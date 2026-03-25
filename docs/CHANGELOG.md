@@ -6,6 +6,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.4.0] - 25-03-2026
+
+### Añadido 🚀
+- **Validación de Formularios en Checkout**: Se ha integrado comprobación estricta y en tiempo real en los datos personales de la reserva. El DNI convierte automáticamente las letras a mayúsculas y purga espacios, el teléfono fuerza formato numérico de 9 dígitos, y el correo es validado garantizando integridad antes del cobro.
+
+## [1.3.0] - 25-03-2026
+
+### Añadido 🚀
+- **Reservas Reales y Códigos QR**: El pago simulado ahora crea reservas auténticas en la base de datos que bloquean la pista inmediatamente (evitando *overbooking*).
+- **Notificaciones Dinámicas por Correo (`api/enviar-correo.php`)**: Al reservar, el servidor genera un código alfanumérico aleatorio y un **Código QR de acceso**, enviándolos incrustados en un correo HTML automático al ciudadano.
+
 ## [1.2.0] - 25-03-2026
 
 ### Añadido 🚀
