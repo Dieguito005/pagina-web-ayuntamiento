@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
 
     // ── Hidratar resumen con datos de la reserva ──
     const storedBooking = localStorage.getItem('bookingData');
@@ -36,6 +36,23 @@
         console.warn('No hay datos de reserva en localStorage.');
     }
 
+    // ── Formateo y Validación de Datos Personales ──
+    const dniInput = document.getElementById('dni');
+    if (dniInput) {
+        dniInput.addEventListener('input', (e) => {
+            // Convertir a mayúsculas y remover caracteres no válidos
+            e.target.value = e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, '');
+        });
+    }
+
+    const telInput = document.getElementById('telefono');
+    if (telInput) {
+        telInput.addEventListener('input', (e) => {
+            // Solo dígitos, máximo 9
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 9);
+        });
+    }
+
     // ── Formateo visual de inputs de tarjeta ──
     const cardNumber = document.getElementById('cardNumber');
     const expiry     = document.getElementById('expiry');
@@ -67,12 +84,7 @@
     const displayCode  = document.getElementById('display-code');
 
     function generateAccessCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '';
-        for (let i = 0; i < 6; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return `TRC-${code}`;
+        return "Cargando...";
     }
 
     if (bookingForm) {
@@ -86,32 +98,50 @@
             const userEmail = document.getElementById('email').value;
 
             setTimeout(async () => {
-                const accessCode = generateAccessCode();
-
-                // Envío de correo vía PHP
+                // Envío de correo y reserva vía PHP
                 try {
                     const bookingInfo = storedBooking ? JSON.parse(storedBooking) : {};
                     const formData = new FormData();
                     formData.append('email', userEmail);
                     formData.append('nombre', document.getElementById('nombre').value);
-                    formData.append('codigo', accessCode);
                     formData.append('pista', bookingInfo.sport || 'Pista Deportiva');
                     formData.append('fecha', bookingInfo.date || 'Día seleccionado');
                     formData.append('hora', bookingInfo.time || 'Hora seleccionada');
 
-                    await fetch('../api/enviar-correo.php', { method: 'POST', body: formData });
+                    const response = await fetch('../api/enviar-correo.php', { method: 'POST', body: formData });
+                    const result = await response.json();
+
+                    if (response.ok && result.status === 'success') {
+                        displayEmail.textContent = userEmail;
+                        displayCode.textContent = result.codigo; // El código alfanumérico generado en PHP
+
+                        formView.classList.add('hidden');
+                        successView.classList.remove('hidden');
+
+                        localStorage.removeItem('bookingData');
+                    } else if (response.status === 500 && result.codigo) {
+                        // Respondió 500 por fallo de SMTP pero guardó la reserva
+                        displayEmail.textContent = "Error SMTP (Correo no enviado pero Reserva Confirmada)";
+                        displayCode.textContent = result.codigo;
+
+                        formView.classList.add('hidden');
+                        successView.classList.remove('hidden');
+
+                        localStorage.removeItem('bookingData');
+                    } else {
+                        alert("Error al procesar la reserva: " + (result.message || "La pista ya no está disponible."));
+                        submitBtn.disabled = false;
+                        btnText.classList.remove('hidden');
+                        spinner.classList.add('hidden');
+                    }
                 } catch (error) {
-                    console.warn('El correo no pudo enviarse (requiere servidor PHP).', error);
+                    alert('Error de conexión con el servidor.');
+                    console.error(error);
+                    submitBtn.disabled = false;
+                    btnText.classList.remove('hidden');
+                    spinner.classList.add('hidden');
                 }
-
-                displayEmail.textContent = userEmail;
-                displayCode.textContent = accessCode;
-
-                formView.classList.add('hidden');
-                successView.classList.remove('hidden');
-
-                localStorage.removeItem('bookingData');
-            }, 2000);
+            }, 1000);
         });
     }
 });
