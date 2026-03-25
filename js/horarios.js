@@ -1,11 +1,9 @@
-/**
- * horarios.js — Lógica compartida de horarios dinámicos
- * Genera los slots de reserva según el día de la semana (hora de Tarancón).
+﻿/**
+ * horarios.js — Lógica compartida de horarios dinámicos con integración de Base de Datos
+ * Genera los slots de reserva según el día de la semana (hora de Tarancón) consultando PHP API.
  */
 document.addEventListener('DOMContentLoaded', () => {
     const TIME_ZONE = 'Europe/Madrid';
-
-    // ── Suplemento de luz (€) — modificar aquí cuando se sepa el importe exacto ──
     const SUPLEMENTO_LUZ = 1.00;
 
     const bookingContainer = document.querySelector('.booking-container');
@@ -15,20 +13,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const DAY_NAMES_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-    // ── Definición de horarios ──
-    // Lunes-Viernes comparten el mismo horario
     const WEEKDAY = {
         morning: [{ start: '09:00', end: '11:00' }, { start: '11:00', end: '13:00' }],
         afternoon: [{ start: '16:00', end: '18:00' }, { start: '18:00', end: '20:00' }, { start: '20:00', end: '22:00', supplement: SUPLEMENTO_LUZ }]
     };
 
     const SCHEDULE = {
-        0: { morning: [{ start: '09:00', end: '11:00' }, { start: '11:00', end: '13:00' }], afternoon: [] },           // Domingo
-        1: WEEKDAY, 2: WEEKDAY, 3: WEEKDAY, 4: WEEKDAY, 5: WEEKDAY,                                                   // Lunes–Viernes
-        6: { morning: [{ start: '09:00', end: '11:00' }, { start: '11:00', end: '13:00' }], afternoon: [{ start: '16:30', end: '18:30' }] } // Sábado
+        0: { morning: [{ start: '09:00', end: '11:00' }, { start: '11:00', end: '13:00' }], afternoon: [] },
+        1: WEEKDAY, 2: WEEKDAY, 3: WEEKDAY, 4: WEEKDAY, 5: WEEKDAY,
+        6: { morning: [{ start: '09:00', end: '11:00' }, { start: '11:00', end: '13:00' }], afternoon: [{ start: '16:30', end: '18:30' }] }
     };
 
-    // ── Utilidades ──
     function getNow() {
         return new Date(new Date().toLocaleString('en-US', { timeZone: TIME_ZONE }));
     }
@@ -39,56 +34,95 @@ document.addEventListener('DOMContentLoaded', () => {
         return d.getDay();
     }
 
-    // ── Crear un botón de slot ──
-    function createSlotButton(slot) {
+    function getISODateForAPI(offset) {
+        const d = getNow();
+        d.setDate(d.getDate() + offset);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function createSlotButton(slot, ocupadosList) {
         const btn = document.createElement('button');
-        btn.className = 'time-slot available';
-        const badge = slot.supplement
+        
+        // Comprobar ocupación en API
+        const ocupadoObj = ocupadosList.find(o => o.hora_inicio === slot.start);
+        
+        const badge = slot.supplement && !ocupadoObj
             ? `<span class="supplement-badge">💡 +${slot.supplement.toFixed(2).replace('.', ',')} € luz</span>`
             : '';
-        btn.innerHTML = `
-            <span class="time">${slot.start} - ${slot.end}</span>
-            ${badge}
-            <span class="status">Disponible</span>
-        `;
-        if (slot.supplement) btn.dataset.supplement = slot.supplement;
+            
+        if (ocupadoObj) {
+            btn.className = 'time-slot disabled';
+            const extraClass = ocupadoObj.estado === 'bloqueada_admin' ? 'bloqueado-admin' : '';
+            const statusText = ocupadoObj.estado === 'bloqueada_admin' ? 'No Disponible' : 'Ocupada';
+            
+            btn.innerHTML = `
+                <span class="time">${slot.start} - ${slot.end}</span>
+                <span class="status ${extraClass}">${statusText}</span>
+            `;
+        } else {
+            btn.className = 'time-slot available';
+            btn.innerHTML = `
+                <span class="time">${slot.start} - ${slot.end}</span>
+                ${badge}
+                <span class="status">Disponible</span>
+            `;
+            if (slot.supplement) btn.dataset.supplement = slot.supplement;
+        }
+        
         return btn;
     }
 
-    // ── Crear un bloque de turno (Mañana / Tarde) ──
-    function createTimeBlock(className, title, slots) {
+    function createTimeBlock(className, title, slots, ocupadosList) {
         const block = document.createElement('div');
         block.className = `time-block ${className}`;
         block.innerHTML = `<h4 class="block-title">${title}</h4>`;
         const container = document.createElement('div');
         container.className = 'slots-container';
-        slots.forEach(slot => container.appendChild(createSlotButton(slot)));
+        slots.forEach(slot => container.appendChild(createSlotButton(slot, ocupadosList)));
         block.appendChild(container);
         return block;
     }
 
-    // ── Generar slots en el DOM ──
-    function generateSlots(dayOfWeek) {
+    async function generateSlots(offset) {
+        const dayOfWeek = getDayOfWeek(offset);
         const schedule = SCHEDULE[dayOfWeek];
         if (!schedule) return;
 
+        scheduleGrid.style.opacity = '0.5';
+        scheduleGrid.innerHTML = '<p class="loading-schedule">Cargando disponibilidad...</p>';
+        confirmBtn.disabled = true;
+
+        const dateISO = getISODateForAPI(offset);
+        let ocupadosList = [];
+
+        try {
+            const resp = await fetch(`../api/get-horarios.php?fecha=${dateISO}&pista=${encodeURIComponent(sport)}`);
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    ocupadosList = data.ocupados;
+                }
+            }
+        } catch (e) {
+            console.error("No se pudo conectar con la BBDD, asumiendo disponibilidad.");
+        }
+
         scheduleGrid.innerHTML = '';
 
-        if (schedule.morning.length > 0) {
-            scheduleGrid.appendChild(createTimeBlock('morning', 'Mañana', schedule.morning));
-        }
-        if (schedule.afternoon.length > 0) {
-            scheduleGrid.appendChild(createTimeBlock('afternoon', 'Tarde', schedule.afternoon));
-        }
+        if (schedule.morning.length > 0) scheduleGrid.appendChild(createTimeBlock('morning', 'Mañana', schedule.morning, ocupadosList));
+        if (schedule.afternoon.length > 0) scheduleGrid.appendChild(createTimeBlock('afternoon', 'Tarde', schedule.afternoon, ocupadosList));
         if (schedule.morning.length === 0 && schedule.afternoon.length === 0) {
             scheduleGrid.innerHTML = '<p class="no-schedule-msg">No hay horarios disponibles para este día.</p>';
         }
 
         bindSlotEvents();
-        refreshSlotsState();
+        refreshSlotsState(offset); // Bloquea si ya ha pasado la hora real
+        scheduleGrid.style.opacity = '1';
     }
 
-    // ── Eventos de click en slots ──
     function bindSlotEvents() {
         const slots = document.querySelectorAll('.time-slot');
         slots.forEach(slot => {
@@ -114,56 +148,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── Bloquear horas pasadas (solo "Hoy") ──
-    function refreshSlotsState() {
-        const activeBtn = document.querySelector('.day-btn.active');
-        if (!activeBtn) return;
-        const offset = parseInt(activeBtn.getAttribute('data-day-offset'), 10);
+    function refreshSlotsState(offset) {
         const slots = document.querySelectorAll('.time-slot');
-
-        if (offset > 0) {
-            slots.forEach(slot => {
-                slot.classList.remove('disabled');
-                slot.classList.add('available');
-                if (!slot.classList.contains('selected')) {
-                    slot.querySelector('.status').textContent = 'Disponible';
-                }
-            });
-            return;
-        }
+        if (offset > 0) return; // Si no es hoy, no comprobamos hora pasada.
 
         const now = getNow();
         const currentHour = now.getHours();
         const currentMin = now.getMinutes();
 
         slots.forEach(slot => {
-            const [h, m] = slot.querySelector('.time').textContent.split(' - ')[0].split(':').map(Number);
+            if (!slot.classList.contains('available') && !slot.classList.contains('selected')) return; 
+            
+            const timeSpan = slot.querySelector('.time').textContent;
+            const [h, m] = timeSpan.split(' - ')[0].split(':').map(Number);
             const passed = h < currentHour || (h === currentHour && m <= currentMin);
 
             if (passed) {
                 slot.classList.remove('available', 'selected');
                 slot.classList.add('disabled');
                 slot.querySelector('.status').textContent = 'Pasada';
-            } else {
-                slot.classList.remove('disabled');
-                slot.classList.add('available');
-                if (!slot.classList.contains('selected')) {
-                    slot.querySelector('.status').textContent = 'Disponible';
-                }
             }
         });
     }
 
-    // ── Reloj y fechas ──
     function updateDatesAndClock() {
         const now = getNow();
-
+        
         const timeDisplay = document.getElementById('local-time-display');
-        if (timeDisplay) {
-            timeDisplay.textContent = now.toLocaleTimeString('es-ES', {
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
-        }
+        if (timeDisplay) timeDisplay.textContent = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
         const dateOptions = { month: '2-digit', day: '2-digit' };
         document.querySelectorAll('.day-btn').forEach(btn => {
@@ -179,21 +191,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── Selección de día ──
     document.querySelectorAll('.day-btn').forEach(btn => {
         btn.addEventListener('click', function () {
+            if (this.classList.contains('active')) return;
+            
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
 
-            generateSlots(getDayOfWeek(parseInt(this.getAttribute('data-day-offset'), 10)));
-            confirmBtn.disabled = true;
-
-            scheduleGrid.style.opacity = '0.5';
-            setTimeout(() => { scheduleGrid.style.opacity = '1'; }, 150);
+            const offset = parseInt(this.getAttribute('data-day-offset'), 10);
+            generateSlots(offset);
         });
     });
 
-    // ── Confirmar reserva ──
     confirmBtn.addEventListener('click', () => {
         const selectedEl = document.querySelector('.time-slot.selected');
         const timeEl = selectedEl ? selectedEl.querySelector('.time') : null;
@@ -204,7 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const supplement = selectedEl.dataset.supplement ? parseFloat(selectedEl.dataset.supplement) : 0;
             localStorage.setItem('bookingData', JSON.stringify({
                 sport,
-                date: `${dayName.textContent} (${dayDate.textContent})`,
+                date: `${getISODateForAPI(parseInt(document.querySelector('.day-btn.active').getAttribute('data-day-offset'), 10))}`,
+                dateVisual: `${dayName.textContent} (${dayDate.textContent})`,
                 time: timeEl.textContent,
                 supplement
             }));
@@ -212,11 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ── Footer: año actual ──
     const yearSpan = document.getElementById('current-year');
     if (yearSpan) yearSpan.textContent = new Date().getFullYear();
 
-    // ── Animaciones scroll ──
     const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -228,14 +236,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
     document.querySelectorAll('.scroll-animate').forEach(el => observer.observe(el));
 
-    // ── Header scroll ──
     window.addEventListener('scroll', () => {
-        document.querySelector('.main-header').classList.toggle('scrolled', window.scrollY > 50);
+        const header = document.querySelector('.main-header');
+        if (header) header.classList.toggle('scrolled', window.scrollY > 50);
     });
 
-    // ── Inicialización ──
     updateDatesAndClock();
     setInterval(updateDatesAndClock, 1000);
-    generateSlots(getDayOfWeek(0));
-    setInterval(refreshSlotsState, 60000);
+    // Iniciar con "Hoy"
+    generateSlots(0);
 });
+

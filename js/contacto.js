@@ -1,4 +1,4 @@
-const { maxHeaderSize } = require("node:http");
+﻿const { maxHeaderSize } = require("node:http");
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Referencias a elementos
@@ -97,3 +97,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     // 1. Inyectar HTML del Banner y del Modal de Cookies
     const cookieHTML = `
         <!-- Banner inferior de Cookies -->
@@ -163,3 +163,4 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', showModal);
     });
 });
+
