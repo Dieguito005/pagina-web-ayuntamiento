@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
 
     // ── Hidratar resumen con datos de la reserva ──
     const storedBooking = localStorage.getItem('bookingData');
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     formData.append('fecha', bookingInfo.date || 'Día seleccionado');
                     formData.append('hora', bookingInfo.time || 'Hora seleccionada');
 
-                    await fetch('enviar-correo.php', { method: 'POST', body: formData });
+                    await fetch('../api/enviar-correo.php', { method: 'POST', body: formData });
                 } catch (error) {
                     console.warn('El correo no pudo enviarse (requiere servidor PHP).', error);
                 }
@@ -115,3 +115,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+

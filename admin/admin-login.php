@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 if (isset($_SESSION['admin_id'])) {
     header("Location: admin-dashboard.php");
@@ -18,7 +18,7 @@ if (isset($_GET['error'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso Empleados - Ayuntamiento de Tarancón</title>
-    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="../css/home.css">
     <style>
         .admin-login-wrapper {
             display: flex;
@@ -111,10 +111,10 @@ if (isset($_GET['error'])) {
     <header class="main-header" style="position: sticky;">
         <div class="header-container">
             <div class="header-logo">
-                <a href="home.html" class="logo-home">
+                <a href="../html/home.html" class="logo-home">
                     <div class="logo-image-box">
                          <!-- Reusing the black logo logic from navbar if wanted, or forcing the white one for dark header -->
-                        <img class="logo-ayuntamiento" src="assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo">
+                        <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo">
                     </div>
                 </a>
             </div>
@@ -146,10 +146,11 @@ if (isset($_GET['error'])) {
                 <button type="submit" class="btn-submit">Entrar al Panel</button>
             </form>
             <div style="margin-top: 20px;">
-                <a href="home.html" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Volver al inicio</a>
+                <a href="../html/home.html" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Volver al inicio</a>
             </div>
         </div>
     </main>
 
 </body>
 </html>
+
