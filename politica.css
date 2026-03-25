@@ -1,0 +1,307 @@
+/* ==========================================================
+   === PÁGINAS LEGALES (Políticas de Privacidad) ============
+   ========================================================== */
+
+/* Contenedor principal para la lectura de documentos legales */
+.legal-content {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 5rem 1.25rem;
+    background-color: var(--color-fondo);
+    min-height: 60vh;
+}
+
+/* Tarjeta elegante donde reside la información */
+.legal-card {
+    background: white;
+    max-width: 55rem; /* ~880px para una longitud de línea óptima al leer */
+    width: 100%;
+    border-radius: 12px;
+    padding: 4rem 4.5rem;
+    box-shadow: 0 15px 45px rgba(45, 95, 138, 0.08); /* Sombra azul institucional suave */
+    border: 1px solid #dce6ef;
+    border-top: 6px solid var(--color-primario); /* Borde superior corporativo */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.legal-card:hover {
+    box-shadow: 0 20px 50px rgba(45, 95, 138, 0.12);
+}
+
+/* Título principal de la tarjeta legal */
+.legal-card h2 {
+    color: #2b5784; /* Azul oscuro de accesibilidad */
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px solid #d0dce8; /* Accent azul institucional */
+    display: inline-block;
+    padding-right: 2rem;
+}
+
+/* Cuerpos de texto y subtítulos dentro del marco legal */
+.legal-text h3 {
+    color: #1c3b5c; /* Azul más oscuro de accesibilidad */
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--color-primario); /* Border corporativo */
+    background-color: #fbf9f7; /* Fondo corporativo muy suave */
+    padding: 0.6rem 1rem;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.02);
+}
+
+.legal-text p {
+    color: #445464; /* Texto azul oscuro de accesibilidad */
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+    font-size: 1.05rem;
+    text-align: justify;
+}
+
+.legal-text strong {
+    color: #223547; /* Azul fuerte de accesibilidad */
+    border-bottom: 1px dotted var(--color-primario); /* Accent azul corporativo */
+}
+
+/* Primer párrafo como introducción */
+.legal-text p:first-of-type {
+    font-size: 1.15rem; 
+    color: #2b5784; /* Azul oscuro */
+    font-weight: 500;
+}
+
+/* Lista dentro del contenido legal si fuera necesario */
+.legal-text ul {
+    background-color: #f4f7fb; /* Fondo azul institucional muy suave */
+    padding: 1.5rem 1.5rem 1.5rem 3rem;
+    border-radius: 8px;
+    border: 1px solid #dce6ef;
+    margin-bottom: 1.5rem;
+    color: #445464; /* azul oscuro */
+    line-height: 1.8;
+    font-size: 1.05rem;
+}
+
+.legal-text li {
+    margin-bottom: 0.5rem;
+}
+
+/* Animación de entrada para la tarjeta legal */
+.fade-in-up {
+    animation: fadeInUp 0.8s ease-out backwards;
+}
+
+@keyframes fadeInUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(30px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Adaptación legal en dispositivos móviles */
+@media (max-width: 48rem) {
+    .legal-content {
+        padding: 3rem 1rem;
+    }
+    
+    .legal-card {
+        padding: 2.5rem 1.5rem;
+    }
+    
+    .legal-card h2 {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        padding-right: 0;
+    }
+    
+    .legal-text p {
+        text-align: left; /* Quitamos el justificado en móviles para evitar espacios raros */
+    }
+    
+    .legal-text ul {
+        padding: 1.5rem 1.5rem 1.5rem 2rem;
+    }
+}
+
+/* ==========================================================
+   === PÁGINA COOKIES (Estilos Adicionales Separados) =======
+   ========================================================== */
+
+/* Estilos extra eliminados para unificar con el diseño base corporativo */
+
+/* Cajas informativas para los tipos de cookies */
+.cookie-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.cookie-type-box {
+    flex: 1;
+    min-width: 15.625rem; /* 250px */
+    background: #f4f7fb;
+    border-left: 5px solid #4a7fa5;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.3s ease;
+}
+
+.cookie-type-box:hover {
+    transform: translateY(-5px);
+    background: #ffffff;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+}
+
+.cookie-type-box h4 {
+    color: #333;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+}
+
+.cookie-type-box p {
+    font-size: 0.95rem;
+    margin-bottom: 0; /* Override the default legal-text p margin */
+    color: #555;
+}
+
+/* Lista personalizada para los navegadores */
+.cookie-browsers {
+    background: #f4f7fb;
+    padding: 1.5rem 2.5rem !important; /* Override the default padding */
+    border: 1px dashed #afc8da;
+    border-radius: 8px;
+}
+
+.cookie-browsers li {
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #f2e9e4;
+}
+
+.cookie-browsers li:last-child {
+    border-bottom: none;
+}
+
+/* ==========================================================
+   === ACCESIBILIDAD (Estilos Adicionales Separados) ========
+   ========================================================== */
+
+/* Estilos extra para diferenciar la tarjeta de accesibilidad */
+.accesibilidad-card {
+    border-top: 6px solid #4a90e2; /* Un azul amigable que representa accesibilidad */
+}
+
+.accesibilidad-card h2 {
+    border-bottom: 3px solid #d4e6f7; 
+    color: #2b5784; 
+    display: inline-block;
+    padding-right: 2rem;
+}
+
+.accesibilidad-card .legal-text h3 {
+    color: #1c3b5c;
+    border-left: 4px solid #4a90e2;
+    background-color: #f0f6fc;
+    padding: 0.6rem 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-top: 3rem;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.02);
+}
+
+.accesibilidad-card .legal-text p {
+    color: #445464;
+}
+
+.accesibilidad-card .legal-text strong {
+    color: #223547;
+    border-bottom: 1px dotted #4a90e2;
+}
+
+.accesibilidad-card .legal-text ul {
+    background-color: #f7fbff;
+    padding: 1.5rem 1.5rem 1.5rem 3rem;
+    border-radius: 8px;
+    border: 1px solid #e2effa;
+}
+
+/* ==========================================================
+   === BOTONES DE ACCIÓN (Compartidos) ======================
+   ========================================================== */
+
+/* Contenedor de botones situado debajo del texto de las políticas */
+.legal-action-container {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 3.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid #dce6ef;
+    flex-wrap: wrap; /* Para que en móviles se adapten bien */
+}
+
+/* Estilo base de los botones legales */
+.btn-legal {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+/* Botón general: Volver al inicio */
+.btn-volver {
+    background: white;
+    color: var(--color-primario);
+    border: 2px solid var(--color-primario);
+    box-shadow: 0 4px 10px rgba(145, 79, 38, 0.05);
+}
+
+.btn-volver:hover {
+    background: var(--color-primario);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(145, 79, 38, 0.2);
+}
+
+/* Botón específico: Configurar Cookies */
+.btn-cookies {
+    background: linear-gradient(135deg, #4a7fa5 0%, #2d5f8a 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(45, 95, 138, 0.3);
+}
+
+.btn-cookies:hover {
+    background: linear-gradient(135deg, #5b8fb5 0%, #3a6f9a 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(45, 95, 138, 0.45);
+}
+
+/* Botón específico: Contactar soporte (Accesibilidad) */
+.btn-contacto {
+    background: linear-gradient(135deg, #4a90e2 0%, #2b5784 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
+}
+
+.btn-contacto:hover {
+    background: linear-gradient(135deg, #5b9ee8 0%, #356799 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(74, 144, 226, 0.45);
+}

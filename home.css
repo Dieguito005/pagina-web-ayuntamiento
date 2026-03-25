@@ -1,0 +1,515 @@
+/* Reset de estilos básicos */
+:root {
+    --color-primario: #2d5f8a;
+    --color-secundario: #4a7fa5;
+    --color-fondo: #f2f4f7;
+    --color-texto: #1f2d3a;
+    --fuente-principal: 'Inter', sans-serif;
+}
+
+*  {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--fuente-principal);
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+}
+a:focus-visible, button:focus-visible {
+    outline: 3px solid #000000; 
+    outline-offset: 3px;
+}
+
+/* --- Estilos principales del Header --- */
+.main-header {
+    /* Degradado azul institucional elegante */
+    background: linear-gradient(135deg, #4a7fa5 0%, #2d5f8a 100%);
+    color: white;
+    padding: 0.9375rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+    transition: padding 0.3s ease, box-shadow 0.3s ease;
+    
+    /* Animación de entrada inicial (deslizar desde arriba) */
+    animation: slideDown 0.6s ease-out;
+}
+
+.main-header.scrolled {
+    padding: 0.4rem 0;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.header-container {
+    max-width: 75rem;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1.25rem;
+}
+
+/* --- LOGO (Izquierda) --- */
+.header-logo .logo-home {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+    background: rgba(255, 255, 255, 0.05); /* Fondo muy sutil para resaltar */
+    border-radius: 8px;
+}
+
+/* Animación al pasar el mouse por el logo */
+.header-logo .logo-home:hover {
+    transform: scale(1.1);
+}
+
+/* Contenedor adaptado para la imagen real del logo */
+.logo-image-box {
+    width: 6rem;
+    height: 6rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+}
+
+/* Ajustes de la imagen para que encaje perfectamente */
+.logo-ayuntamiento {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    /* Sombras para mejorar contraste sobre el fondo azul y animación sutil de entrada */
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    animation: fadeInScale 0.8s ease-out backwards;
+}
+
+/* --- TÍTULO (Centro) --- */
+.header-title h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* --- REDES SOCIALES (Derecha) --- */
+.header-socials {
+    display: flex;
+    gap: 0.9375rem;
+}
+
+.social-icon {
+    text-decoration: none;
+    display: block;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Forma redonda y fondo translúcido para los iconos */
+.icon-placeholder {
+    width: 2.8125rem;
+    height: 2.8125rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: fadeInScale 0.6s ease-out backwards;
+}
+
+/* Ajuste para las imágenes de los iconos insertados por el usuario */
+.icon-placeholder img {
+    width: 1.5rem;
+    height: 1.5rem;
+    object-fit: contain;
+}
+
+/* Retrasos escalonados para la entrada de iconos sociales */
+.fade-in-delay-1 { animation-delay: 0.2s; }
+.fade-in-delay-2 { animation-delay: 0.4s; }
+.fade-in-delay-3 { animation-delay: 0.6s; }
+
+/* Efecto hover interactivo y dinámico (flotación e iluminación) */
+.social-icon:hover {
+    transform: translateY(-5px);
+}
+
+.social-icon:hover .icon-placeholder {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+    color: #fff;
+    transform: rotate(360deg); /* Animación de vuelta completa al hacer hover */
+}
+
+/* --- DEFINICIÓN DE ANIMACIONES KEYFRAMES --- */
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* --- RESPONSIVIDAD (Móviles / Tablets) --- */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column;
+        gap: 0.9375rem;
+    }
+    
+    .header-title h1 {
+        font-size: 1.4rem;
+        text-align: center;
+    }
+}
+
+/* ==========================================================
+   === CONTENIDO PRINCIPAL (MAIN) ===========================
+   ========================================================== */
+
+.main-content {
+    min-height: 60vh;
+    padding-bottom: 3.75rem;
+}
+
+/* --- BANNER HERO --- */
+.hero-banner {
+    background: linear-gradient(rgba(45, 95, 138, 0.55), rgba(26, 58, 87, 0.65)), url('assets/imagenes/hero-bg.jpg') center/cover;
+    background-color: #2d5f8a; 
+    color: white;
+    text-align: center;
+    padding: 5rem 1.25rem;
+    margin-bottom: 3.75rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.hero-content {
+    max-width: 50rem;
+    margin: 0 auto;
+}
+
+.hero-content h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 0.9375rem;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    color: #c8dce8; /* Tono frío institucional acorde al diseño */
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+@media (max-width: 768px) {
+    .hero-banner {
+        padding: 3.5rem 1.25rem;
+    }
+    .hero-content h2 {
+        font-size: 2rem;
+    }
+    .hero-content p {
+        font-size: 1rem;
+    }
+}
+
+/* --- SECCIÓN DE TARJETAS --- */
+.sports-cards-section {
+    padding: 0 1.25rem;
+}
+
+.cards-container {
+    max-width: 62.5rem;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+}
+
+.sport-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    flex: 1;
+    min-width: 20rem;
+    max-width: 28.125rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #dce6ef;
+}
+
+/* Animación de elevación e iluminación al pasar el cursor */
+.sport-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(45, 95, 138, 0.18);
+}
+
+/* Caja de la imagen en la tarjeta */
+.card-image-box {
+    background: linear-gradient(135deg, #dce8f2 0%, #b8d0e6 100%);
+    height: 11.25rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.sport-icon {
+    width: 5.3125rem;
+    height: 5.3125rem;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    transition: transform 0.4s ease;
+}
+
+.sport-card:hover .sport-icon {
+    transform: scale(1.15) rotate(5deg);
+}
+
+.card-info {
+    padding: 1.875rem 1.5625rem;
+    text-align: center;
+}
+
+.card-info h3 {
+    color: #2d5f8a;
+    font-size: 1.6rem;
+    margin-bottom: 0.625rem;
+}
+
+.court-context {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 1.5625rem;
+    min-height: 2.75rem;
+    line-height: 1.5;
+}
+
+/* Botón cálido coincidente con el header */
+.btn-primary {
+    display: inline-block;
+    background: linear-gradient(135deg, #4a7fa5 0%, #2d5f8a 100%);
+    color: white;
+    text-decoration: none;
+    padding: 0.75em 1.75em;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(45, 95, 138, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5b8fb5 0%, #3a6f9a 100%);
+    transform: scale(1.05);
+    color: white;
+    box-shadow: 0 6px 15px rgba(45, 95, 138, 0.45);
+}
+
+/* Botón secundario (outline) */
+.btn-secondary {
+    display: inline-block;
+    background: transparent;
+    color: #2d5f8a;
+    border: 2px solid #4a7fa5;
+    text-decoration: none;
+    padding: 0.6em 1.2em;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #4a7fa5 0%, #2d5f8a 100%);
+    color: white;
+    transform: scale(1.05);
+}
+
+/* --- ANIMACIONES MAIN KEYFRAMES --- */
+.scroll-animate { opacity: 0; }
+.fade-in-up { animation: fadeInUp 0.8s ease-out both; }
+.slide-in-left { animation: slideInLeft 0.8s ease-out both 0.2s; }
+.slide-in-right { animation: slideInRight 0.8s ease-out both 0.4s; }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-40px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* ==========================================================
+   === FOOTER ===============================================
+   ========================================================== */
+
+.main-footer {
+    background: linear-gradient(135deg, #1e3d5c 0%, #0f2236 100%);
+    color: #d0dce8;
+    padding: 40px 0 0 0;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.15);
+    animation: slideUp 0.8s ease-out backwards;
+}
+
+.footer-container {
+    max-width: 75rem;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.875rem;
+    padding: 0 1.25rem 1.875rem;
+}
+
+/* --- LOGO Y TÍTULO (Izquierda) --- */
+.footer-branding {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-width: 15.625rem;
+}
+
+.footer-title h2 {
+    font-size: 1.3rem;
+    color: white;
+    margin-bottom: 3px;
+    font-weight: 700;
+}
+
+.footer-title p {
+    font-size: 0.9rem;
+    color: #a0aec0;
+}
+
+/* --- COLUMNAS DEL FOOTER (Legal y Contacto) --- */
+.footer-legal, .footer-contact {
+    flex: 1;
+    min-width: 12.5rem;
+}
+.footer-legal li:hover, .footer-contact li:hover{
+    text-decoration: underline;
+}
+.footer-legal h3{
+    cursor: pointer;
+}
+.footer-contact h3{
+    cursor: pointer;
+}
+
+.main-footer h3 {
+    color: white;
+    font-size: 1.1rem;
+    margin-bottom: 0.9375rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+/* Subrayado elegante debajo de los títulos del footer */
+.main-footer h3::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 2.5rem;
+    background-color: #7ab3d4;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.main-footer h3:hover::after {
+    width: 3.75rem; /* Efecto animado al pasar el ratón por el título */
+}
+
+.main-footer ul {
+    list-style: none;
+}
+
+.main-footer ul li {
+    margin-bottom: 0.625rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Enlaces del Footer */
+.main-footer a {
+    color: #d0dce8;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.main-footer a:hover {
+    color: #ffffff;
+    transform: translateX(5px); /* Pequeña animación hacia la derecha */
+}
+
+/* --- COPYRIGHT (Abajo) --- */
+.footer-bottom {
+    background-color: rgba(0, 0, 0, 0.35); /* Franja oscura final */
+    text-align: center;
+    padding: 0.9375rem 1.25rem;
+    font-size: 0.85rem;
+    color: #94afc4;
+}
+
+/* --- NUEVAS ANIMACIONES (Footer) --- */
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* --- RESPONSIVIDAD DEL FOOTER --- */
+@media (max-width: 48rem) {
+    .footer-container {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .footer-branding {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .main-footer h3::after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Finaliza tu reserva de instalaciones deportivas del Ayuntamiento de Tarancón.">
+    <link rel="preload" href="assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" as="image">
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="checkout.css">
+    <link rel="stylesheet" href="cookies.css">
+    <script src="cookies.js" defer></script>
+    <script src="checkout.js" defer></script>
+    <title>Reserva y Pago - Alquileres Tarancón</title>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <!-- Izquierda: Espacio para Logo -->
+            <div class="header-logo">
+                <a href="https://nuevaweb.tarancon.es/" class="logo-home">
+                    <div class="logo-image-box">
+                        <img class="logo-ayuntamiento" src="assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo Ayuntamiento" decoding="async">
+                    </div>
+                </a>
+            </div>
+
+            <!-- Centro: Título -->
+            <div class="header-title">
+                <h1> Alquileres Tarancón </h1>
+            </div>
+
+            <!-- Derecha: Redes Sociales -->
+            <div class="header-socials">
+                <a href="https://facebook.com" class="social-icon" target="_blank" aria-label="Facebook">
+                    <div class="icon-placeholder fade-in-delay-1"><img src="assets/iconos/facebook.png" alt="logotipo de Facebook" loading="lazy" decoding="async"></div>
+                </a>
+                <a href="https://X.com" class="social-icon" target="_blank" aria-label="Twitter">
+                    <div class="icon-placeholder fade-in-delay-2"><img src="assets/iconos/X.png" alt="logotipo de Twitter" loading="lazy" decoding="async"></div>
+                </a>
+                <a href="https://www.instagram.com/taranconayto/" class="social-icon" target="_blank" aria-label="Instagram">
+                    <div class="icon-placeholder fade-in-delay-3"><img src="assets/iconos/logotipo-de-instagram.png" alt="logotipo de Instagram" loading="lazy" decoding="async"></div>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content checkout-content">
+        <section class="checkout-layout">
+            
+            <!-- CONTENIDO PRINCIPAL: FORMULARIO Y PAGO -->
+            <div class="checkout-form-container fade-in-up" id="checkout-form-view">
+                <h2>Finalizar Reserva</h2>
+                <p class="checkout-subtitle">Por favor, completa tus datos para generar el código de acceso a la pista.</p>
+                
+                <a href="home.html" class="btn-secondary" style="margin-bottom: 2rem; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                    Volver al Inicio
+                </a>
+
+                <!-- AVISO LEGAL DE CANCELACIÓN -->
+                <div class="cancellation-alert">
+                    <div class="alert-icon">⚠️</div>
+                    <div class="alert-text">
+                        <strong>Atención:</strong> El límite de cancelación de la reserva es hasta <strong>media hora antes</strong> de la misma. Si se rebasa dicho límite, la reserva se bloquea y el importe no será devuelto.
+                    </div>
+                </div>
+
+                <form id="booking-form" class="booking-form">
+                    
+                    <!-- DATOS PERSONALES -->
+                    <fieldset class="form-section">
+                        <legend>Datos Personales</legend>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label for="nombre">Nombre *</label>
+                                <input type="text" id="nombre" name="nombre" required placeholder="Ej: Juan">
+                            </div>
+                            <div class="form-group half">
+                                <label for="apellidos">Apellidos *</label>
+                                <input type="text" id="apellidos" name="apellidos" required placeholder="Ej: Pérez García">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label for="dni">DNI / NIE *</label>
+                                <input type="text" id="dni" name="dni" required placeholder="12345678A" pattern="^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$|^[XYZ][0-9]{7}[TRWAGMYFPDXBNJZSQVHLCKE]$" title="Introduce un DNI o NIE válido">
+                            </div>
+                            <div class="form-group half">
+                                <label for="telefono">Teléfono *</label>
+                                <input type="tel" id="telefono" name="telefono" required placeholder="Ej: 600123456" pattern="[0-9]{9}" title="Introduce un número de 9 cifras">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Correo Electrónico *</label>
+                            <input type="email" id="email" name="email" required placeholder="juan.perez@email.com">
+                            <small class="help-text">Te enviaremos a este correo tu código de entrada automático.</small>
+                        </div>
+                    </fieldset>
+
+                    <!-- DATOS DE TARJETA -->
+                    <fieldset class="form-section payment-section">
+                        <legend>Datos de Pago</legend>
+                        <p class="payment-disclaimer">Cobro seguro. Formulario simulado para pruebas.</p>
+                        <div class="form-group">
+                            <label for="cardName">Titular de la tarjeta *</label>
+                            <input type="text" id="cardName" name="cardName" required placeholder="Juan Pérez">
+                        </div>
+                        <div class="form-group">
+                            <label for="cardNumber">Número de tarjeta *</label>
+                            <div class="card-input-wrapper">
+                                <input type="text" id="cardNumber" name="cardNumber" required placeholder="0000 0000 0000 0000" maxlength="19" pattern="\d{4}\s?\d{4}\s?\d{4}\s?\d{4}">
+                                <span class="card-icon">💳</span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label for="expiry">Caducidad (MM/AA) *</label>
+                                <input type="text" id="expiry" name="expiry" required placeholder="MM/AA" maxlength="5" pattern="(0[1-9]|1[0-2])\/\d{2}">
+                            </div>
+                            <div class="form-group half">
+                                <label for="cvv">CVC/CVV *</label>
+                                <input type="password" id="cvv" name="cvv" required placeholder="123" maxlength="3" pattern="\d{3}">
+                            </div>
+                        </div>
+                    </fieldset>
+                    
+                    <!-- Políticas -->
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="accept-policies" name="accept-policies" required>
+                        <label for="accept-policies">He leído y acepto la <a href="politica-privacidad.html" target="_blank">Política de Privacidad</a> y las condiciones de alquiler del Ayuntamiento de Tarancón.</label>
+                    </div>
+
+                    <button type="submit" class="btn-primary btn-submit-form" id="submit-btn">
+                        <span class="btn-text">Pagar y Generar Reserva</span>
+                        <div class="spinner hidden" id="loading-spinner"></div>
+                    </button>
+                    <p class="error-msg hidden" id="form-error-msg">Por favor, rellena los campos correctamente.</p>
+                </form>
+            </div>
+
+            <!-- VISTA DE CONFIRMACIÓN / CÓDIGO (Oculta por defecto) -->
+            <div class="checkout-success-container hidden" id="checkout-success-view">
+                <div class="success-card">
+                    <div class="success-icon-wrap">
+                        <div class="success-icon">✓</div>
+                    </div>
+                    <h2>¡Reserva Confirmada!</h2>
+                    <p>El pago se ha realizado con éxito.</p>
+                    <p>Acabamos de enviarle a su correo electrónico <strong><span id="display-email"></span></strong> los detalles de la reserva junto con este código de entrada.</p>
+                    
+                    <div class="code-box">
+                        <p class="code-label">Código de Acceso del Conserje</p>
+                        <p class="access-code" id="display-code">------</p>
+                    </div>
+
+                    <div class="success-instructions">
+                        <p><strong>¿Qué debo hacer ahora?</strong></p>
+                        <ul>
+                            <li>Guarde este código alfanumérico.</li>
+                            <li>Acuda a las instalaciones elegidas unos minutos antes de la reserva.</li>
+                            <li>Enseñe o dicte este código al conserje de la instalación para que le permita entrar a la pista.</li>
+                        </ul>
+                    </div>
+
+                    <a href="home.html" class="btn-primary btn-back-home">Volver al Inicio</a>
+                </div>
+            </div>
+
+            <!-- BARRA LATERAL: RESUMEN DE RESERVA -->
+            <aside class="checkout-sidebar fade-in-up delay-1">
+                <div class="summary-card">
+                    <h3>Resumen de Reserva</h3>
+                    <div class="summary-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Instalación:</span>
+                            <span class="detail-value" id="summary-sport">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Fecha:</span>
+                            <span class="detail-value" id="summary-date">--/--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Horario:</span>
+                            <span class="detail-value" id="summary-time">--:-- - --:--</span>
+                        </div>
+                        <div class="detail-divider"></div>
+                        <div class="detail-row" id="summary-base-price-row">
+                            <span class="detail-label">Base Pista:</span>
+                            <span class="detail-value">4,00 €</span>
+                        </div>
+                        <div class="detail-row hidden" id="summary-light-row">
+                            <span class="detail-label" style="color:#d32f2f;">Suplemento Luz (Noche):</span>
+                            <span class="detail-value">1,00 €</span>
+                        </div>
+                        <div class="detail-row total-row" style="margin-top: 8px; border-top: 1px dashed #ccc; padding-top: 8px;">
+                            <span class="detail-label">Total a Pagar:</span>
+                            <span class="detail-value total-price" id="summary-total-price">4,00 €</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+        </section>
+    </main>
+
+    <!-- FOOTER PRINCIPAL -->
+    <footer class="main-footer">
+        <div class="footer-container">
+            <!-- Sección Izquierda: Logo y Título -->
+            <div class="footer-branding">
+                <div class="footer-title">
+                    <h2>Alquileres Tarancón</h2>
+                    <p>Ayuntamiento de Tarancón</p>
+                </div>
+            </div>
+
+            <!-- Sección Central: Bases Legales -->
+            <div class="footer-legal">
+                <h3>Legal</h3>
+                <ul>
+                    <li><a href="aviso-legal.html">Aviso Legal</a></li>
+                    <li><a href="politica-privacidad.html">Política de Privacidad</a></li>
+                    <li><a href="politica-cookies.html">Política de Cookies</a></li>
+                    <li><a href="accesibilidad.html">Accesibilidad</a></li>
+                </ul>
+            </div>
+
+            <!-- Sección Derecha: Contacto -->
+            <div class="footer-contact">
+                <h3>Contacto</h3>
+                <ul>
+                    <li><a href="https://www.google.com/maps/place/Ayuntamiento+de+Taranc%C3%B3n/@40.0130199,-3.0041254,17z/data=!3m1!4b1!4m6!3m5!1s0xd4283ee3a347a75:0x19aa29e13b570ee4!8m2!3d40.0130199!4d-3.0041254!16s%2Fg%2F1thx5cb2?entry=ttu&g_ep=EgoyMDI2MDMwMi4wIKXMDSoASAFQAw%3D%3D">📍 Plaza del Ayuntamiento, 1, 16400</a></li>
+                    <li><a href="tel:+34969321016">📞 +34 969 32 10 16</a></li>
+                    <li><a href="contacto.html">✉️ Formulario de Contacto</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Línea de Copyright -->
+        <div class="footer-bottom">
+            <p>&copy; 2026 Ayuntamiento de Tarancón. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    
+</body>
+</html>
