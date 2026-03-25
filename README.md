@@ -23,6 +23,8 @@ Venimos de una primera fase estática usando únicamente HTML, CSS y LocalStorag
 - **Modularización:** Hemos transformado nuestras vistas en componentes dinámicos de PHP (extrayendo el `header` y el `footer`) para no duplicar código y mejorar el mantenimiento drásticamente.
 - **Base de Datos Dinámica:** Hemos implementado MySQL (vía PDO) para registrar realmente si una franja horaria está ocupada.
 - **Panel Administrativo `v1.2`:** Recientemente concluimos la capacidad del Ayuntamiento no solo de *bloquear* pistas para el público, sino también de *desbloquearlas* en caso de cancelación del evento administrativo.
+- **Reservas Reales y Códigos QR `v1.3`:** Generación automática de códigos alfanuméricos y QR incrustados en correos electrónicos mediante SMTP, creando registros auténticos en la BD.
+- **Validación de Formularios `v1.4`:** Estrictas validaciones frontend en tiempo real (DNI con mayúsculas, formatos exactos de teléfono) para garantizar la integridad de los datos de reserva.
 - **Limpieza de Código y Assets:** Hemos organizado todo en carpetas específicas (`/html`, `/css`, `/js`, `/api`, `/admin`, `/docs`).
 
 ---
@@ -34,8 +36,7 @@ Nuestro propósito es seguir profesionalizando la plataforma. Estas son las idea
 1. **Gestión Real de Usuarios Ciudadanos:** Sustituir la "reserva libre" por un sistema donde el ciudadano deba iniciar sesión (crear una cuenta, recuperar contraseña) para tener un historial de sus reservas pasadas y futuras.
 2. **Integración de Pasarela de Pago Real:** Conectar el *Checkout* con plataformas como Stripe o Redsys para el cobro real de las tasas municipales, incluyendo el cálculo dinámico del "suplemento de luz".
 3. **Roles Avanzados en Administración:** Actualmente todos interactúan como administrador. En el futuro, introduciremos el rol explícito de `concejal` con capacidades únicas (ej. reportes financieros, estadísticas de uso de pistas).
-4. **Envío de Correos Automáticos (SMTP Real):** Sustituir el prototipo actual de validación en HTML por correos electrónicos reales que envíen un código QR al ciudadano tras completar la reserva.
-5. **Panel de Usuario Ciudadano:** Un "Mi Perfil" donde el taranconero pueda ver qué pistas tiene reservadas e incluso cancelarlas (según política de devoluciones).
+4. **Panel de Usuario Ciudadano:** Un "Mi Perfil" donde el taranconero pueda ver qué pistas tiene reservadas e incluso cancelarlas (según política de devoluciones).
 
 ---
 
