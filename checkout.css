@@ -1,0 +1,398 @@
+/* --- ESTILOS DE LAYOUT CHECKOUT --- */
+.checkout-content {
+    background-color: #f4f6f8;
+    padding: 3rem 1.25rem;
+    min-height: 80vh;
+}
+
+.checkout-layout {
+    max-width: 75rem;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column-reverse; /* En móvil, resumen abajo o arriba según preferencia. Por defecto orden html, aquí lo cambiamos para que formulario suba */
+    gap: 2rem;
+}
+
+@media (min-width: 900px) {
+    .checkout-layout {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+/* --- FORMULARIO Y CONTENEDOR PRINCIPAL --- */
+.checkout-form-container {
+    flex: 2;
+    background: #fff;
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.checkout-form-container h2 {
+    color: #2d5f8a;
+    margin-bottom: 0.5rem;
+    font-size: 1.8rem;
+}
+
+.checkout-subtitle {
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+/* --- AVISO DE CANCELACIÓN --- */
+.cancellation-alert {
+    display: flex;
+    align-items: flex-start;
+    background-color: #fff4e5;
+    border-left: 5px solid #ff9800;
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+    color: #c9710f;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+}
+
+.alert-icon {
+    font-size: 1.4rem;
+    margin-right: 1rem;
+    line-height: 1.2;
+}
+
+.alert-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* --- ESTILOS FORMULARIO --- */
+.form-section {
+    border: none;
+    margin-bottom: 2.5rem;
+    padding: 0;
+}
+
+.form-section legend {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #eee;
+    width: 100%;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.half {
+    flex: 1;
+    min-width: calc(50% - 1.5rem);
+}
+
+@media (max-width: 768px) {
+    .form-group.half {
+        min-width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    .checkout-form-container {
+        padding: 1.5rem;
+    }
+}
+
+.form-group label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    color: #444;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="tel"],
+.form-group input[type="password"] {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus {
+    border-color: #4a7fa5;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(45, 95, 138, 0.2);
+}
+
+.help-text {
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 0.3rem;
+}
+
+.payment-section .form-row .half {
+    min-width: 120px;
+}
+
+.payment-disclaimer {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: -0.5rem;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+}
+
+.card-input-wrapper {
+    position: relative;
+}
+
+.card-input-wrapper input {
+    width: 100%;
+    padding-right: 2.5rem;
+}
+
+.card-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+}
+
+.checkbox-group {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.625rem;
+    margin-bottom: 2rem;
+}
+
+.checkbox-group input {
+    margin-top: 0.2rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: #2d5f8a;
+}
+
+.checkbox-group label {
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: normal;
+}
+
+.checkbox-group a {
+    color: #4a7fa5;
+    text-decoration: underline;
+}
+
+/* Botón Formulario */
+.btn-submit-form {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 1em;
+    border: none;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.btn-submit-form:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    position: absolute;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-msg {
+    color: #d32f2f;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+.hidden {
+    display: none !important;
+}
+
+/* --- BARRA LATERAL (RESUMEN) --- */
+.checkout-sidebar {
+    flex: 1;
+    min-width: 300px;
+}
+
+.summary-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 100px; /* Pegado debajo del header */
+}
+
+.summary-card h3 {
+    color: #1f2d3a;
+    font-size: 1.25rem;
+    border-bottom: 2px solid #2d5f8a;
+    padding-bottom: 0.8rem;
+    margin-bottom: 1.2rem;
+}
+
+.summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.detail-label {
+    font-weight: 600;
+}
+
+.detail-value {
+    color: #333;
+    text-align: right;
+}
+
+.detail-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 0.5rem 0;
+}
+
+.total-row {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2d5f8a;
+}
+
+.total-price {
+    font-size: 1.3rem;
+    color: #4a7fa5;
+}
+
+/* --- VISTA DE ÉXITO --- */
+.checkout-success-container {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.success-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    animation: fadeInScale 0.5s ease-out backwards;
+}
+
+.success-icon-wrap {
+    width: 80px;
+    height: 80px;
+    background-color: #e8f5e9;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 1.5rem;
+}
+
+.success-icon {
+    color: #4caf50;
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+.success-card h2 {
+    color: #2e7d32;
+    margin-bottom: 1rem;
+    font-size: 2rem;
+}
+
+.success-card > p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.code-box {
+    background: linear-gradient(135deg, #dce8f2 0%, #b8d0e6 100%);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 2rem 0;
+    border: 2px dashed #4a7fa5;
+}
+
+.code-label {
+    font-size: 0.9rem;
+    color: #2d5f8a;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.access-code {
+    font-family: monospace;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #0f2236;
+    letter-spacing: 5px;
+    text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
+}
+
+.success-instructions {
+    background: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: left;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.success-instructions ul {
+    margin-top: 0.5rem;
+    padding-left: 1.5rem;
+}
+
+.success-instructions li {
+    margin-bottom: 0.5rem;
+}
+
+.btn-back-home {
+    display: inline-block;
+}
+
+/* Animaciones */
+.delay-1 { animation-delay: 0.2s; }

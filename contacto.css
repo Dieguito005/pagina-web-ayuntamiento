@@ -1,0 +1,191 @@
+/* ==========================================================
+   === ESTILOS PARA LA PÁGINA DE CONTACTO ===================
+   ========================================================== */
+
+/* Wrapper principal de la página */
+.contact-page-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem 1rem;
+    min-height: calc(100vh - 300px); /* Ajuste de altura considerando header/footer */
+    background-color: var(--fondo-claro, #f4f6f8);
+}
+
+.contact-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* Contendedor del Formulario */
+.contact-page-container {
+    background: #ffffff;
+    width: 100%;
+    max-width: 550px;
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    position: relative;
+    border-top: 5px solid var(--color-primario, #2d5f8a);
+}
+
+/* Cabecera del formulario */
+.contact-modal-title {
+    color: var(--color-primario, #2d5f8a);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+    text-align: center;
+}
+
+.contact-modal-desc {
+    color: #666;
+    font-size: 0.95rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+/* Formulario */
+.contact-form .form-group {
+    margin-bottom: 1.2rem;
+}
+
+.contact-form label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: #444;
+    font-size: 0.9rem;
+}
+
+.contact-form input[type="text"],
+.contact-form input[type="email"],
+.contact-form input[type="tel"],
+.contact-form select,
+.contact-form textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-family: var(--fuente-principal, 'Inter', sans-serif);
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: #f9fafb;
+    box-sizing: border-box;
+}
+
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus {
+    outline: none;
+    border-color: var(--color-secundario, #4a7fa5);
+    box-shadow: 0 0 0 3px rgba(45, 95, 138, 0.2);
+    background-color: #fff;
+}
+
+.contact-form textarea {
+    resize: vertical;
+}
+
+/* Estilos de Error (Validación) */
+.contact-form input.input-error,
+.contact-form select.input-error,
+.contact-form textarea.input-error {
+    border-color: #e63946;
+    background-color: #fff0f1;
+}
+
+.contact-form .error-msg {
+    display: block;
+    color: #e63946;
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+    min-height: 1.2rem; /* Reserva espacio para evitar saltos en UI */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.contact-form .error-msg.visible {
+    opacity: 1;
+}
+
+/* Botones del Formulario */
+.contact-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 2rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-modal {
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+    font-family: var(--fuente-principal, 'Inter', sans-serif);
+}
+
+.btn-cancelar {
+    background-color: #ffffff;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+}
+
+.btn-cancelar:hover {
+    background-color: #f3f4f6;
+    color: #1f2937;
+}
+
+.btn-restablecer {
+    background-color: #f8f9fa;
+    color: #0056b3;
+    border: 1px solid #cce5ff;
+}
+
+.btn-restablecer:hover {
+    background-color: #e2eef9;
+}
+
+.btn-enviar {
+    background: linear-gradient(135deg, var(--color-secundario, #4a7fa5) 0%, var(--color-primario, #2d5f8a) 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(45, 95, 138, 0.25);
+}
+
+.btn-enviar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(45, 95, 138, 0.4);
+}
+
+.btn-enviar:disabled {
+    background: #9ca3af;
+    box-shadow: none;
+    transform: none;
+    cursor: not-allowed;
+}
+
+/* Responsividad */
+@media (max-width: 480px) {
+    .contact-modal-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .btn-modal {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .contact-page-wrapper {
+        padding: 2rem 1rem;
+    }
+    
+    .contact-page-container {
+        padding: 1.5rem 1rem;
+    }
+}

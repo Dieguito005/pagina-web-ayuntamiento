@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Contacta con el Ayuntamiento de Tarancón para cualquier duda sobre los alquileres de pistas deportivas.">
+    <link rel="preload" href="assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" as="image">
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="contacto.css">
+    <title>Contacto | Alquileres Tarancón</title>
+    <script src="contacto.js" defer></script>
+    <link rel="stylesheet" href="cookies.css">
+    <script src="cookies.js" defer></script>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <!-- Izquierda: Espacio para Logo -->
+            <div class="header-logo">
+                <a href="https://nuevaweb.tarancon.es/" class="logo-home">
+                    <div class="logo-image-box">
+                        <img class="logo-ayuntamiento" src="assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo Ayuntamiento" decoding="async">
+                    </div>
+                </a>
+            </div>
+
+            <!-- Centro: Título -->
+            <div class="header-title">
+                <h1> Alquileres Tarancón </h1>
+            </div>
+
+            <!-- Derecha: Redes Sociales -->
+            <div class="header-socials">
+                <a href="https://facebook.com" class="social-icon" target="_blank" aria-label="Facebook">
+                    <div class="icon-placeholder fade-in-delay-1"><img src="assets/iconos/facebook.png" alt="logotipo de Facebook" loading="lazy" decoding="async"></div>
+                </a>
+                <a href="https://X.com" class="social-icon" target="_blank" aria-label="Twitter">
+                    <div class="icon-placeholder fade-in-delay-2"><img src="assets/iconos/X.png" alt="logotipo de Twitter" loading="lazy" decoding="async"></div>
+                </a>
+                <a href="https://www.instagram.com/taranconayto/" class="social-icon" target="_blank" aria-label="Instagram">
+                    <div class="icon-placeholder fade-in-delay-3"><img src="assets/iconos/logotipo-de-instagram.png" alt="logotipo de Instagram" loading="lazy" decoding="async"></div>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content contact-page-wrapper">
+        <section class="contact-section scroll-animate" data-animation="fade-in-up">
+            <div class="contact-page-container">
+                <h2 class="contact-modal-title">Contactar Soporte</h2>
+                <p class="contact-modal-desc" style="margin-bottom: 5px;">Ayuntamiento de Tarancón</p>
+                <p style="text-align: center; font-size: 0.9rem; margin-bottom: 20px; color: #555;">
+                    ¿Prefieres usar tu correo? <a href="mailto:deportes@tarancon.es" style="color: var(--color-primario, #914f26); text-decoration: underline; font-weight: bold;">Escríbenos directamente</a>.
+                </p>
+                
+                <form id="contactForm" class="contact-form" novalidate>
+                    <div class="form-group">
+                        <label for="contactNombre">Nombre *</label>
+                        <input type="text" id="contactNombre" name="nombre" placeholder="Ej. Juan" required>
+                        <span class="error-msg" id="errorNombre">El nombre es obligatorio.</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactApellidos">Apellidos *</label>
+                        <input type="text" id="contactApellidos" name="apellidos" placeholder="Ej. Pérez García" required>
+                        <span class="error-msg" id="errorApellidos">Los apellidos son obligatorios.</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactEmail">Correo Electrónico *</label>
+                        <input type="email" id="contactEmail" name="email" placeholder="ejemplo@correo.com" required>
+                        <span class="error-msg" id="errorEmail">Ingrese un correo electrónico válido.</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactTelefono">Número de Teléfono *</label>
+                        <input type="tel" id="contactTelefono" name="telefono" placeholder="Ej. 600123456" required>
+                        <span class="error-msg" id="errorTelefono">Ingrese un teléfono válido (al menos 9 dígitos).</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactTipo">Tipo de Consulta *</label>
+                        <select id="contactTipo" name="tipo" required>
+                            <option value="" disabled selected>Seleccione una opción...</option>
+                            <option value="reserva">Reserva de Pistas</option>
+                            <option value="tarifas">Dudas sobre Tarifas</option>
+                            <option value="quejas">Quejas o Sugerencias</option>
+                            <option value="otros">Otras Consultas</option>
+                        </select>
+                        <span class="error-msg" id="errorTipo">Debe seleccionar un tipo de consulta.</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactDescripcion">Descripción *</label>
+                        <textarea id="contactDescripcion" name="descripcion" rows="4" placeholder="Detalle el motivo de su contacto aquí..." required></textarea>
+                        <span class="error-msg" id="errorDescripcion">La descripción es obligatoria.</span>
+                    </div>
+                    
+                    <div class="contact-modal-actions">
+                        <a href="home.html" class="btn-modal btn-cancelar" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">Volver Inicio</a>
+                        <button type="reset" class="btn-modal btn-restablecer" id="btnResetContact">Restablecer</button>
+                        <button type="submit" class="btn-modal btn-enviar" id="btnSubmitContact">Enviar</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER PRINCIPAL -->
+    <footer class="main-footer">
+        <div class="footer-container">
+            <!-- Sección Izquierda: Logo y Título -->
+            <div class="footer-branding">
+                <div class="footer-title">
+                    <h2>Alquileres Tarancón</h2>
+                    <p>Ayuntamiento de Tarancón</p>
+                </div>
+            </div>
+
+            <!-- Sección Central: Bases Legales -->
+            <div class="footer-legal">
+                <h3>Legal</h3>
+                <ul>
+                    <li><a href="aviso-legal.html">Aviso Legal</a></li>
+                    <li><a href="politica-privacidad.html">Política de Privacidad</a></li>
+                    <li><a href="politica-cookies.html">Política de Cookies</a></li>
+                    <li><a href="accesibilidad.html">Accesibilidad</a></li>
+                </ul>
+            </div>
+
+            <!-- Sección Derecha: Contacto -->
+            <div class="footer-contact">
+                <h3>Contacto</h3>
+                <ul>
+                    <li><a href="https://www.google.com/maps/place/Ayuntamiento+de+Taranc%C3%B3n/@40.0130199,-3.0041254,17z/data=!3m1!4b1!4m6!3m5!1s0xd4283ee3a347a75:0x19aa29e13b570ee4!8m2!3d40.0130199!4d-3.0041254!16s%2Fg%2F1thx5cb2?entry=ttu&g_ep=EgoyMDI2MDMwMi4wIKXMDSoASAFQAw%3D%3D">📍 Plaza del Ayuntamiento, 1, 16400</a></li>
+                    <li><a href="tel:+34969321016">📞 +34 969 32 10 16</a></li>
+                    <li><a href="contacto.html">✉️ Formulario de Contacto</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Línea de Copyright -->
+        <div class="footer-bottom">
+            <p>&copy; <span id="current-year">2026</span> Ayuntamiento de Tarancón. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Obtener el año actual para el footer dinámicamente
+        document.addEventListener('DOMContentLoaded', () => {
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
+        });
+
+        // Efecto Navbar más compacto al hacer scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.main-header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Animaciones con Intersection Observer
+        const observeElements = document.querySelectorAll('.scroll-animate');
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const animationClass = entry.target.dataset.animation;
+                    if (animationClass) {
+                        entry.target.classList.add(animationClass);
+                    }
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        observeElements.forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
