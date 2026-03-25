@@ -6,6 +6,11 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.1.1] - 25-03-2026
+
+### Cambiado 🔄
+- **Redes Sociales**: Actualizados los enlaces del encabezado para redirigir a los perfiles oficiales del Ayuntamiento de Tarancón en X (Twitter) y Facebook.
+
 ## [1.1.0] - 25-03-2026
 
 ### Añadido 🚀
