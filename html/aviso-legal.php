@@ -13,36 +13,7 @@
 </head>
 <body>
 
-    <header class="main-header">
-        <div class="header-container">
-            <!-- Izquierda: Espacio para Logo -->
-            <div class="header-logo">
-                <a href="https://nuevaweb.tarancon.es/" class="logo-home">
-                    <div class="logo-image-box">
-                        <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo Ayuntamiento" decoding="async">
-                    </div>
-                </a>
-            </div>
-
-            <!-- Centro: Título -->
-            <div class="header-title">
-                <h1> Alquileres Tarancón </h1>
-            </div>
-
-            <!-- Derecha: Redes Sociales -->
-            <div class="header-socials">
-                <a href="https://www.facebook.com/Ayuntamiento.tarancon/?locale=es_ES" class="social-icon" target="_blank" aria-label="Facebook">
-                    <div class="icon-placeholder fade-in-delay-1"><img src="../assets/iconos/facebook.png" alt="logotipo de Facebook" loading="lazy" decoding="async"></div>
-                </a>
-                <a href="https://x.com/aytotarancon" class="social-icon" target="_blank" aria-label="Twitter">
-                    <div class="icon-placeholder fade-in-delay-2"><img src="../assets/iconos/X.png" alt="logotipo de Twitter" loading="lazy" decoding="async"></div>
-                </a>
-                <a href="https://www.instagram.com/taranconayto/" class="social-icon" target="_blank" aria-label="Instagram">
-                    <div class="icon-placeholder fade-in-delay-3"><img src="../assets/iconos/logotipo-de-instagram.png" alt="logotipo de Instagram" loading="lazy" decoding="async"></div>
-                </a>
-            </div>
-        </div>
-    </header>
+    <?php include '../includes/header.php'; ?>
 
     <!-- CUERPO DE LA PÁGINA DE AVISO LEGAL -->
     <main class="main-content legal-content">
@@ -73,53 +44,17 @@
                 
                 <!-- Botón de acción -->
                 <div class="legal-action-container">
-                    <a href="home.html" class="btn-legal btn-volver">Volver al Inicio</a>
+                    <a href="home.php" class="btn-legal btn-volver">Volver al Inicio</a>
                 </div>
             </div>
         </section>
     </main>
 
     <!-- FOOTER PRINCIPAL -->
-    <footer class="main-footer">
-        <div class="footer-container">
-            <!-- Sección Izquierda: Logo y Título -->
-            <div class="footer-branding">
-                <div class="footer-title">
-                    <h2>Alquileres Tarancón</h2>
-                    <p>Ayuntamiento de Tarancón</p>
-                </div>
-            </div>
-
-            <!-- Sección Central: Bases Legales -->
-            <div class="footer-legal">
-                <h3>Legal</h3>
-                <ul>
-                    <li><a href="aviso-legal.html">Aviso Legal</a></li>
-                    <li><a href="politica-privacidad.html">Política de Privacidad</a></li>
-                    <li><a href="politica-cookies.html">Política de Cookies</a></li>
-                    <li><a href="accesibilidad.html">Accesibilidad</a></li>
-                </ul>
-            </div>
-
-            <!-- Sección Derecha: Contacto -->
-            <div class="footer-contact">
-                <h3>Contacto</h3>
-                <ul>
-                    <li><a href="https://www.google.com/maps/place/Plaza+del+Ayuntamiento,+1,+16400+Taranc%C3%B3n,+C%C3%A1diz/@36.7666667,-6.2666667,17z/data=!3m1!4b1!4m5!3m4!1s0xd6456a96c000000:0x5b3c2c2c2c2c2c2!8m2!3d36.7666667!4d-6.2666667">📍 Plaza del Ayuntamiento, 1, 16400</a></li>
-                    <li><a href="tel:+34969321016">📞 +34 969 32 10 16</a></li>
-                    <li><a href="contacto.html">✉️ Formulario de Contacto</a></li>
-                </ul>
-            </div>
-        </div>
-        
-        <!-- Línea de Copyright -->
-        <div class="footer-bottom">
-            <p>&copy; 2026 Ayuntamiento de Tarancón. Todos los derechos reservados.</p>
-            <p style="margin-top:5px; font-size: 0.85rem;"><a href="../admin/admin-login.php" style="color: rgba(255,255,255,0.5); text-decoration: none;">🔒 Acceso Empleados</a></p>
-        </div>
-    </footer>
+    <?php include '../includes/footer.php'; ?>
     
 </body>
 </html>
+
 
 

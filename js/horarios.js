@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 time: timeEl.textContent,
                 supplement
             }));
-            window.location.href = 'checkout.html';
+            window.location.href = 'checkout.php';
         }
     });
 
@@ -246,4 +246,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Iniciar con "Hoy"
     generateSlots(0);
 });
+
 
