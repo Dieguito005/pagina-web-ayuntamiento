@@ -1,4 +1,4 @@
-/**
+﻿/**
  * admin.js — Lógica para el Panel de Administrador (Bloqueo de 30 días)
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnBlockSlot.disabled = true;
         
         try {
-            const resp = await fetch(`api/get-horarios.php?fecha=${fecha}&pista=${pista}`);
+            const resp = await fetch(`../api/get-horarios.php?fecha=${fecha}&pista=${pista}`);
             if (!resp.ok) throw new Error("Network error");
             const resData = await resp.json();
             
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnBlockSlot.textContent = "Bloqueando...";
         
         try {
-            const resp = await fetch('api/bloquear-hora.php', {
+            const resp = await fetch('../api/bloquear-hora.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -214,3 +214,4 @@ document.addEventListener('DOMContentLoaded', () => {
     populateDates();
     loadSchedule();
 });
+

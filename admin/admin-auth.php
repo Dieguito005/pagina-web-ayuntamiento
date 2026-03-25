@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 // admin-auth.php
 session_start();
-require_once 'api/conexion.php';
+require_once '../api/conexion.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuario = trim($_POST['usuario'] ?? '');
@@ -44,3 +44,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 ?>
+

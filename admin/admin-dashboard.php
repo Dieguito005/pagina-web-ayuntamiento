@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 if (!isset($_SESSION['admin_id'])) {
     header("Location: admin-login.php");
@@ -11,7 +11,7 @@ if (!isset($_SESSION['admin_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración - Alquileres Tarancón</title>
-    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="../css/home.css">
     <style>
         .admin-layout {
             display: flex;
@@ -183,9 +183,9 @@ if (!isset($_SESSION['admin_id'])) {
     <header class="main-header" style="position: sticky; z-index: 100;">
         <div class="header-container">
             <div class="header-logo">
-                <a href="home.html" class="logo-home">
+                <a href="../html/home.html" class="logo-home">
                     <div class="logo-image-box">
-                        <img class="logo-ayuntamiento" src="assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo">
+                        <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo">
                     </div>
                 </a>
             </div>
@@ -246,6 +246,7 @@ if (!isset($_SESSION['admin_id'])) {
     
     <div id="toast">Notificación</div>
 
-    <script src="admin.js"></script>
+    <script src="../js/admin.js"></script>
 </body>
 </html>
+

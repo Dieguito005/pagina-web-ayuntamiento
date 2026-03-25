@@ -1,4 +1,4 @@
-/**
+﻿/**
  * horarios.js — Lógica compartida de horarios dinámicos con integración de Base de Datos
  * Genera los slots de reserva según el día de la semana (hora de Tarancón) consultando PHP API.
  */
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let ocupadosList = [];
 
         try {
-            const resp = await fetch(`api/get-horarios.php?fecha=${dateISO}&pista=${encodeURIComponent(sport)}`);
+            const resp = await fetch(`../api/get-horarios.php?fecha=${dateISO}&pista=${encodeURIComponent(sport)}`);
             if (resp.ok) {
                 const data = await resp.json();
                 if (data.status === 'success') {
@@ -246,3 +246,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Iniciar con "Hoy"
     generateSlots(0);
 });
+
