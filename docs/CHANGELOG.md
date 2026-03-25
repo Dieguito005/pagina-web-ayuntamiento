@@ -6,6 +6,12 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.2.0] - 25-03-2026
+
+### Añadido 🚀
+- **Desbloqueo Administrativo (`api/desbloquear-hora.php`)**: Nueva utilidad que permite a los perfiles de Ayuntamiento desbloquear franjas horarias que previamente fueron bloqueadas administrativamente, volviéndolas a poner rojas a la vista del ciudadano.
+- **Interfaz de Desbloqueo**: Actualizaciones en `admin-dashboard.php` y `admin.js` para permitir seleccionar horas bloqueadas y deshabilitar el bloqueo con un solo click.
+
 ## [1.1.1] - 25-03-2026
 
 ### Cambiado 🔄
