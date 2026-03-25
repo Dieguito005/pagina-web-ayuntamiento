@@ -14,36 +14,7 @@
 </head>
 <body>
 
-    <header class="main-header">
-        <div class="header-container">
-            <!-- Izquierda: Espacio para Logo -->
-            <div class="header-logo">
-                <a href="https://nuevaweb.tarancon.es/" class="logo-home">
-                    <div class="logo-image-box">
-                        <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo Ayuntamiento" decoding="async">
-                    </div>
-                </a>
-            </div>
-
-            <!-- Centro: Título -->
-            <div class="header-title">
-                <h1> Alquileres Tarancón </h1>
-            </div>
-
-            <!-- Derecha: Redes Sociales -->
-            <div class="header-socials">
-                <a href="https://www.facebook.com/Ayuntamiento.tarancon/?locale=es_ES" class="social-icon" target="_blank" aria-label="Facebook">
-                    <div class="icon-placeholder fade-in-delay-1"><img src="../assets/iconos/facebook.png" alt="logotipo de Facebook" loading="lazy" decoding="async"></div>
-                </a>
-                <a href="https://x.com/aytotarancon" class="social-icon" target="_blank" aria-label="Twitter">
-                    <div class="icon-placeholder fade-in-delay-2"><img src="../assets/iconos/X.png" alt="logotipo de Twitter" loading="lazy" decoding="async"></div>
-                </a>
-                <a href="https://www.instagram.com/taranconayto/" class="social-icon" target="_blank" aria-label="Instagram">
-                    <div class="icon-placeholder fade-in-delay-3"><img src="../assets/iconos/logotipo-de-instagram.png" alt="logotipo de Instagram" loading="lazy" decoding="async"></div>
-                </a>
-            </div>
-        </div>
-    </header>
+    <?php include '../includes/header.php'; ?>
 
     <main class="main-content checkout-content">
         <section class="checkout-layout">
@@ -53,7 +24,7 @@
                 <h2>Finalizar Reserva</h2>
                 <p class="checkout-subtitle">Por favor, completa tus datos para generar el código de acceso a la pista.</p>
                 
-                <a href="home.html" class="btn-secondary" style="margin-bottom: 2rem; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                <a href="home.php" class="btn-secondary" style="margin-bottom: 2rem; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
                     Volver al Inicio
                 </a>
 
@@ -127,7 +98,7 @@
                     <!-- Políticas -->
                     <div class="form-group checkbox-group">
                         <input type="checkbox" id="accept-policies" name="accept-policies" required>
-                        <label for="accept-policies">He leído y acepto la <a href="politica-privacidad.html" target="_blank">Política de Privacidad</a> y las condiciones de alquiler del Ayuntamiento de Tarancón.</label>
+                        <label for="accept-policies">He leído y acepto la <a href="politica-privacidad.php" target="_blank">Política de Privacidad</a> y las condiciones de alquiler del Ayuntamiento de Tarancón.</label>
                     </div>
 
                     <button type="submit" class="btn-primary btn-submit-form" id="submit-btn">
@@ -162,7 +133,7 @@
                         </ul>
                     </div>
 
-                    <a href="home.html" class="btn-primary btn-back-home">Volver al Inicio</a>
+                    <a href="home.php" class="btn-primary btn-back-home">Volver al Inicio</a>
                 </div>
             </div>
 
@@ -204,46 +175,10 @@
     </main>
 
     <!-- FOOTER PRINCIPAL -->
-    <footer class="main-footer">
-        <div class="footer-container">
-            <!-- Sección Izquierda: Logo y Título -->
-            <div class="footer-branding">
-                <div class="footer-title">
-                    <h2>Alquileres Tarancón</h2>
-                    <p>Ayuntamiento de Tarancón</p>
-                </div>
-            </div>
-
-            <!-- Sección Central: Bases Legales -->
-            <div class="footer-legal">
-                <h3>Legal</h3>
-                <ul>
-                    <li><a href="aviso-legal.html">Aviso Legal</a></li>
-                    <li><a href="politica-privacidad.html">Política de Privacidad</a></li>
-                    <li><a href="politica-cookies.html">Política de Cookies</a></li>
-                    <li><a href="accesibilidad.html">Accesibilidad</a></li>
-                </ul>
-            </div>
-
-            <!-- Sección Derecha: Contacto -->
-            <div class="footer-contact">
-                <h3>Contacto</h3>
-                <ul>
-                    <li><a href="https://www.google.com/maps/place/Ayuntamiento+de+Taranc%C3%B3n/@40.0130199,-3.0041254,17z/data=!3m1!4b1!4m6!3m5!1s0xd4283ee3a347a75:0x19aa29e13b570ee4!8m2!3d40.0130199!4d-3.0041254!16s%2Fg%2F1thx5cb2?entry=ttu&g_ep=EgoyMDI2MDMwMi4wIKXMDSoASAFQAw%3D%3D">📍 Plaza del Ayuntamiento, 1, 16400</a></li>
-                    <li><a href="tel:+34969321016">📞 +34 969 32 10 16</a></li>
-                    <li><a href="contacto.html">✉️ Formulario de Contacto</a></li>
-                </ul>
-            </div>
-        </div>
-        
-        <!-- Línea de Copyright -->
-        <div class="footer-bottom">
-            <p>&copy; 2026 Ayuntamiento de Tarancón. Todos los derechos reservados.</p>
-            <p style="margin-top:5px; font-size: 0.85rem;"><a href="../admin/admin-login.php" style="color: rgba(255,255,255,0.5); text-decoration: none;">🔒 Acceso Empleados</a></p>
-        </div>
-    </footer>
+    <?php include '../includes/footer.php'; ?>
     
 </body>
 </html>
+
 
 

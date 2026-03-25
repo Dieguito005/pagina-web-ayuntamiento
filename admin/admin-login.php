@@ -111,7 +111,7 @@ if (isset($_GET['error'])) {
     <header class="main-header" style="position: sticky;">
         <div class="header-container">
             <div class="header-logo">
-                <a href="../html/home.html" class="logo-home">
+                <a href="../html/home.php" class="logo-home">
                     <div class="logo-image-box">
                          <!-- Reusing the black logo logic from navbar if wanted, or forcing the white one for dark header -->
                         <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo">
@@ -146,11 +146,12 @@ if (isset($_GET['error'])) {
                 <button type="submit" class="btn-submit">Entrar al Panel</button>
             </form>
             <div style="margin-top: 20px;">
-                <a href="../html/home.html" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Volver al inicio</a>
+                <a href="../html/home.php" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Volver al inicio</a>
             </div>
         </div>
     </main>
 
 </body>
 </html>
+
 

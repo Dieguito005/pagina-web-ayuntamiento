@@ -6,9 +6,16 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.2.0] - 25-03-2026
+
+### Añadido 🚀
+- **Desbloqueo Administrativo (`api/desbloquear-hora.php`)**: Nueva utilidad que permite a los perfiles de Ayuntamiento desbloquear franjas horarias que previamente fueron bloqueadas administrativamente, volviéndolas a poner rojas a la vista del ciudadano.
+- **Interfaz de Desbloqueo**: Actualizaciones en `admin-dashboard.php` y `admin.js` para permitir seleccionar horas bloqueadas y deshabilitar el bloqueo con un solo click.
+
 ## [1.1.1] - 25-03-2026
 
 ### Cambiado 🔄
+- **Arquitectura de Componentes (PHP)**: Refactorizado el código base para extraer el encabezado (`header`) y pie de página (`footer`) a archivos independientes en la carpeta `/includes/`. Se convirtieron todos los archivos públicos de `.html` a `.php` para evitar la duplicación de código mediante el comando `include` de PHP.
 - **Redes Sociales**: Actualizados los enlaces del encabezado para redirigir a los perfiles oficiales del Ayuntamiento de Tarancón en X (Twitter) y Facebook.
 
 ## [1.1.0] - 25-03-2026
