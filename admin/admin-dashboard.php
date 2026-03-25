@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if (!isset($_SESSION['admin_id'])) {
     header("Location: admin-login.php");
@@ -122,7 +122,8 @@ if (!isset($_SESSION['admin_id'])) {
         .time-slot.available:hover { border-color: #d15615; box-shadow: 0 4px 10px rgba(209, 86, 21, 0.15); }
         .time-slot.selected { background-color: #fff4e5; border-color: #d15615; }
         .time-slot.disabled { background-color: #f5f5f5; border-color: #eee; cursor: not-allowed; opacity: 0.7;}
-        .time-slot.blocked_admin { background-color: #ffebee; border-color: #ffcdd2; cursor: not-allowed; }
+        .time-slot.blocked_admin { background-color: #ffebee; border-color: #ffcdd2; cursor: pointer; }
+        .time-slot.blocked_admin:hover { border-color: #d32f2f; box-shadow: 0 4px 10px rgba(211, 47, 47, 0.15); }
         .time-slot.booked_user { background-color: #e8f5e9; border-color: #c8e6c9; cursor: not-allowed; }
         
         .time-slot .time { display: block; font-size: 1.15rem; font-weight: 700; color: #333; margin-bottom: 0.3rem;}
@@ -151,6 +152,20 @@ if (!isset($_SESSION['admin_id'])) {
         }
         .btn-block:hover { background-color: #b71c1c; }
         .btn-block:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        .btn-unblock {
+            background-color: #f57c00;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-unblock:hover { background-color: #ef6c00; }
+        .btn-unblock:disabled { background-color: #ccc; cursor: not-allowed; }
         
         /* Notificaciones toast */
         #toast {
