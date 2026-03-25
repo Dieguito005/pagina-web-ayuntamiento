@@ -183,7 +183,7 @@ if (!isset($_SESSION['admin_id'])) {
     <header class="main-header" style="position: sticky; z-index: 100;">
         <div class="header-container">
             <div class="header-logo">
-                <a href="../html/home.html" class="logo-home">
+                <a href="../html/home.php" class="logo-home">
                     <div class="logo-image-box">
                         <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo">
                     </div>
@@ -249,4 +249,5 @@ if (!isset($_SESSION['admin_id'])) {
     <script src="../js/admin.js"></script>
 </body>
 </html>
+
 
