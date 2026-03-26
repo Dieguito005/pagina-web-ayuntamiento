@@ -6,6 +6,11 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.5.0] - 26-03-2026
+
+### Añadido 🚀
+- **Edición Dinámica de Precios**: Se ha añadido una nueva pestaña "Editar Precios" en el panel de control del administrador con un calendario de 30 días. Los administradores pueden modificar el precio base o cambiar/eliminar la tarifa de luz para horas específicas. Los cambios se reflejarán instantáneamente en el área pública para los ciudadanos y en el proceso de checkout.
+
 ## [1.4.0] - 25-03-2026
 
 ### Añadido 🚀
