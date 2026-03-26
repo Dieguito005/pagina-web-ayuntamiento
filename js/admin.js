@@ -1,5 +1,5 @@
 /**
- * js/admin.js — Lógica para el Panel de Administrador (Bloqueo y Desbloqueo de 30 días)
+ * js/admin.js — Lógica para el Panel de Administrador (Bloqueo y Desbloqueo de 30 días, Edición de Precios)
  */
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -8,6 +8,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const scheduleGrid = document.getElementById('admin-schedule-grid');
     const btnBlockSlot = document.getElementById('btn-block-slot');
     const toast = document.getElementById('toast');
+    const actionBar = document.querySelector('.action-bar');
+    
+    // Tabs y Modos
+    const tabBloqueos = document.getElementById('tab-bloqueos');
+    const tabPrecios = document.getElementById('tab-precios');
+    const titlePage = document.getElementById('admin-page-title');
+    let currentMode = 'bloqueos'; // 'bloqueos' o 'precios'
+
+    // Elementos del Modal de Precios
+    const priceModal = document.getElementById('price-modal');
+    const priceModalInfo = document.getElementById('price-modal-info');
+    const modalPrecioBase = document.getElementById('modal-precio-base');
+    const modalPrecioLuz = document.getElementById('modal-precio-luz');
+    const btnCancelPrice = document.getElementById('btn-cancel-price');
+    const btnSavePrice = document.getElementById('btn-save-price');
+    let currentPriceSlot = null; // Guardar contexto del slot editado
 
     // Mismo horario general que horarios.js
     const WEEKDAY = {
@@ -58,6 +74,29 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
     }
 
+    // ── Logica Cambio de Tabs ──
+    if (tabBloqueos && tabPrecios) {
+        tabBloqueos.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentMode = 'bloqueos';
+            tabBloqueos.classList.add('active');
+            tabPrecios.classList.remove('active');
+            titlePage.textContent = 'Gestión de Bloqueos';
+            actionBar.style.display = 'flex';
+            loadSchedule();
+        });
+        
+        tabPrecios.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentMode = 'precios';
+            tabPrecios.classList.add('active');
+            tabBloqueos.classList.remove('active');
+            titlePage.textContent = 'Edición de Precios';
+            actionBar.style.display = 'none'; // No necesitamos botón general de bloquear
+            loadSchedule();
+        });
+    }
+
     async function loadSchedule() {
         const pista = pistaSelect.value;
         const fecha = fechaSelect.value;
@@ -65,17 +104,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const dayOfWeek = parseInt(selectedOption.dataset.dayoffweek, 10);
         
         scheduleGrid.style.opacity = '0.5';
-        btnBlockSlot.disabled = true;
-        btnBlockSlot.textContent = "Selecciona un horario";
-        btnBlockSlot.className = 'btn-block';
+        if (btnBlockSlot) {
+            btnBlockSlot.disabled = true;
+            btnBlockSlot.textContent = "Selecciona un horario";
+            btnBlockSlot.className = 'btn-block';
+        }
         
         try {
-            const resp = await fetch(`../api/get-horarios.php?fecha=${fecha}&pista=${pista}`);
+            const resp = await fetch(`../api/get-horarios.php?fecha=${fecha}&pista=${encodeURIComponent(pista)}`);
             if (!resp.ok) throw new Error("Network error");
             const resData = await resp.json();
             
             if (resData.status === 'success') {
-                renderSchedule(dayOfWeek, resData.ocupados || []);
+                renderSchedule(dayOfWeek, resData.ocupados || [], resData.precios || []);
             } else {
                 showToast("Error al cargar datos", "error");
             }
@@ -87,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderSchedule(dayOfWeek, ocupadosData) {
+    function renderSchedule(dayOfWeek, ocupadosData, preciosData) {
         scheduleGrid.innerHTML = '';
         const schedule = getScheduleForDay(dayOfWeek);
         
@@ -106,28 +147,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.className = 'time-slot';
                 
                 const ocupadoObj = ocupadosData.find(o => o.hora_inicio === slot.start);
+                const precioObj = preciosData.find(p => p.hora_inicio === slot.start);
                 
+                let extraHtml = '';
+                if (precioObj) {
+                    let base = precioObj.precio_base !== null ? precioObj.precio_base.toFixed(2) : '-';
+                    let luz = precioObj.precio_luz !== null ? precioObj.precio_luz.toFixed(2) : '-';
+                    extraHtml = `<span class="price-tag">C: Base ${base}€ | Luz ${luz}€</span>`;
+                }
+
                 if (ocupadoObj) {
                     if (ocupadoObj.estado === 'bloqueada_admin') {
                          btn.classList.add('blocked_admin');
-                         btn.innerHTML = `<span class="time">${slot.start} - ${slot.end}</span><span class="status">Bloqueo Admin</span>`;
+                         btn.innerHTML = `<span class="time">${slot.start} - ${slot.end}</span><span class="status">Bloqueo Admin</span>${extraHtml}`;
                          btn.dataset.action = 'unblock';
                          btn.dataset.start = slot.start;
                          btn.dataset.end = slot.end;
                     } else {
                          btn.classList.add('booked_user', 'disabled');
-                         btn.innerHTML = `<span class="time">${slot.start} - ${slot.end}</span><span class="status">Reservada</span>`;
+                         btn.innerHTML = `<span class="time">${slot.start} - ${slot.end}</span><span class="status">Reservada</span>${extraHtml}`;
+                         btn.dataset.start = slot.start;
+                         btn.dataset.end = slot.end;
                     }
                 } else {
                     btn.classList.add('available');
-                    btn.innerHTML = `<span class="time">${slot.start} - ${slot.end}</span><span class="status">Disponible</span>`;
+                    btn.innerHTML = `<span class="time">${slot.start} - ${slot.end}</span><span class="status">Disponible</span>${extraHtml}`;
                     btn.dataset.start = slot.start;
                     btn.dataset.end = slot.end;
                     btn.dataset.action = 'block';
                 }
                 
-                if (!btn.classList.contains('disabled')) {
-                    btn.addEventListener('click', function() {
+                // En modo precios, permitimos click en TODO (incluso reservados)
+                // En modo bloqueos, sólo en no disabled
+                btn.addEventListener('click', function() {
+                    if (currentMode === 'bloqueos') {
+                        if (this.classList.contains('disabled')) return;
+                        
                         document.querySelectorAll('.time-slot').forEach(s => {
                             if (s !== this && !s.classList.contains('disabled')) {
                                 s.classList.remove('selected');
@@ -157,8 +212,28 @@ document.addEventListener('DOMContentLoaded', () => {
                             btnBlockSlot.textContent = "Selecciona un horario";
                             btnBlockSlot.className = 'btn-block';
                         }
-                    });
-                }
+                    } else if (currentMode === 'precios') {
+                        // Modal de editar precios
+                        currentPriceSlot = {
+                            start: this.dataset.start,
+                            end: this.dataset.end,
+                            pista: pistaSelect.value,
+                            fecha: fechaSelect.value
+                        };
+                        
+                        priceModalInfo.innerHTML = `Pista: <strong>${currentPriceSlot.pista}</strong><br>Fecha: <strong>${currentPriceSlot.fecha}</strong><br>Hora: <strong>${currentPriceSlot.start} - ${currentPriceSlot.end}</strong>`;
+                        
+                        if (precioObj) {
+                            modalPrecioBase.value = precioObj.precio_base !== null ? precioObj.precio_base : '';
+                            modalPrecioLuz.value = precioObj.precio_luz !== null ? precioObj.precio_luz : '';
+                        } else {
+                            modalPrecioBase.value = '';
+                            modalPrecioLuz.value = '';
+                        }
+                        
+                        priceModal.style.display = 'flex';
+                    }
+                });
                 
                 container.appendChild(btn);
             });
@@ -174,56 +249,105 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    btnBlockSlot.addEventListener('click', async () => {
-        const selectedSlot = document.querySelector('.time-slot.selected');
-        if (!selectedSlot) return;
-        
-        const action = selectedSlot.dataset.action;
-        const isUnblock = action === 'unblock';
-        
-        const startTime = selectedSlot.dataset.start;
-        const endTime = selectedSlot.dataset.end;
-        const pista = pistaSelect.value;
-        const fecha = fechaSelect.value;
-        
-        const confirmMsg = isUnblock ? '¿Confirmar DESBLOQUEO administrativo?' : '¿Confirmar bloqueo administrativo?';
-        
-        if (!confirm(`${confirmMsg}\nPista: ${pista}\nFecha: ${fecha}\nHora: ${startTime} - ${endTime}`)) {
-            return;
-        }
-        
-        btnBlockSlot.disabled = true;
-        btnBlockSlot.textContent = isUnblock ? "Desbloqueando..." : "Bloqueando...";
-        
-        const endpoint = isUnblock ? '../api/desbloquear-hora.php' : '../api/bloquear-hora.php';
-        
-        try {
-            const resp = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    pista: pista,
-                    fecha: fecha,
-                    hora_inicio: startTime,
-                    hora_fin: endTime
-                })
-            });
+    // Modal Events
+    if (btnCancelPrice) {
+        btnCancelPrice.addEventListener('click', () => {
+            priceModal.style.display = 'none';
+        });
+    }
+
+    if (btnSavePrice) {
+        btnSavePrice.addEventListener('click', async () => {
+            if (!currentPriceSlot) return;
             
-            const data = await resp.json();
-            if (resp.ok && data.status === 'success') {
-                showToast(data.message, 'success');
-                loadSchedule();
-            } else {
-                showToast(data.message || 'Error en la operación', 'error');
+            const pBase = modalPrecioBase.value;
+            const pLuz = modalPrecioLuz.value;
+            
+            btnSavePrice.textContent = 'Guardando...';
+            btnSavePrice.disabled = true;
+            
+            try {
+                const resp = await fetch('../api/update-precio.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pista: currentPriceSlot.pista,
+                        fecha: currentPriceSlot.fecha,
+                        hora_inicio: currentPriceSlot.start,
+                        precio_base: pBase,
+                        precio_luz: pLuz
+                    })
+                });
+                const data = await resp.json();
+                
+                if (resp.ok && data.status === 'success') {
+                    showToast(data.message, 'success');
+                    priceModal.style.display = 'none';
+                    loadSchedule();
+                } else {
+                    showToast(data.message || 'Error al guardar', 'error');
+                }
+            } catch (e) {
+                showToast('Error de conexión', 'error');
+            } finally {
+                btnSavePrice.textContent = 'Guardar';
+                btnSavePrice.disabled = false;
             }
-        } catch (e) {
-            showToast("Error de conexión", 'error');
-        } finally {
-            if (!btnBlockSlot.disabled) {
-                btnBlockSlot.textContent = isUnblock ? "Desbloquear Horario Seleccionado" : "Bloquear Horario Seleccionado";
+        });
+    }
+
+    if (btnBlockSlot) {
+        btnBlockSlot.addEventListener('click', async () => {
+            const selectedSlot = document.querySelector('.time-slot.selected');
+            if (!selectedSlot) return;
+            
+            const action = selectedSlot.dataset.action;
+            const isUnblock = action === 'unblock';
+            
+            const startTime = selectedSlot.dataset.start;
+            const endTime = selectedSlot.dataset.end;
+            const pista = pistaSelect.value;
+            const fecha = fechaSelect.value;
+            
+            const confirmMsg = isUnblock ? '¿Confirmar DESBLOQUEO administrativo?' : '¿Confirmar bloqueo administrativo?';
+            
+            if (!confirm(`${confirmMsg}\nPista: ${pista}\nFecha: ${fecha}\nHora: ${startTime} - ${endTime}`)) {
+                return;
             }
-        }
-    });
+            
+            btnBlockSlot.disabled = true;
+            btnBlockSlot.textContent = isUnblock ? "Desbloqueando..." : "Bloqueando...";
+            
+            const endpoint = isUnblock ? '../api/desbloquear-hora.php' : '../api/bloquear-hora.php';
+            
+            try {
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pista: pista,
+                        fecha: fecha,
+                        hora_inicio: startTime,
+                        hora_fin: endTime
+                    })
+                });
+                
+                const data = await resp.json();
+                if (resp.ok && data.status === 'success') {
+                    showToast(data.message, 'success');
+                    loadSchedule();
+                } else {
+                    showToast(data.message || 'Error en la operación', 'error');
+                }
+            } catch (e) {
+                showToast("Error de conexión", 'error');
+            } finally {
+                if (!btnBlockSlot.disabled) {
+                    btnBlockSlot.textContent = isUnblock ? "Desbloquear Horario Seleccionado" : "Bloquear Horario Seleccionado";
+                }
+            }
+        });
+    }
 
     pistaSelect.addEventListener('change', loadSchedule);
     fechaSelect.addEventListener('change', loadSchedule);

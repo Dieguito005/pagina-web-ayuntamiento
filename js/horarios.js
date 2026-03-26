@@ -1,4 +1,4 @@
-﻿/**
+/**
  * horarios.js — Lógica compartida de horarios dinámicos con integración de Base de Datos
  * Genera los slots de reserva según el día de la semana (hora de Tarancón) consultando PHP API.
  */
@@ -43,14 +43,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    function createSlotButton(slot, ocupadosList) {
+    function createSlotButton(slot, ocupadosList, preciosList) {
         const btn = document.createElement('button');
         
         // Comprobar ocupación en API
         const ocupadoObj = ocupadosList.find(o => o.hora_inicio === slot.start);
+        const precioObj = preciosList.find(p => p.hora_inicio === slot.start);
         
-        const badge = slot.supplement && !ocupadoObj
-            ? `<span class="supplement-badge">💡 +${slot.supplement.toFixed(2).replace('.', ',')} € luz</span>`
+        const basePrice = precioObj && precioObj.precio_base !== null ? parseFloat(precioObj.precio_base) : 4.00;
+        const supplPrice = precioObj && precioObj.precio_luz !== null ? parseFloat(precioObj.precio_luz) : (slot.supplement || 0);
+        
+        const badge = supplPrice > 0 && !ocupadoObj
+            ? `<span class="supplement-badge">💡 +${supplPrice.toFixed(2).replace('.', ',')} € luz</span>`
             : '';
             
         if (ocupadoObj) {
@@ -69,19 +73,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${badge}
                 <span class="status">Disponible</span>
             `;
-            if (slot.supplement) btn.dataset.supplement = slot.supplement;
+            btn.dataset.baseprice = basePrice;
+            btn.dataset.supplement = supplPrice;
         }
         
         return btn;
     }
 
-    function createTimeBlock(className, title, slots, ocupadosList) {
+    function createTimeBlock(className, title, slots, ocupadosList, preciosList) {
         const block = document.createElement('div');
         block.className = `time-block ${className}`;
         block.innerHTML = `<h4 class="block-title">${title}</h4>`;
         const container = document.createElement('div');
         container.className = 'slots-container';
-        slots.forEach(slot => container.appendChild(createSlotButton(slot, ocupadosList)));
+        slots.forEach(slot => container.appendChild(createSlotButton(slot, ocupadosList, preciosList)));
         block.appendChild(container);
         return block;
     }
@@ -97,13 +102,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const dateISO = getISODateForAPI(offset);
         let ocupadosList = [];
+        let preciosList = [];
 
         try {
             const resp = await fetch(`../api/get-horarios.php?fecha=${dateISO}&pista=${encodeURIComponent(sport)}`);
             if (resp.ok) {
                 const data = await resp.json();
                 if (data.status === 'success') {
-                    ocupadosList = data.ocupados;
+                    ocupadosList = data.ocupados || [];
+                    preciosList = data.precios || [];
                 }
             }
         } catch (e) {
@@ -112,8 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         scheduleGrid.innerHTML = '';
 
-        if (schedule.morning.length > 0) scheduleGrid.appendChild(createTimeBlock('morning', 'Mañana', schedule.morning, ocupadosList));
-        if (schedule.afternoon.length > 0) scheduleGrid.appendChild(createTimeBlock('afternoon', 'Tarde', schedule.afternoon, ocupadosList));
+        if (schedule.morning.length > 0) scheduleGrid.appendChild(createTimeBlock('morning', 'Mañana', schedule.morning, ocupadosList, preciosList));
+        if (schedule.afternoon.length > 0) scheduleGrid.appendChild(createTimeBlock('afternoon', 'Tarde', schedule.afternoon, ocupadosList, preciosList));
         if (schedule.morning.length === 0 && schedule.afternoon.length === 0) {
             scheduleGrid.innerHTML = '<p class="no-schedule-msg">No hay horarios disponibles para este día.</p>';
         }
@@ -211,12 +218,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (timeEl && dayName && dayDate) {
             const supplement = selectedEl.dataset.supplement ? parseFloat(selectedEl.dataset.supplement) : 0;
+            const basePrice = selectedEl.dataset.baseprice ? parseFloat(selectedEl.dataset.baseprice) : 4.00;
+            
             localStorage.setItem('bookingData', JSON.stringify({
                 sport,
                 date: `${getISODateForAPI(parseInt(document.querySelector('.day-btn.active').getAttribute('data-day-offset'), 10))}`,
                 dateVisual: `${dayName.textContent} (${dayDate.textContent})`,
                 time: timeEl.textContent,
-                supplement
+                supplement,
+                basePrice
             }));
             window.location.href = 'checkout.php';
         }

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             summaryTime.textContent  = data.time  || '--:-- - --:--';
 
             const supplement = data.supplement ? parseFloat(data.supplement) : 0;
-            const basePrice  = 4.00;
+            const basePrice  = data.basePrice ? parseFloat(data.basePrice) : 4.00;
 
             if (supplement > 0) {
                 if (feeLightRow) {

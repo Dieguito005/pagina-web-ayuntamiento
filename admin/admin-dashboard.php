@@ -49,6 +49,15 @@ if (!isset($_SESSION['admin_id'])) {
             background-color: #d15615;
             color: white;
         }
+        
+        .time-slot .price-tag {
+            display: block;
+            margin-top: 0.3rem;
+            font-size: 0.75rem;
+            color: #d15615;
+            font-weight: bold;
+        }
+        
         .admin-main {
             flex-grow: 1;
             padding: 2.5rem;
@@ -219,15 +228,15 @@ if (!isset($_SESSION['admin_id'])) {
             <p><strong>Rol:</strong> <?= htmlspecialchars(ucfirst($_SESSION['admin_rol'] ?? 'Admin')) ?></p>
             
             <nav class="admin-nav">
-                <a href="admin-dashboard.php" class="active">📅 Calendario 30 días</a>
-                <!-- Future links could go here if roles expand -->
+                <a href="#" id="tab-bloqueos" class="active">📅 Calendario Bloqueos</a>
+                <a href="#" id="tab-precios">💰 Editar Precios</a>
             </nav>
         </aside>
 
         <!-- Contenido principal -->
         <main class="admin-main">
             <div class="admin-header">
-                <h2>Gestión de Pistas</h2>
+                <h2 id="admin-page-title">Gestión de Bloqueos</h2>
                 <a href="admin-logout.php" class="btn-logout">Cerrar Sesión</a>
             </div>
 
@@ -261,6 +270,33 @@ if (!isset($_SESSION['admin_id'])) {
     
     <div id="toast">Notificación</div>
 
+    <!-- Modal para editar precio -->
+    <div id="price-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:2rem; border-radius:8px; width:400px; max-width:90%;">
+            <h3 style="margin-top:0; color:#0b1c3c;">Editar Precio</h3>
+            <p id="price-modal-info" style="color:#666; font-size:0.9rem; margin-bottom:1.5rem;"></p>
+            
+            <div class="control-group" style="margin-bottom:1rem;">
+                <label for="modal-precio-base">Precio Base (€)</label>
+                <input type="number" step="0.01" id="modal-precio-base" placeholder="Dejar en blanco para default" style="padding:0.6rem; border:1px solid #ccc; border-radius:6px; width:100%;">
+            </div>
+            
+            <div class="control-group" style="margin-bottom:1.5rem;">
+                <label for="modal-precio-luz">Suplemento Luz (€)</label>
+                <input type="number" step="0.01" id="modal-precio-luz" placeholder="Dejar en blanco para default" style="padding:0.6rem; border:1px solid #ccc; border-radius:6px; width:100%;">
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; gap:1rem;">
+                <button id="btn-cancel-price" style="background:#ccc; color:#333; border:none; padding:0.6rem 1.2rem; border-radius:6px; cursor:pointer;">Cancelar</button>
+                <button id="btn-save-price" style="background:#d15615; color:white; border:none; padding:0.6rem 1.2rem; border-radius:6px; cursor:pointer;">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pasar variables desde PHP u ocultarlo en variables globales si hace falta
+        const defaultBasePrice = 4.00;
+    </script>
     <script src="../js/admin.js"></script>
 </body>
 </html>
