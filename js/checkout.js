@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const summarySport  = document.getElementById('summary-sport');
     const summaryDate   = document.getElementById('summary-date');
     const summaryTime   = document.getElementById('summary-time');
+    const summaryBasePr = document.getElementById('summary-base-price');
     const feeLightRow   = document.getElementById('summary-light-row');
     const totalPriceEl  = document.getElementById('summary-total-price');
 
@@ -18,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const supplement = data.supplement ? parseFloat(data.supplement) : 0;
             const basePrice  = data.basePrice ? parseFloat(data.basePrice) : 4.00;
+
+            if (summaryBasePr) summaryBasePr.textContent = basePrice.toFixed(2).replace('.', ',') + ' €';
 
             if (supplement > 0) {
                 if (feeLightRow) {

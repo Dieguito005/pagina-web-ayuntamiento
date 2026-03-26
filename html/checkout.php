@@ -157,7 +157,7 @@
                         <div class="detail-divider"></div>
                         <div class="detail-row" id="summary-base-price-row">
                             <span class="detail-label">Base Pista:</span>
-                            <span class="detail-value">4,00 €</span>
+                            <span class="detail-value" id="summary-base-price">4,00 €</span>
                         </div>
                         <div class="detail-row hidden" id="summary-light-row">
                             <span class="detail-label" style="color:#d32f2f;">Suplemento Luz (Noche):</span>
