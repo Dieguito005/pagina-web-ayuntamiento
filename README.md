@@ -25,6 +25,7 @@ Venimos de una primera fase estática usando únicamente HTML, CSS y LocalStorag
 - **Panel Administrativo `v1.2`:** Recientemente concluimos la capacidad del Ayuntamiento no solo de *bloquear* pistas para el público, sino también de *desbloquearlas* en caso de cancelación del evento administrativo.
 - **Reservas Reales y Códigos QR `v1.3`:** Generación automática de códigos alfanuméricos y QR incrustados en correos electrónicos mediante SMTP, creando registros auténticos en la BD.
 - **Validación de Formularios `v1.4`:** Estrictas validaciones frontend en tiempo real (DNI con mayúsculas, formatos exactos de teléfono) para garantizar la integridad de los datos de reserva.
+- **Edición Dinámica de Precios `v1.5`:** Los administradores ahora pueden modificar el precio base y la tarifa de luz de manera granular para cada reserva desde una nueva pestaña interactiva en el panel del administrador.
 - **Limpieza de Código y Assets:** Hemos organizado todo en carpetas específicas (`/html`, `/css`, `/js`, `/api`, `/admin`, `/docs`).
 
 ---
