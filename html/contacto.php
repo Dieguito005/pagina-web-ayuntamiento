@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Contacta con el Ayuntamiento de Tarancón para cualquier duda sobre los alquileres de pistas deportivas.">
     <link rel="preload" href="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" as="image">
-    <link rel="stylesheet" href="../css/home.css">
-    <link rel="stylesheet" href="../css/contacto.css">
+    <link rel="stylesheet" href="../css/home.css?v=1.5.0">
+    <link rel="stylesheet" href="../css/contacto.css?v=1.5.0">
     <title>Contacto | Alquileres Tarancón</title>
     <script src="../js/contacto.js" defer></script>
-    <link rel="stylesheet" href="../css/cookies.css">
+    <link rel="stylesheet" href="../css/cookies.css?v=1.5.0">
     <script src="../js/cookies.js" defer></script>
 </head>
 <body>
