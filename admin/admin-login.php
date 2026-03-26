@@ -18,7 +18,7 @@ if (isset($_GET['error'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso Empleados - Ayuntamiento de Tarancón</title>
-    <link rel="stylesheet" href="../css/home.css?v=1.5.0">
+    <link rel="stylesheet" href="../css/home.css">
     <style>
         .admin-login-wrapper {
             display: flex;
@@ -146,7 +146,7 @@ if (isset($_GET['error'])) {
                 <button type="submit" class="btn-submit">Entrar al Panel</button>
             </form>
             <div style="margin-top: 20px;">
-                <a href="../html/home.php" style="color: #666; text-decoration: none; font-size: 0.9rem;">? Volver al inicio</a>
+                <a href="../html/home.php" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Volver al inicio</a>
             </div>
         </div>
     </main>

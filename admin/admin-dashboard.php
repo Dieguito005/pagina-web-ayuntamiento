@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if (!isset($_SESSION['admin_id'])) {
     header("Location: admin-login.php");
@@ -10,8 +10,8 @@ if (!isset($_SESSION['admin_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de AdministraciÃ³n - Alquileres TarancÃ³n</title>
-    <link rel="stylesheet" href="../css/home.css?v=1.5.0">
+    <title>Panel de Administración - Alquileres Tarancón</title>
+    <link rel="stylesheet" href="../css/home.css">
     <style>
         .admin-layout {
             display: flex;
@@ -228,16 +228,16 @@ if (!isset($_SESSION['admin_id'])) {
             <p><strong>Rol:</strong> <?= htmlspecialchars(ucfirst($_SESSION['admin_rol'] ?? 'Admin')) ?></p>
             
             <nav class="admin-nav">
-                <a href="#" id="tab-bloqueos" class="active">ðŸ“… Calendario Bloqueos</a>
-                <a href="#" id="tab-precios">ðŸ’° Editar Precios</a>
+                <a href="#" id="tab-bloqueos" class="active">📅 Calendario Bloqueos</a>
+                <a href="#" id="tab-precios">💰 Editar Precios</a>
             </nav>
         </aside>
 
         <!-- Contenido principal -->
         <main class="admin-main">
             <div class="admin-header">
-                <h2 id="admin-page-title">GestiÃ³n de Bloqueos</h2>
-                <a href="admin-logout.php" class="btn-logout">Cerrar SesiÃ³n</a>
+                <h2 id="admin-page-title">Gestión de Bloqueos</h2>
+                <a href="admin-logout.php" class="btn-logout">Cerrar Sesión</a>
             </div>
 
             <div class="dashboard-controls">
@@ -245,15 +245,15 @@ if (!isset($_SESSION['admin_id'])) {
                     <label for="pista-select">Selecciona la Pista</label>
                     <select id="pista-select">
                         <option value="Tenis">Pista de Tenis</option>
-                        <option value="PÃ¡del Cubierta">PÃ¡del Cubierta</option>
-                        <option value="PÃ¡del Descubierta">PÃ¡del Descubierta</option>
+                        <option value="Pádel Cubierta">Pádel Cubierta</option>
+                        <option value="Pádel Descubierta">Pádel Descubierta</option>
                     </select>
                 </div>
                 
                 <div class="control-group">
                     <label for="fecha-select">Selecciona la Fecha</label>
                     <select id="fecha-select">
-                        <!-- Generado por JS: prÃ³ximos 30 dÃ­as -->
+                        <!-- Generado por JS: próximos 30 días -->
                     </select>
                 </div>
             </div>
@@ -268,7 +268,7 @@ if (!isset($_SESSION['admin_id'])) {
         </main>
     </div>
     
-    <div id="toast">NotificaciÃ³n</div>
+    <div id="toast">Notificación</div>
 
     <!-- Modal para editar precio -->
     <div id="price-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
@@ -277,12 +277,12 @@ if (!isset($_SESSION['admin_id'])) {
             <p id="price-modal-info" style="color:#666; font-size:0.9rem; margin-bottom:1.5rem;"></p>
             
             <div class="control-group" style="margin-bottom:1rem;">
-                <label for="modal-precio-base">Precio Base (â‚¬)</label>
+                <label for="modal-precio-base">Precio Base (€)</label>
                 <input type="number" step="0.01" id="modal-precio-base" placeholder="Dejar en blanco para default" style="padding:0.6rem; border:1px solid #ccc; border-radius:6px; width:100%;">
             </div>
             
             <div class="control-group" style="margin-bottom:1.5rem;">
-                <label for="modal-precio-luz">Suplemento Luz (â‚¬)</label>
+                <label for="modal-precio-luz">Suplemento Luz (€)</label>
                 <input type="number" step="0.01" id="modal-precio-luz" placeholder="Dejar en blanco para default" style="padding:0.6rem; border:1px solid #ccc; border-radius:6px; width:100%;">
             </div>
             

@@ -1,3 +1,5 @@
+﻿const { maxHeaderSize } = require("node:http");
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Referencias a elementos
     const contactForm = document.getElementById('contactForm');

@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Aviso legal y condiciones de uso del portal web de alquileres deportivos del Ayuntamiento de Tarancón.">
     <link rel="preload" href="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" as="image">
-    <link rel="stylesheet" href="../css/home.css?v=1.5.0">
-    <link rel="stylesheet" href="../css/politica.css?v=1.5.0">
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/politica.css">
     <title>Aviso Legal | Alquileres Tarancón</title>
-    <link rel="stylesheet" href="../css/cookies.css?v=1.5.0">
+    <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
 </head>
 <body>

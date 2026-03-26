@@ -7,9 +7,9 @@
     <meta name="description"
         content="Reserva tus pistas de pádel y tenis en el Ayuntamiento de Tarancón. Instalaciones modernas y accesibles.">
     <link rel="preload" href="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" as="image">
-    <link rel="stylesheet" href="../css/home.css?v=1.5.0">
+    <link rel="stylesheet" href="../css/home.css">
     <title>Alquileres Tarancón</title>
-    <link rel="stylesheet" href="../css/cookies.css?v=1.5.0">
+    <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
 </head>
 
