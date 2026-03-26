@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../css/checkout.css">
     <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
-    <script src="../js/checkout.js" defer></script>
+    <script src="../js/checkout.js?v=1.5.0" defer></script>
     <title>Reserva y Pago - Alquileres Tarancón</title>
 </head>
 <body>

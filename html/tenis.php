@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -72,7 +72,7 @@
     <!-- FOOTER PRINCIPAL -->
     <?php include '../includes/footer.php'; ?>
     
-    <script src="../js/horarios.js" defer></script>
+    <script src="../js/horarios.js?v=1.5.0" defer></script>
 </body>
 </html>
 

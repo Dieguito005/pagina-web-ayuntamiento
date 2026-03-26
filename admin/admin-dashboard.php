@@ -297,7 +297,7 @@ if (!isset($_SESSION['admin_id'])) {
         // Pasar variables desde PHP u ocultarlo en variables globales si hace falta
         const defaultBasePrice = 4.00;
     </script>
-    <script src="../js/admin.js"></script>
+    <script src="../js/admin.js?v=1.5.0"></script>
 </body>
 </html>
 
