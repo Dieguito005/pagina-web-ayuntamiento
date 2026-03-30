@@ -1,5 +1,6 @@
 <?php
 // api/enviar-correo.php
+if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'conexion.php';
 header("Content-Type: application/json; charset=UTF-8");
 
@@ -39,8 +40,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $codigo_acceso = 'TRC-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
 
             // Insertar en la base de datos la reserva real
-            $insertStmt = $pdo->prepare("INSERT INTO reservas (pista, fecha, hora_inicio, hora_fin, estado, usuario_nombre, usuario_email, dni, telefono, precio_total, codigo_acceso, fecha_registro) VALUES (?, ?, ?, ?, 'reservada', ?, ?, ?, ?, ?, ?, NOW())");
-            $insertStmt->execute([$pista, $fecha, $hora_inicio, $hora_fin, $nombre, $to, $dni, $telefono, $precio_total, $codigo_acceso]);
+            $usuario_id = $_SESSION['user_id'] ?? null;
+            $insertStmt = $pdo->prepare("INSERT INTO reservas (pista, fecha, hora_inicio, hora_fin, estado, usuario_nombre, usuario_email, dni, telefono, precio_total, codigo_acceso, usuario_id, fecha_registro) VALUES (?, ?, ?, ?, 'reservada', ?, ?, ?, ?, ?, ?, ?, NOW())");
+            $insertStmt->execute([$pista, $fecha, $hora_inicio, $hora_fin, $nombre, $to, $dni, $telefono, $precio_total, $codigo_acceso, $usuario_id]);
 
             // Generar URL del QR dinámico
             $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($codigo_acceso);

@@ -6,6 +6,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.7.0] - 30-03-2026
+
+### Añadido 🚀
+- **Sistema de Login y Registro de Usuarios**: Implementación completa de autenticación para ciudadanos con registro por email, validación de DNI/teléfono, indicador de fuerza de contraseña y auto-login tras registro.
+- **Página de Perfil de Usuario (`perfil.php`)**: Panel personal donde el usuario ve sus datos (nombre, email, DNI, teléfono), estadísticas de reservas (total, activas, canceladas) y un historial completo de todas sus reservas con códigos de acceso.
+- **Auto-rellenado del Checkout**: Los campos del formulario de pago (nombre, apellidos, DNI, teléfono, email) se rellenan automáticamente con los datos de la cuenta del usuario logueado, reduciendo fricción en el proceso de reserva.
+- **Vinculación de Reservas a Cuentas**: Las reservas quedan enlazadas al `usuario_id` de la cuenta, permitiendo consultas futuras de historial y estadísticas por usuario.
+- **Header Dinámico**: El encabezado de la web ahora muestra iconos condicionales: "Iniciar Sesión" si no está logueado, o "Mi Perfil" + "Cerrar Sesión" si lo está.
+- **Protección de Rutas**: Solo el checkout requiere login obligatorio. Las páginas de información (home, contacto, legales, horarios) siguen siendo de acceso libre.
+- **Script de Base de Datos (`setup_db_users.php`)**: Creación automática de la tabla `usuarios` y de la columna `usuario_id` en `reservas`.
+
 ## [1.6.0] - 30-03-2026
 
 ### Añadido 🚀

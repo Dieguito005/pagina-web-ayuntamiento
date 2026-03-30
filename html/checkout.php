@@ -1,3 +1,4 @@
+<?php require_once '../includes/user-auth-check.php'; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -44,26 +45,26 @@
                         <div class="form-row">
                             <div class="form-group half">
                                 <label for="nombre">Nombre *</label>
-                                <input type="text" id="nombre" name="nombre" required placeholder="Ej: Juan">
+                                <input type="text" id="nombre" name="nombre" required placeholder="Ej: Juan" value="<?= htmlspecialchars($_SESSION['user_nombre'] ?? '') ?>">
                             </div>
                             <div class="form-group half">
                                 <label for="apellidos">Apellidos *</label>
-                                <input type="text" id="apellidos" name="apellidos" required placeholder="Ej: Pérez García">
+                                <input type="text" id="apellidos" name="apellidos" required placeholder="Ej: Pérez García" value="<?= htmlspecialchars($_SESSION['user_apellidos'] ?? '') ?>">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group half">
                                 <label for="dni">DNI / NIE *</label>
-                                <input type="text" id="dni" name="dni" required placeholder="12345678A" pattern="^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$|^[XYZ][0-9]{7}[TRWAGMYFPDXBNJZSQVHLCKE]$" title="Introduce un DNI o NIE válido">
+                                <input type="text" id="dni" name="dni" required placeholder="12345678A" pattern="^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$|^[XYZ][0-9]{7}[TRWAGMYFPDXBNJZSQVHLCKE]$" title="Introduce un DNI o NIE válido" value="<?= htmlspecialchars($_SESSION['user_dni'] ?? '') ?>">
                             </div>
                             <div class="form-group half">
                                 <label for="telefono">Teléfono *</label>
-                                <input type="tel" id="telefono" name="telefono" required placeholder="Ej: 600123456" pattern="[0-9]{9}" title="Introduce un número de 9 cifras">
+                                <input type="tel" id="telefono" name="telefono" required placeholder="Ej: 600123456" pattern="[0-9]{9}" title="Introduce un número de 9 cifras" value="<?= htmlspecialchars($_SESSION['user_telefono'] ?? '') ?>">
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="email">Correo Electrónico *</label>
-                            <input type="email" id="email" name="email" required placeholder="juan.perez@email.com">
+                            <input type="email" id="email" name="email" required placeholder="juan.perez@email.com" value="<?= htmlspecialchars($_SESSION['user_email'] ?? '') ?>">
                             <small class="help-text">Te enviaremos a este correo tu código de entrada automático.</small>
                         </div>
                     </fieldset>
