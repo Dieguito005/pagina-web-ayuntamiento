@@ -107,9 +107,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const formData = new FormData();
                     formData.append('email', userEmail);
                     formData.append('nombre', document.getElementById('nombre').value);
+                    formData.append('dni', document.getElementById('dni').value);
+                    formData.append('telefono', document.getElementById('telefono').value);
                     formData.append('pista', bookingInfo.sport || 'Pista Deportiva');
                     formData.append('fecha', bookingInfo.date || 'Día seleccionado');
                     formData.append('hora', bookingInfo.time || 'Hora seleccionada');
+                    // Calculate total price
+                    const basePrice = bookingInfo.basePrice ? parseFloat(bookingInfo.basePrice) : 4.00;
+                    const supplement = bookingInfo.supplement ? parseFloat(bookingInfo.supplement) : 0;
+                    formData.append('precio_total', (basePrice + supplement).toFixed(2));
 
                     const response = await fetch('../api/enviar-correo.php', { method: 'POST', body: formData });
                     const result = await response.json();

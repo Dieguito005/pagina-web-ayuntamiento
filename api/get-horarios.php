@@ -6,9 +6,9 @@ header('Content-Type: application/json');
 $fecha = $_GET['fecha'] ?? date('Y-m-d');
 $pista = $_GET['pista'] ?? '';
 
-try {
-    $stmt = $pdo->prepare("SELECT hora_inicio, hora_fin, estado FROM reservas WHERE fecha = ? AND pista = ?");
-    $stmt->execute([$fecha, $pista]);
+    try {
+        $stmt = $pdo->prepare("SELECT hora_inicio, hora_fin, estado FROM reservas WHERE fecha = ? AND pista = ? AND estado != 'cancelada'");
+        $stmt->execute([$fecha, $pista]);
     $reservas = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Simplificar el formato para el frontend (ej. '09:00:00' -> '09:00')

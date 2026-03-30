@@ -8,13 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const scheduleGrid = document.getElementById('admin-schedule-grid');
     const btnBlockSlot = document.getElementById('btn-block-slot');
     const toast = document.getElementById('toast');
-    const actionBar = document.querySelector('.action-bar');
     
+    // Vistas y Contenedores
+    const viewBloqueos = document.getElementById('view-bloqueos-precios');
+    const viewBuscador = document.getElementById('view-buscador');
+    const actionBarBloqueos = document.getElementById('action-bar-bloqueos');
+
     // Tabs y Modos
+    const tabBuscador = document.getElementById('tab-buscador');
     const tabBloqueos = document.getElementById('tab-bloqueos');
     const tabPrecios = document.getElementById('tab-precios');
     const titlePage = document.getElementById('admin-page-title');
-    let currentMode = 'bloqueos'; // 'bloqueos' o 'precios'
+    let currentMode = 'bloqueos'; // 'bloqueos', 'precios' o 'buscador'
 
     // Elementos del Modal de Precios
     const priceModal = document.getElementById('price-modal');
@@ -75,14 +80,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── Logica Cambio de Tabs ──
-    if (tabBloqueos && tabPrecios) {
+    if (tabBloqueos && tabPrecios && tabBuscador) {
+        tabBuscador.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentMode = 'buscador';
+            tabBuscador.classList.add('active');
+            tabBloqueos.classList.remove('active');
+            tabPrecios.classList.remove('active');
+            titlePage.textContent = 'Buscador e Historial';
+            viewBuscador.style.display = 'block';
+            viewBloqueos.style.display = 'none';
+        });
+
         tabBloqueos.addEventListener('click', (e) => {
             e.preventDefault();
             currentMode = 'bloqueos';
             tabBloqueos.classList.add('active');
             tabPrecios.classList.remove('active');
+            tabBuscador.classList.remove('active');
             titlePage.textContent = 'Gestión de Bloqueos';
-            actionBar.style.display = 'flex';
+            viewBloqueos.style.display = 'block';
+            viewBuscador.style.display = 'none';
+            if (actionBarBloqueos) actionBarBloqueos.style.display = 'flex';
             loadSchedule();
         });
         
@@ -91,8 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
             currentMode = 'precios';
             tabPrecios.classList.add('active');
             tabBloqueos.classList.remove('active');
+            tabBuscador.classList.remove('active');
             titlePage.textContent = 'Edición de Precios';
-            actionBar.style.display = 'none'; // No necesitamos botón general de bloquear
+            viewBloqueos.style.display = 'block';
+            viewBuscador.style.display = 'none';
+            if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
             loadSchedule();
         });
     }
@@ -213,6 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             btnBlockSlot.className = 'btn-block';
                         }
                     } else if (currentMode === 'precios') {
+                        if (this.classList.contains('disabled') || this.classList.contains('blocked_admin')) {
+                            showToast('No se puede cambiar el precio de una hora que ya está reservada o bloqueada.', 'error');
+                            return;
+                        }
+
                         // Modal de editar precios
                         currentPriceSlot = {
                             start: this.dataset.start,
@@ -354,4 +381,166 @@ document.addEventListener('DOMContentLoaded', () => {
     
     populateDates();
     loadSchedule();
+
+    // ── Logica Buscador e Historial ──
+    const formBuscador = document.getElementById('form-buscador');
+    const tablaReservasBody = document.getElementById('tabla-reservas-body');
+    const btnExportCsv = document.getElementById('btn-export-csv');
+    const detailsModal = document.getElementById('details-modal');
+    const detailsModalContent = document.getElementById('details-modal-content');
+    const btnCloseDetails = document.getElementById('btn-close-details');
+    const btnCloseDetails2 = document.getElementById('btn-close-details2');
+    
+    let reservasActuales = [];
+
+    if (formBuscador) {
+        formBuscador.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const dni = document.getElementById('s-dni').value.trim();
+            const nombre = document.getElementById('s-nombre').value.trim();
+            const pista = document.getElementById('s-pista').value;
+            const estado = document.getElementById('s-estado').value;
+            const fechaInicio = document.getElementById('s-fecha-inicio').value;
+            
+            let query = `../api/admin-reservas.php?1=1`;
+            if (dni) query += `&dni=${encodeURIComponent(dni)}`;
+            if (nombre) query += `&nombre=${encodeURIComponent(nombre)}`;
+            if (pista) query += `&pista=${encodeURIComponent(pista)}`;
+            if (estado) query += `&estado=${encodeURIComponent(estado)}`;
+            if (fechaInicio) query += `&fecha_inicio=${encodeURIComponent(fechaInicio)}`;
+            
+            tablaReservasBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Buscando...</td></tr>';
+            
+            try {
+                const resp = await fetch(query);
+                const data = await resp.json();
+                
+                if (resp.ok && data.status === 'success') {
+                    reservasActuales = data.data;
+                    renderTable(reservasActuales);
+                } else {
+                    tablaReservasBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Error: ${data.message}</td></tr>`;
+                }
+            } catch (err) {
+                tablaReservasBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Error de conexión.</td></tr>`;
+            }
+        });
+    }
+
+    function getBadgeClass(estado) {
+        if (estado === 'reservada') return 'reservada';
+        if (estado === 'cancelada') return 'cancelada';
+        return 'bloqueada_admin';
+    }
+
+    function renderTable(data) {
+        if (data.length === 0) {
+            tablaReservasBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No se encontraron resultados.</td></tr>';
+            return;
+        }
+
+        tablaReservasBody.innerHTML = data.map(r => `
+            <tr>
+                <td><strong>${r.fecha.split('-').reverse().join('/')}</strong><br><span style="color:#666;font-size:0.85rem;">${r.hora_inicio.substring(0,5)} - ${r.hora_fin.substring(0,5)}</span></td>
+                <td>${r.pista}</td>
+                <td>${r.usuario_nombre || 'Admin P.'}</td>
+                <td>${r.dni || '---'}</td>
+                <td><span class="badge ${getBadgeClass(r.estado)}">${r.estado === 'bloqueada_admin' ? 'Bloqueo Admin' : (r.estado.charAt(0).toUpperCase() + r.estado.slice(1))}</span></td>
+                <td><strong>${r.precio_total ? r.precio_total + '€' : '---'}</strong></td>
+                <td>
+                    <button class="btn-sm btn-view" onclick="verDetalles(${r.id})">🔍 Ver</button>
+                    ${r.estado !== 'cancelada' && r.estado !== 'bloqueada_admin' ? `<button class="btn-sm btn-cancel" onclick="cancelarReserva(${r.id})">❌ Anular</button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.verDetalles = (id) => {
+        const r = reservasActuales.find(x => x.id == id);
+        if (!r) return;
+        
+        detailsModalContent.innerHTML = `
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div><strong>ID Reserva:</strong> #${r.id}</div>
+                <div><strong>Fecha Registro:</strong> ${r.fecha_registro || 'Desconocida'}</div>
+                <div><strong>Estado:</strong> <span class="badge ${getBadgeClass(r.estado)}">${r.estado}</span></div>
+                <div><strong>Código Acceso:</strong> ${r.codigo_acceso || '---'}</div>
+            </div>
+            <hr style="border:0; border-top:1px solid #eee; margin:1rem 0;">
+            <p style="margin-bottom:0.5rem; color:#d15615; font-weight:bold;">Datos del Cliente</p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div><strong>Nombre:</strong> ${r.usuario_nombre || '---'}</div>
+                <div><strong>DNI:</strong> ${r.dni || '---'}</div>
+                <div><strong>Email:</strong> ${r.usuario_email || '---'}</div>
+                <div><strong>Teléfono:</strong> ${r.telefono || '---'}</div>
+            </div>
+            <hr style="border:0; border-top:1px solid #eee; margin:1rem 0;">
+            <p style="margin-bottom:0.5rem; color:#d15615; font-weight:bold;">Datos de la Pista</p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div><strong>Instalación:</strong> ${r.pista}</div>
+                <div><strong>Precio Total:</strong> ${r.precio_total ? r.precio_total + ' €' : '---'}</div>
+                <div><strong>Día:</strong> ${r.fecha.split('-').reverse().join('/')}</div>
+                <div><strong>Hora:</strong> ${r.hora_inicio.substring(0,5)} a ${r.hora_fin.substring(0,5)}</div>
+            </div>
+        `;
+        detailsModal.style.display = 'flex';
+    };
+
+    if (btnCloseDetails) btnCloseDetails.addEventListener('click', () => detailsModal.style.display = 'none');
+    if (btnCloseDetails2) btnCloseDetails2.addEventListener('click', () => detailsModal.style.display = 'none');
+
+    window.cancelarReserva = async (id) => {
+        if (!confirm('¿Estás seguro de que deseas anular esta reserva del cliente? Esta acción no se puede deshacer.')) return;
+        
+        try {
+            const resp = await fetch('../api/admin-reservas.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'cancelar', id: id })
+            });
+            const data = await resp.json();
+            if (resp.ok && data.status === 'success') {
+                showToast('Reserva anulada correctamente', 'success');
+                // Refresh data by submitting form again
+                document.getElementById('form-buscador').dispatchEvent(new Event('submit'));
+                // Si la vista actual es bloqueos (modo de pista), también lo refrescamos
+                loadSchedule();
+            } else {
+                showToast(data.message || 'Error al anular', 'error');
+            }
+        } catch (err) {
+            showToast('Error de red', 'error');
+        }
+    };
+
+    if (btnExportCsv) {
+        btnExportCsv.addEventListener('click', () => {
+            if (reservasActuales.length === 0) {
+                alert("No hay datos para exportar. Haz una búsqueda primero.");
+                return;
+            }
+            
+            let csvContent = "ID,Instalacion,Fecha,Hora Inicio,Hora Fin,Estado,Total,Nombre Cliente,DNI,Email,Telefono,Codigo Acceso,Fecha Registro\n";
+            reservasActuales.forEach(r => {
+                const row = [
+                    r.id, `"${r.pista}"`, r.fecha, r.hora_inicio, r.hora_fin, r.estado, 
+                    r.precio_total || '', `"${r.usuario_nombre || ''}"`, r.dni || '', 
+                    r.usuario_email || '', r.telefono || '', r.codigo_acceso || '', r.fecha_registro || ''
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `reservas_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+
 });

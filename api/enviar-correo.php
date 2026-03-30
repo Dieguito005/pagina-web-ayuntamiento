@@ -6,6 +6,9 @@ header("Content-Type: application/json; charset=UTF-8");
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $to = $_POST['email'] ?? '';
     $nombre = $_POST['nombre'] ?? 'Ciudadano/a';
+    $dni = $_POST['dni'] ?? null;
+    $telefono = $_POST['telefono'] ?? null;
+    $precio_total = $_POST['precio_total'] ?? null;
     $pista = $_POST['pista'] ?? '';
     $fecha = $_POST['fecha'] ?? '';
     $hora_string = $_POST['hora'] ?? '';
@@ -24,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         try {
             // Verificar disponibilidad real (Evitar colisión o overbooking)
-            $checkStmt = $pdo->prepare("SELECT id FROM reservas WHERE pista = ? AND fecha = ? AND hora_inicio = ?");
+            $checkStmt = $pdo->prepare("SELECT id FROM reservas WHERE pista = ? AND fecha = ? AND hora_inicio = ? AND estado != 'cancelada'");
             $checkStmt->execute([$pista, $fecha, $hora_inicio]);
             if ($checkStmt->fetch()) {
                  http_response_code(409);
@@ -36,8 +39,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $codigo_acceso = 'TRC-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
 
             // Insertar en la base de datos la reserva real
-            $insertStmt = $pdo->prepare("INSERT INTO reservas (pista, fecha, hora_inicio, hora_fin, estado, usuario_nombre, usuario_email, codigo_acceso) VALUES (?, ?, ?, ?, 'reservada', ?, ?, ?)");
-            $insertStmt->execute([$pista, $fecha, $hora_inicio, $hora_fin, $nombre, $to, $codigo_acceso]);
+            $insertStmt = $pdo->prepare("INSERT INTO reservas (pista, fecha, hora_inicio, hora_fin, estado, usuario_nombre, usuario_email, dni, telefono, precio_total, codigo_acceso, fecha_registro) VALUES (?, ?, ?, ?, 'reservada', ?, ?, ?, ?, ?, ?, NOW())");
+            $insertStmt->execute([$pista, $fecha, $hora_inicio, $hora_fin, $nombre, $to, $dni, $telefono, $precio_total, $codigo_acceso]);
 
             // Generar URL del QR dinámico
             $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($codigo_acceso);

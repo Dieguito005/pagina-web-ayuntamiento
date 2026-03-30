@@ -142,6 +142,41 @@ if (!isset($_SESSION['admin_id'])) {
         .time-slot.booked_user .status { color: #2e7d32; }
         .time-slot.selected .status { color: #d15615; }
         
+        /* Estilos Buscador e Historial */
+        .search-filters {
+            background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: end;
+        }
+        .search-filters .control-group { margin-bottom: 0; }
+        .search-filters input, .search-filters select {
+            width: 100%; box-sizing: border-box;
+            padding: 0.6rem 1rem; border: 1px solid #ccc; border-radius: 6px;
+            font-size: 0.95rem; background-color: #fff; transition: all 0.3s;
+        }
+        .search-filters input:focus, .search-filters select:focus {
+            outline: none; border-color: #d15615; box-shadow: 0 0 0 3px rgba(209, 86, 21, 0.1);
+        }
+        .search-filters label {
+            font-weight: 600; color: #555; font-size: 0.85rem; margin-bottom: 0.4rem; display: block; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .btn-search { background-color: #0b1c3c; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; height: 42px; }
+        .btn-search:hover { background-color: #1a3673; }
+        .btn-export { background-color: #2e7d32; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; height: 42px; }
+        .btn-export:hover { background-color: #1b5e20; }
+        
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 2rem; }
+        .admin-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        .admin-table th, .admin-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        .admin-table th { background-color: #f8f9fa; font-weight: 600; color: #333; }
+        .badge { padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
+        .badge.reservada { background-color: #e8f5e9; color: #2e7d32; }
+        .badge.cancelada { background-color: #ffebee; color: #c62828; }
+        .badge.bloqueada_admin { background-color: #fff3e0; color: #ef6c00; }
+        
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 4px; cursor: pointer; border: none; font-weight: 600; }
+        .btn-view { background-color: #e3f2fd; color: #1565c0; margin-right: 0.5rem; }
+        .btn-cancel { background-color: #fbe9e7; color: #d32f2f; }
+        
         .action-bar {
             margin-top: 2rem;
             display: flex;
@@ -228,6 +263,7 @@ if (!isset($_SESSION['admin_id'])) {
             <p><strong>Rol:</strong> <?= htmlspecialchars(ucfirst($_SESSION['admin_rol'] ?? 'Admin')) ?></p>
             
             <nav class="admin-nav">
+                <a href="#" id="tab-buscador">🔍 Buscador e Historial</a>
                 <a href="#" id="tab-bloqueos" class="active">📅 Calendario Bloqueos</a>
                 <a href="#" id="tab-precios">💰 Editar Precios</a>
             </nav>
@@ -240,30 +276,89 @@ if (!isset($_SESSION['admin_id'])) {
                 <a href="admin-logout.php" class="btn-logout">Cerrar Sesión</a>
             </div>
 
-            <div class="dashboard-controls">
-                <div class="control-group">
-                    <label for="pista-select">Selecciona la Pista</label>
-                    <select id="pista-select">
-                        <option value="Tenis">Pista de Tenis</option>
-                        <option value="Pádel Cubierta">Pádel Cubierta</option>
-                        <option value="Pádel Descubierta">Pádel Descubierta</option>
-                    </select>
+            <div id="view-bloqueos-precios">
+                <div class="dashboard-controls">
+                    <div class="control-group">
+                        <label for="pista-select">Selecciona la Pista</label>
+                        <select id="pista-select">
+                            <option value="Tenis">Pista de Tenis</option>
+                            <option value="Pádel Cubierta">Pádel Cubierta</option>
+                            <option value="Pádel Descubierta">Pádel Descubierta</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="fecha-select">Selecciona la Fecha</label>
+                        <select id="fecha-select">
+                            <!-- Generado por JS: próximos 30 días -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="schedule-grid-admin" id="admin-schedule-grid">
+                    <p>Cargando horarios...</p>
                 </div>
                 
-                <div class="control-group">
-                    <label for="fecha-select">Selecciona la Fecha</label>
-                    <select id="fecha-select">
-                        <!-- Generado por JS: próximos 30 días -->
-                    </select>
+                <div class="action-bar" id="action-bar-bloqueos">
+                    <button class="btn-block" id="btn-block-slot" disabled>Bloquear Horario Seleccionado</button>
                 </div>
             </div>
 
-            <div class="schedule-grid-admin" id="admin-schedule-grid">
-                <p>Cargando horarios...</p>
-            </div>
-            
-            <div class="action-bar">
-                <button class="btn-block" id="btn-block-slot" disabled>Bloquear Horario Seleccionado</button>
+            <!-- VIEW: Buscador e Historial -->
+            <div id="view-buscador" style="display:none;">
+                <form id="form-buscador" class="search-filters">
+                    <div class="control-group">
+                        <label>DNI Cliente</label>
+                        <input type="text" id="s-dni" placeholder="Ej: 12345678Z">
+                    </div>
+                    <div class="control-group">
+                        <label>Nombre</label>
+                        <input type="text" id="s-nombre" placeholder="Nombre completo">
+                    </div>
+                    <div class="control-group">
+                        <label>Pista</label>
+                        <select id="s-pista">
+                            <option value="">Todas</option>
+                            <option value="Tenis">Pista de Tenis</option>
+                            <option value="Pádel Cubierta">Pádel Cubierta</option>
+                            <option value="Pádel Descubierta">Pádel Descubierta</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Fecha Desde</label>
+                        <input type="date" id="s-fecha-inicio">
+                    </div>
+                    <div class="control-group">
+                        <label>Estado</label>
+                        <select id="s-estado">
+                            <option value="">Todos</option>
+                            <option value="reservada">Reservada</option>
+                            <option value="bloqueada_admin">Bloqueo Admin</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-search">Buscar</button>
+                    <button type="button" class="btn-export" id="btn-export-csv" title="Exportar resultados a CSV">⬇️ CSV</button>
+                </form>
+
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha y Hora</th>
+                                <th>Pista</th>
+                                <th>Cliente</th>
+                                <th>DNI</th>
+                                <th>Estado</th>
+                                <th>Total</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-reservas-body">
+                            <tr><td colspan="7" style="text-align:center;">Realiza una búsqueda para ver resultados.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </main>
     </div>
@@ -289,6 +384,22 @@ if (!isset($_SESSION['admin_id'])) {
             <div style="display:flex; justify-content:flex-end; gap:1rem;">
                 <button id="btn-cancel-price" style="background:#ccc; color:#333; border:none; padding:0.6rem 1.2rem; border-radius:6px; cursor:pointer;">Cancelar</button>
                 <button id="btn-save-price" style="background:#d15615; color:white; border:none; padding:0.6rem 1.2rem; border-radius:6px; cursor:pointer;">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles de reserva -->
+    <div id="details-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:2rem; border-radius:8px; width:500px; max-width:90%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid #eee; padding-bottom:1rem;">
+                <h3 style="margin:0; color:#0b1c3c;">Detalles de la Reserva</h3>
+                <button id="btn-close-details" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#666;">&times;</button>
+            </div>
+            <div id="details-modal-content" style="line-height:1.6; color:#333; font-size:0.95rem;">
+                <!-- Contenido generado dinámicamente -->
+            </div>
+            <div style="margin-top:1.5rem; text-align:right;">
+                <button id="btn-close-details2" class="btn-sm" style="background:#ccc; padding:0.6rem 1.2rem;">Cerrar</button>
             </div>
         </div>
     </div>

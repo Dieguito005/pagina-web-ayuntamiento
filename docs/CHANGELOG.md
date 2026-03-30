@@ -6,6 +6,16 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.6.0] - 30-03-2026
+
+### Añadido 🚀
+- **Buscador Avanzado y Panel de Historial**: Se ha incluido una nueva pestaña en el portal administrativo (`admin-dashboard.php`) que proporciona un buscador detallado de reservas.
+- **Filtros Flexibles**: Permite la búsqueda de reservas mediante DNI, Nombre completo, Pista (Tenis/Pádel), Rango de Fechas y Estado (Reservada, Bloqueo Admin, Cancelada).
+- **Gestión de Incidencias**: Los administradores ahora pueden ver todos los detalles personales y de reserva en tiempo real mediante un nuevo Modal emergente, incluyendo teléfono, DNI y precio total.
+- **Anulación de Reservas**: Incorporada funcionalidad que capacita a los administradores a anular reservas (`cancelada`), previniendo overbooking o confusiones y solucionando rápida y eficazmente las incidencias del servicio al usuario.
+- **Exportación en CSV**: Agregado un botón que compila instantáneamente los resultados de la búsqueda de reservas vigente en un documento CSV organizado, optimizando reportes y contabilidad.
+- **Ampliación Base de Datos (`reservas`)**: Implementación del script auto-ejecutable `setup_db_update.php` que añade automáticamente soportes de almacenamiento robusto para: DNI, Teléfono y Precios Totales dentro de la base general de reservas.
+
 ## [1.5.0] - 26-03-2026
 
 ### Añadido 🚀
