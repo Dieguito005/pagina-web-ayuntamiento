@@ -6,6 +6,51 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.8.0] - 31-03-2026
+
+### Añadido 🚀
+- **Sección "Próximas Reservas"**: Nueva sección visual destacada en el perfil que muestra únicamente las reservas con fecha futura y estado activo. Cada tarjeta incluye instalación, fecha, horario, código de acceso y una **cuenta atrás dinámica** ("¡Hoy!", "Mañana", "En N días") calculada automáticamente.
+- **Edición de credenciales (modal tabbed)**: Nuevo botón "✏️ Editar datos" en la cabecera del perfil que abre un modal con tres pestañas:
+  - 📞 **Teléfono** — Editable sin cierre de sesión. Se actualiza en BBDD y refresca la página.
+  - 📧 **Email** — Requiere confirmar el nuevo email dos veces. Actualiza BBDD y cierra sesión automáticamente, forzando re-login con el nuevo correo.
+  - 🔑 **Contraseña** — Requiere introducir la contraseña actual para confirmar identidad. Genera nuevo hash bcrypt, actualiza BBDD y cierra sesión.
+  - 🔒 Nombre, Apellidos y DNI se muestran como datos protegidos con explicación ("contacta con el Ayuntamiento").
+- **Nueva API `api/user-update.php`**: Endpoint JSON seguro que gestiona las tres acciones de actualización con validaciones completas en servidor y destrucción de sesión cuando corresponde.
+- **Stat card "Total Gastado €"**: Cuarta tarjeta de estadísticas que suma el precio total de todas las reservas activas del usuario.
+- **"Miembro desde"** en cabecera: badge azul en la cabecera del perfil que muestra la fecha en que el usuario creó su cuenta (`fecha_registro` de la tabla `usuarios`).
+- **Códigos de acceso copiables (sutil)**: Los códigos en el historial y en las próximas reservas se copian al portapapeles con un clic. El feedback es mínimo: un flash verde instantáneo (1.3 s) sin modificar el layout ni mostrar iconos adicionales.
+- **Historial con dos columnas de fecha**:
+  - **Fecha Pista**: día para el que se hizo la reserva de la instalación.
+  - **Reservado el**: día en que el ciudadano realizó la reserva (`fecha_registro`). Muestra "—" si la reserva es anterior a la migración de base de datos.
+
+### Cambiado 🔄
+- Tabla de historial ampliada de 6 a 7 columnas para acomodar las dos fechas.
+- Estadísticas de perfil ampliadas de 3 a 4 tarjetas.
+- Cabecera del perfil reestructurada con zona de acciones agrupadas verticalmente.
+
+---
+
+## [1.7.1] - 31-03-2026
+
+### Arreglado 🐛
+- **Página en blanco al hacer login/registro**: El cierre `?>` de `conexion.php` generaba output invisible (bytes `\r\n`) antes de que `session_start()` y `header("Location: ...")` pudieran ejecutarse, haciendo que las redirecciones fallasen silenciosamente y el navegador mostrase una página en blanco. Eliminado el cierre PHP según las buenas prácticas del lenguaje.
+- **`header()` sin fallback**: Si por alguna razón PHP ya había enviado cabeceras, ninguna redirección funcionaba. Se añadió `ob_start()` al inicio de `user-auth.php`, `user-register.php` y `user-logout.php`, junto con una función `safe_redirect()` que actúa como fallback mediante `<meta http-equiv="refresh">` y `window.location.href` en caso de que `header()` no esté disponible.
+- **Redirect vacío tras login**: El operador `??` no captura cadenas vacías `""`. El campo oculto `redirect` enviaba `""` cuando el usuario accedía directamente al login, causando un `Location:` vacío. Corregido usando `!empty()` para que los strings vacíos caigan al destino por defecto (`home.php`).
+- **Error "Error de conexión con el servidor" al reservar**: La tabla `reservas` original carecía de las columnas `dni`, `telefono`, `precio_total`, `usuario_id`, `fecha_registro` y del valor `cancelada` en el ENUM `estado`. El INSERT de `enviar-correo.php` fallaba con PDOException 500. Corregido mediante detección dinámica de columnas con `SHOW COLUMNS FROM reservas` para construir el INSERT adaptándose a cualquier estado de la tabla.
+- **Reserva guardada pero pantalla sin confirmación**: Cuando `mail()` fallaba (normal en XAMPP sin SMTP), la API devolvía HTTP 500, impidiendo que el JS mostrase la pantalla de confirmación. Ahora tanto el envío exitoso como el fallo de SMTP devuelven HTTP 200 con `status: success` y el código de acceso generado, mostrando siempre la confirmación al usuario.
+- **Output corrupto en `enviar-correo.php`**: Añadido `ob_start()` y eliminado el cierre `?>` del archivo para evitar contaminación de la respuesta JSON con whitespace.
+
+### Añadido 🚀
+- **Copiar código con un clic**: En la pantalla de confirmación de reserva, el bloque del código de acceso es ahora interactivo. Al hacer clic sobre él, el código se copia automáticamente al portapapeles usando la API `navigator.clipboard`. Se muestra un feedback visual inmediato (✅ "¡Copiado!") que revierte a los 2 segundos. La selección manual del texto sigue siendo posible para quienes prefieran copiar a mano.
+- **Hint visual en el código de acceso**: Un indicador con 📋 "Haz clic para copiar" aparece debajo del código, con animación de hover y cambio de color al estado copiado.
+- **Script de migración `update_reservas_table.php`**: Creado script de un solo uso para añadir las columnas faltantes y actualizar el ENUM de `estado` en instalaciones existentes sin resetear la base de datos.
+
+### Cambiado 🔄
+- Etiqueta del code-box renombrada de "Código de Acceso del Conserje" a "Código de Acceso" para mayor claridad.
+- Versión de `checkout.js` bumpeada a `1.7.1` para forzar recarga en caché de navegadores.
+
+---
+
 ## [1.7.0] - 30-03-2026
 
 ### Añadido 🚀

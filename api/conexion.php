@@ -21,4 +21,3 @@ try {
     // Si la base de datos no existe, mostramos un error amigable
     die("Error de conexión a la base de datos. Por favor, asegúrate de haber ejecutado setup_db.php primero. Detalles: " . $e->getMessage());
 }
-?>

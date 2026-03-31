@@ -1,15 +1,35 @@
 <?php
 // api/user-auth.php — Procesa el login de usuarios públicos
+ob_start(); // Capturar cualquier output accidental para que header() funcione siempre
 session_start();
 require_once 'conexion.php';
+
+/**
+ * Función de redirección robusta con fallback HTML/JS
+ * Garantiza la redirección incluso si header() falla
+ */
+function safe_redirect($url) {
+    // Intentar redirección por header HTTP
+    if (!headers_sent()) {
+        header("Location: " . $url);
+        ob_end_flush();
+        exit;
+    }
+    // Fallback: redirección por HTML + JavaScript
+    ob_end_clean();
+    echo '<!DOCTYPE html><html><head>';
+    echo '<meta http-equiv="refresh" content="0;url=' . htmlspecialchars($url) . '">';
+    echo '<script>window.location.href="' . htmlspecialchars($url, ENT_QUOTES) . '";</script>';
+    echo '</head><body><p>Redirigiendo...</p></body></html>';
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
     if (empty($email) || empty($password)) {
-        header("Location: ../html/user-login.php?error=empty");
-        exit;
+        safe_redirect('../html/user-login.php?error=empty');
     }
 
     try {
@@ -31,23 +51,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $updateStmt->execute([$user['id']]);
 
             // Redirigir al destino original o a home
-            $redirect = $_POST['redirect'] ?? '../html/home.php';
+            $redirect = !empty($_POST['redirect']) ? $_POST['redirect'] : '../html/home.php';
             // Sanitizar redirect para evitar open redirect
             if (strpos($redirect, '://') !== false || strpos($redirect, '//') === 0) {
                 $redirect = '../html/home.php';
             }
-            header("Location: " . $redirect);
-            exit;
+            safe_redirect($redirect);
         } else {
-            header("Location: ../html/user-login.php?error=invalid");
-            exit;
+            safe_redirect('../html/user-login.php?error=invalid');
         }
     } catch (\PDOException $e) {
-        header("Location: ../html/user-login.php?error=db");
-        exit;
+        safe_redirect('../html/user-login.php?error=db');
     }
 } else {
-    header("Location: ../html/user-login.php");
-    exit;
+    safe_redirect('../html/user-login.php');
 }
-?>

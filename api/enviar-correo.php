@@ -1,5 +1,6 @@
 <?php
 // api/enviar-correo.php
+ob_start();
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'conexion.php';
 header("Content-Type: application/json; charset=UTF-8");
@@ -39,10 +40,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Generar Código Alfanumérico
             $codigo_acceso = 'TRC-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
 
-            // Insertar en la base de datos la reserva real
-            $usuario_id = $_SESSION['user_id'] ?? null;
-            $insertStmt = $pdo->prepare("INSERT INTO reservas (pista, fecha, hora_inicio, hora_fin, estado, usuario_nombre, usuario_email, dni, telefono, precio_total, codigo_acceso, usuario_id, fecha_registro) VALUES (?, ?, ?, ?, 'reservada', ?, ?, ?, ?, ?, ?, ?, NOW())");
-            $insertStmt->execute([$pista, $fecha, $hora_inicio, $hora_fin, $nombre, $to, $dni, $telefono, $precio_total, $codigo_acceso, $usuario_id]);
+            // Detectar qué columnas existen en la tabla reservas para máxima compatibilidad
+            $columnsResult = $pdo->query("SHOW COLUMNS FROM reservas");
+            $existingColumns = [];
+            while ($col = $columnsResult->fetch()) {
+                $existingColumns[] = $col['Field'];
+            }
+
+            // Construir INSERT dinámico según las columnas que existan
+            $insertCols = ['pista', 'fecha', 'hora_inicio', 'hora_fin', 'estado', 'usuario_nombre', 'usuario_email', 'codigo_acceso'];
+            $insertVals = [$pista, $fecha, $hora_inicio, $hora_fin, 'reservada', $nombre, $to, $codigo_acceso];
+
+            if (in_array('dni', $existingColumns)) {
+                $insertCols[] = 'dni';
+                $insertVals[] = $dni;
+            }
+            if (in_array('telefono', $existingColumns)) {
+                $insertCols[] = 'telefono';
+                $insertVals[] = $telefono;
+            }
+            if (in_array('precio_total', $existingColumns)) {
+                $insertCols[] = 'precio_total';
+                $insertVals[] = $precio_total;
+            }
+            if (in_array('usuario_id', $existingColumns)) {
+                $insertCols[] = 'usuario_id';
+                $insertVals[] = $_SESSION['user_id'] ?? null;
+            }
+            if (in_array('fecha_registro', $existingColumns)) {
+                $insertCols[] = 'fecha_registro';
+                $insertVals[] = date('Y-m-d H:i:s');
+            }
+
+            $placeholders = implode(', ', array_fill(0, count($insertCols), '?'));
+            $colsStr = implode(', ', $insertCols);
+            $insertStmt = $pdo->prepare("INSERT INTO reservas ($colsStr) VALUES ($placeholders)");
+            $insertStmt->execute($insertVals);
 
             // Generar URL del QR dinámico
             $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($codigo_acceso);
@@ -88,18 +121,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
             $headers .= "From: reservas@tarancon.es" . "\r\n"; 
 
-            $sent = mail($to, $subject, $message, $headers);
+            $sent = @mail($to, $subject, $message, $headers);
             
             if ($sent) {
                 http_response_code(200);
                 echo json_encode(["status" => "success", "message" => "Reserva creada y correo enviado.", "codigo" => $codigo_acceso]);
             } else {
-                http_response_code(500);
-                echo json_encode(["status" => "error", "message" => "Pista reservada en BBDD, pero tu entorno XAMPP no tiene configurado el servidor SMTP para enviar el correo real.", "codigo" => $codigo_acceso]);
+                // La reserva SÍ se guardó en BBDD, solo falla el envío de correo (normal en XAMPP local)
+                http_response_code(200);
+                echo json_encode(["status" => "success", "message" => "Reserva creada correctamente. El correo no se pudo enviar (SMTP no configurado en entorno local).", "codigo" => $codigo_acceso]);
             }
         } catch (\PDOException $e) {
             http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Error de BBDD al procesar la reserva. Inténtelo más tarde."]);
+            echo json_encode(["status" => "error", "message" => "Error de BBDD al procesar la reserva: " . $e->getMessage()]);
         }
     } else {
         http_response_code(400);
@@ -109,4 +143,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     http_response_code(405);
     echo json_encode(["status" => "error", "message" => "Método no permitido."]);
 }
-?>

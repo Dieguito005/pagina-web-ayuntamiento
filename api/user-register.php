@@ -1,7 +1,25 @@
 <?php
 // api/user-register.php — Procesa el registro de usuarios públicos
+ob_start();
 session_start();
 require_once 'conexion.php';
+
+/**
+ * Función de redirección robusta con fallback HTML/JS
+ */
+function safe_redirect($url) {
+    if (!headers_sent()) {
+        header("Location: " . $url);
+        ob_end_flush();
+        exit;
+    }
+    ob_end_clean();
+    echo '<!DOCTYPE html><html><head>';
+    echo '<meta http-equiv="refresh" content="0;url=' . htmlspecialchars($url) . '">';
+    echo '<script>window.location.href="' . htmlspecialchars($url, ENT_QUOTES) . '";</script>';
+    echo '</head><body><p>Redirigiendo...</p></body></html>';
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = trim($_POST['nombre'] ?? '');
@@ -42,8 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!empty($errors)) {
-        header("Location: ../html/user-registro.php?error=" . implode(',', $errors));
-        exit;
+        safe_redirect('../html/user-registro.php?error=' . implode(',', $errors));
     }
 
     try {
@@ -51,8 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $checkStmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ? LIMIT 1");
         $checkStmt->execute([$email]);
         if ($checkStmt->fetch()) {
-            header("Location: ../html/user-registro.php?error=email_existe");
-            exit;
+            safe_redirect('../html/user-registro.php?error=email_existe');
         }
 
         // Hashear contraseña e insertar
@@ -71,19 +87,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_telefono'] = $telefono ?: null;
 
         // Redirigir al destino original o a home
-        $redirect = $_POST['redirect'] ?? '../html/home.php';
+        $redirect = !empty($_POST['redirect']) ? $_POST['redirect'] : '../html/home.php';
         if (strpos($redirect, '://') !== false || strpos($redirect, '//') === 0) {
             $redirect = '../html/home.php';
         }
-        header("Location: " . $redirect);
-        exit;
+        safe_redirect($redirect);
 
     } catch (\PDOException $e) {
-        header("Location: ../html/user-registro.php?error=db");
-        exit;
+        safe_redirect('../html/user-registro.php?error=db');
     }
 } else {
-    header("Location: ../html/user-registro.php");
-    exit;
+    safe_redirect('../html/user-registro.php');
 }
-?>

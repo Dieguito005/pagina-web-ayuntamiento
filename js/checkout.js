@@ -120,23 +120,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     const response = await fetch('../api/enviar-correo.php', { method: 'POST', body: formData });
                     const result = await response.json();
 
-                    if (response.ok && result.status === 'success') {
+                    if (result.status === 'success' && result.codigo) {
+                        // Reserva creada correctamente (correo enviado o no)
                         displayEmail.textContent = userEmail;
-                        displayCode.textContent = result.codigo; // El código alfanumérico generado en PHP
-
-                        formView.classList.add('hidden');
-                        successView.classList.remove('hidden');
-
-                        localStorage.removeItem('bookingData');
-                    } else if (response.status === 500 && result.codigo) {
-                        // Respondió 500 por fallo de SMTP pero guardó la reserva
-                        displayEmail.textContent = "Error SMTP (Correo no enviado pero Reserva Confirmada)";
                         displayCode.textContent = result.codigo;
 
                         formView.classList.add('hidden');
                         successView.classList.remove('hidden');
 
                         localStorage.removeItem('bookingData');
+
+                        // ── Copiar al portapapeles al hacer clic en el code-box ──
+                        const codeBox   = document.getElementById('code-box-copy');
+                        const copyIcon  = document.getElementById('copy-icon');
+                        const copyText  = document.getElementById('copy-text');
+
+                        if (codeBox) {
+                            codeBox.style.cursor = 'pointer';
+                            codeBox.addEventListener('click', () => {
+                                const code = result.codigo;
+                                navigator.clipboard.writeText(code).then(() => {
+                                    // Feedback visual de éxito
+                                    if (copyIcon)  copyIcon.textContent  = '✅';
+                                    if (copyText)  copyText.textContent  = '¡Copiado!';
+                                    codeBox.classList.add('copied');
+                                    setTimeout(() => {
+                                        if (copyIcon) copyIcon.textContent = '📋';
+                                        if (copyText) copyText.textContent = 'Haz clic para copiar';
+                                        codeBox.classList.remove('copied');
+                                    }, 2000);
+                                }).catch(() => {
+                                    // Fallback: seleccionar el texto manualmente
+                                    const range = document.createRange();
+                                    range.selectNodeContents(displayCode);
+                                    const sel = window.getSelection();
+                                    sel.removeAllRanges();
+                                    sel.addRange(range);
+                                });
+                            });
+                        }
                     } else {
                         alert("Error al procesar la reserva: " + (result.message || "La pista ya no está disponible."));
                         submitBtn.disabled = false;
@@ -144,8 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         spinner.classList.add('hidden');
                     }
                 } catch (error) {
-                    alert('Error de conexión con el servidor.');
-                    console.error(error);
+                    console.error('Error detallado:', error);
+                    alert('Error de conexión con el servidor. Comprueba que XAMPP (Apache y MySQL) están encendidos y vuelve a intentarlo.');
                     submitBtn.disabled = false;
                     btnText.classList.remove('hidden');
                     spinner.classList.add('hidden');
