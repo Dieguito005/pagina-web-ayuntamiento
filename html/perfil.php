@@ -23,8 +23,27 @@ try {
 } catch (\PDOException $e) { $reservas = []; }
 
 $hoy = date('Y-m-d');
-$proximasReservas = array_filter($reservas, fn($r) => $r['fecha'] >= $hoy && $r['estado'] === 'reservada');
-$historialReservas = array_filter($reservas, fn($r) => $r['fecha'] < $hoy || $r['estado'] !== 'reservada');
+$horaActual = date('H:i');
+
+$proximasReservas = array_filter($reservas, function($r) use ($hoy, $horaActual) {
+    if ($r['estado'] !== 'reservada') return false;
+    if ($r['fecha'] > $hoy) return true;
+    if ($r['fecha'] === $hoy) {
+        $horaInicioR = substr($r['hora_inicio'], 0, 5);
+        return $horaActual < $horaInicioR;
+    }
+    return false;
+});
+
+$historialReservas = array_filter($reservas, function($r) use ($hoy, $horaActual) {
+    if ($r['estado'] !== 'reservada') return true;
+    if ($r['fecha'] < $hoy) return true;
+    if ($r['fecha'] === $hoy) {
+        $horaInicioR = substr($r['hora_inicio'], 0, 5);
+        return $horaActual >= $horaInicioR;
+    }
+    return false;
+});
 
 $totalReservas      = count($reservas);
 $reservasActivas    = count(array_filter($reservas, fn($r) => $r['estado'] === 'reservada'));
@@ -92,6 +111,13 @@ $totalGastado       = array_sum(array_map(fn($r) => (float)($r['precio_total'] ?
             font-size: 0.78rem; font-weight: 600; margin-top: 0.3rem; margin-left: 0.4rem;
         }
         .profile-actions { display: flex; flex-direction: column; gap: 0.6rem; align-items: flex-end; }
+        .btn-home-profile {
+            background: white; color: #0b1c3c; border: 1px solid #ccc;
+            padding: 0.55rem 1.1rem; border-radius: 8px; text-decoration: none;
+            font-size: 0.88rem; font-weight: 600; cursor: pointer;
+            transition: all 0.25s; text-align: center; white-space: nowrap;
+        }
+        .btn-home-profile:hover { background: #f4f6f8; border-color: #0b1c3c; }
         .btn-edit-profile {
             background: linear-gradient(135deg, #d15615, #a44310);
             color: white; border: none;
@@ -208,6 +234,8 @@ $totalGastado       = array_sum(array_map(fn($r) => (float)($r['precio_total'] ?
             font-size: 0.78rem; font-weight: 600; display: inline-block;
         }
         .badge.reservada       { background: #e8f5e9; color: #2e7d32; }
+        .badge.en_curso        { background: #e3f2fd; color: #1565c0; }
+        .badge.terminada       { background: #f5f5f5; color: #757575; }
         .badge.cancelada       { background: #ffebee; color: #c62828; }
         .badge.bloqueada_admin { background: #fff3e0; color: #ef6c00; }
 
@@ -346,6 +374,7 @@ $totalGastado       = array_sum(array_map(fn($r) => (float)($r['precio_total'] ?
                     <?php endif; ?>
                 </div>
                 <div class="profile-actions">
+                    <a href="home.php" class="btn-home-profile">🏠 Ir al inicio</a>
                     <button class="btn-edit-profile" id="btn-open-edit">✏️ Editar datos</button>
                     <a href="../api/user-logout.php" class="btn-logout-profile">Cerrar sesión</a>
                 </div>
@@ -401,11 +430,11 @@ $totalGastado       = array_sum(array_map(fn($r) => (float)($r['precio_total'] ?
             <!-- ── Historial de Reservas ── -->
             <h3 class="section-title">📋 Historial de Reservas</h3>
 
-            <?php if (empty($reservas)): ?>
+            <?php if (empty($historialReservas)): ?>
                 <div class="history-table-container">
                     <div class="empty-state">
                         <div class="icon">🏸</div>
-                        <p>Aún no has realizado ninguna reserva.</p>
+                        <p>Aún no hay reservas en tu historial.</p>
                         <p><a href="home.php">¡Reserva tu primera pista ahora!</a></p>
                     </div>
                 </div>
@@ -424,21 +453,36 @@ $totalGastado       = array_sum(array_map(fn($r) => (float)($r['precio_total'] ?
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($reservas as $r):
+                            <?php foreach ($historialReservas as $r):
                                 $fechaPistaFmt  = date('d/m/Y', strtotime($r['fecha']));
                                 $fechaReservaFmt = !empty($r['fecha_registro'])
                                     ? date('d/m/Y', strtotime($r['fecha_registro']))
                                     : '—';
                                 $horaInicio  = substr($r['hora_inicio'], 0, 5);
                                 $horaFin     = substr($r['hora_fin'],   0, 5);
-                                $estadoLabel = $r['estado'] === 'bloqueada_admin' ? 'Bloqueo Admin' : ucfirst($r['estado']);
+                                
+                                $esHoy = ($r['fecha'] === $hoy);
+                                $estadoLabel = ucfirst($r['estado']);
+                                $badgeClass = $r['estado'];
+                                
+                                if ($r['estado'] === 'reservada') {
+                                    if ($esHoy && $horaActual >= $horaInicio && $horaActual < $horaFin) {
+                                        $estadoLabel = 'En curso';
+                                        $badgeClass = 'en_curso';
+                                    } elseif ($r['fecha'] < $hoy || ($esHoy && $horaActual >= $horaFin)) {
+                                        $estadoLabel = 'Terminada';
+                                        $badgeClass = 'terminada';
+                                    }
+                                } elseif ($r['estado'] === 'bloqueada_admin') {
+                                    $estadoLabel = 'Bloqueo Admin';
+                                }
                             ?>
                             <tr>
                                 <td><strong><?= $fechaPistaFmt ?></strong></td>
                                 <td><span style="color:#888; font-size:0.88rem;"><?= $fechaReservaFmt ?></span></td>
                                 <td><?= htmlspecialchars($r['pista']) ?></td>
                                 <td><?= $horaInicio ?> – <?= $horaFin ?></td>
-                                <td><span class="badge <?= $r['estado'] ?>"><?= $estadoLabel ?></span></td>
+                                <td><span class="badge <?= $badgeClass ?>"><?= $estadoLabel ?></span></td>
                                 <td>
                                     <?php if (!empty($r['codigo_acceso'])): ?>
                                         <span class="code-copy js-copy-code" data-code="<?= htmlspecialchars($r['codigo_acceso']) ?>" title="Haz clic para copiar">
