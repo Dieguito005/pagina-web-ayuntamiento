@@ -16,10 +16,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Tabs y Modos
     const tabBuscador = document.getElementById('tab-buscador');
+    const tabConsultas = document.getElementById('tab-consultas');
     const tabBloqueos = document.getElementById('tab-bloqueos');
     const tabPrecios = document.getElementById('tab-precios');
     const titlePage = document.getElementById('admin-page-title');
-    let currentMode = 'bloqueos'; // 'bloqueos', 'precios' o 'buscador'
+    let currentMode = 'bloqueos'; // 'bloqueos', 'precios', 'buscador' o 'consultas'
+
+    // Elementos Consultas
+    const viewConsultas = document.getElementById('view-consultas');
+    const formConsultas = document.getElementById('form-consultas');
+    const tablaConsultasBody = document.getElementById('tabla-consultas-body');
+    let consultasActuales = [];
 
     // Elementos del Modal de Precios
     const priceModal = document.getElementById('price-modal');
@@ -85,22 +92,44 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             currentMode = 'buscador';
             tabBuscador.classList.add('active');
+            tabConsultas?.classList.remove('active');
             tabBloqueos.classList.remove('active');
             tabPrecios.classList.remove('active');
             titlePage.textContent = 'Buscador e Historial';
             viewBuscador.style.display = 'block';
             viewBloqueos.style.display = 'none';
+            if (viewConsultas) viewConsultas.style.display = 'none';
         });
+
+        if (tabConsultas) {
+            tabConsultas.addEventListener('click', (e) => {
+                e.preventDefault();
+                currentMode = 'consultas';
+                tabConsultas.classList.add('active');
+                tabBuscador.classList.remove('active');
+                tabBloqueos.classList.remove('active');
+                tabPrecios.classList.remove('active');
+                titlePage.textContent = 'Buzón de Consultas';
+                viewConsultas.style.display = 'block';
+                viewBuscador.style.display = 'none';
+                viewBloqueos.style.display = 'none';
+                if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
+                // Trigger form submission
+                if (formConsultas) formConsultas.dispatchEvent(new Event('submit'));
+            });
+        }
 
         tabBloqueos.addEventListener('click', (e) => {
             e.preventDefault();
             currentMode = 'bloqueos';
             tabBloqueos.classList.add('active');
+            tabConsultas?.classList.remove('active');
             tabPrecios.classList.remove('active');
             tabBuscador.classList.remove('active');
             titlePage.textContent = 'Gestión de Bloqueos';
             viewBloqueos.style.display = 'block';
             viewBuscador.style.display = 'none';
+            if (viewConsultas) viewConsultas.style.display = 'none';
             if (actionBarBloqueos) actionBarBloqueos.style.display = 'flex';
             loadSchedule();
         });
@@ -109,11 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             currentMode = 'precios';
             tabPrecios.classList.add('active');
+            tabConsultas?.classList.remove('active');
             tabBloqueos.classList.remove('active');
             tabBuscador.classList.remove('active');
             titlePage.textContent = 'Edición de Precios';
             viewBloqueos.style.display = 'block';
             viewBuscador.style.display = 'none';
+            if (viewConsultas) viewConsultas.style.display = 'none';
             if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
             loadSchedule();
         });
@@ -543,4 +574,129 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ── Logica Consultas ──
+    if (formConsultas) {
+        formConsultas.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const buscar = document.getElementById('c-buscar').value.trim();
+            const tipo = document.getElementById('c-tipo').value;
+            const estado = document.getElementById('c-estado').value;
+            const fechaInicio = document.getElementById('c-fecha-inicio').value;
+            
+            let query = `../api/admin-consultas.php?action=get`;
+            if (buscar) query += `&search=${encodeURIComponent(buscar)}`;
+            if (tipo) query += `&tipo=${encodeURIComponent(tipo)}`;
+            if (estado) query += `&estado=${encodeURIComponent(estado)}`;
+            if (fechaInicio) query += `&fecha_inicio=${encodeURIComponent(fechaInicio)}`;
+            
+            tablaConsultasBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Buscando...</td></tr>';
+            
+            try {
+                const resp = await fetch(query);
+                const data = await resp.json();
+                
+                if (resp.ok && data.success) {
+                    consultasActuales = data.data;
+                    renderTableConsultas(consultasActuales);
+                } else {
+                    tablaConsultasBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Error: ${data.message}</td></tr>`;
+                }
+            } catch (err) {
+                tablaConsultasBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Error de conexión.</td></tr>`;
+            }
+        });
+    }
+
+    function renderTableConsultas(data) {
+        if (data.length === 0) {
+            tablaConsultasBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No hay consultas.</td></tr>';
+            return;
+        }
+
+        tablaConsultasBody.innerHTML = data.map(c => `
+            <tr>
+                <td><strong>${c.fecha_creacion.substring(0,10).split('-').reverse().join('/')}</strong></td>
+                <td>${c.nombre} ${c.apellidos}</td>
+                <td><small>${c.email}<br>${c.dni} - TEL: ${c.telefono}</small></td>
+                <td><span class="badge" style="background-color:#e3f2fd; color:#1565c0;">${c.tipo_consulta.toUpperCase()}</span></td>
+                <td>
+                    <span class="badge ${c.estado === 'resuelta' ? 'reservada' : 'cancelada'}">${c.estado.toUpperCase()}</span>
+                </td>
+                <td>
+                    <button class="btn-sm btn-view" onclick="verDetalleConsulta(${c.id})">🔍 Leer</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.verDetalleConsulta = (id) => {
+        const c = consultasActuales.find(x => x.id == id);
+        if (!c) return;
+        
+        detailsModalContent.innerHTML = `
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div><strong>ID Consulta:</strong> #${c.id}</div>
+                <div><strong>Fecha:</strong> ${c.fecha_creacion}</div>
+                <div><strong>Remitente:</strong> ${c.nombre} ${c.apellidos}</div>
+                <div><strong>DNI:</strong> ${c.dni}</div>
+                <div><strong>Email:</strong> ${c.email}</div>
+                <div><strong>Teléfono:</strong> ${c.telefono}</div>
+                <div><strong>Tema:</strong> ${c.tipo_consulta}</div>
+                <div><strong>Estado:</strong> <span class="badge ${c.estado === 'resuelta' ? 'reservada' : 'cancelada'}">${c.estado.toUpperCase()}</span></div>
+            </div>
+            <hr style="border:0; border-top:1px solid #eee; margin:1rem 0;">
+            <p style="margin-bottom:0.5rem; color:#d15615; font-weight:bold;">Mensaje Original:</p>
+            <div style="background-color: #f9f9f9; padding: 1rem; border-radius: 4px; white-space: pre-wrap;">${c.descripcion}</div>
+        `;
+
+        const modalActions = document.getElementById('details-modal-actions');
+        modalActions.innerHTML = '';
+
+        if (c.estado !== 'resuelta') {
+            const btnResolve = document.createElement('button');
+            btnResolve.className = 'btn-sm';
+            btnResolve.style.backgroundColor = '#2e7d32';
+            btnResolve.style.color = 'white';
+            btnResolve.style.padding = '0.6rem 1.2rem';
+            btnResolve.style.marginRight = '0.5rem';
+            btnResolve.textContent = 'Marcar como Resuelta';
+            btnResolve.onclick = () => resolverConsulta(c.id);
+            modalActions.appendChild(btnResolve);
+        }
+
+        const btnClose = document.createElement('button');
+        btnClose.className = 'btn-sm';
+        btnClose.style.backgroundColor = '#ccc';
+        btnClose.style.padding = '0.6rem 1.2rem';
+        btnClose.textContent = 'Cerrar';
+        btnClose.onclick = () => detailsModal.style.display = 'none';
+        modalActions.appendChild(btnClose);
+
+        detailsModal.style.display = 'flex';
+    };
+
+    window.resolverConsulta = async (id) => {
+        if (!confirm('¿Marcar consulta como resuelta? (Esto enviará un email al usuario informándole).')) return;
+        
+        try {
+            const fd = new FormData();
+            fd.append('id', id);
+
+            const resp = await fetch('../api/admin-consultas.php?action=resolve', {
+                method: 'POST',
+                body: fd
+            });
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                showToast('Consulta marcada como resuelta', 'success');
+                detailsModal.style.display = 'none';
+                formConsultas.dispatchEvent(new Event('submit'));
+            } else {
+                showToast(data.message || 'Error al resolver', 'error');
+            }
+        } catch (err) {
+            showToast('Error de red', 'error');
+        }
+    };
 });

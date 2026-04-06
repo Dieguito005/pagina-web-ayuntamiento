@@ -1,5 +1,3 @@
-﻿const { maxHeaderSize } = require("node:http");
-
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Referencias a elementos
     const contactForm = document.getElementById('contactForm');
@@ -27,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const validateField = (input) => {
         let isError = false;
 
+        // Skip honeypot
+        if (input.id === 'honeypot') return true;
+
         // Validaciones específicas
         if (input.value.trim() === '') {
             isError = true;
@@ -36,6 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (input.type === 'tel') {
             const telRegex = /^[0-9+\s-]{9,}$/; // Al menos 9 caracteres, permitiendo '+', espacios y '-'
             if (!telRegex.test(input.value)) isError = true;
+        } else if (input.name === 'dni') {
+            // Validación muy básica de DNI (solo comprueba que haya algo de formato, la validación real backend)
+            const dniRegex = /^[0-9]{8}[A-Z]$/i;
+            const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/i;
+            if (!dniRegex.test(input.value) && !nieRegex.test(input.value)) isError = true;
         }
 
         showError(input, isError);
@@ -44,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Validar al perder el foco (onblur)
     inputs.forEach(input => {
+        if (input.id === 'honeypot') return;
         input.addEventListener('blur', () => {
             validateField(input);
         });
@@ -59,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Limpiar todos los errores al restablecer
     const clearAllErrors = () => {
         inputs.forEach(input => {
+            if (input.id === 'honeypot') return;
             showError(input, false);
         });
     };
@@ -71,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Validar al enviar
-    contactForm.addEventListener('submit', (e) => {
+    contactForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         let isFormValid = true;
 
@@ -81,19 +89,44 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Honeypot check prevent submission entirely if filled out
+        const honeypot = document.getElementById('honeypot');
+        if (honeypot && honeypot.value.trim() !== '') {
+            // Silently pretend it worked for bots
+            contactForm.reset();
+            return;
+        }
+
         if (isFormValid) {
-            // Simulamos el envío
             const btnSubmit = document.getElementById('btnSubmitContact');
             const originalText = btnSubmit.textContent;
             btnSubmit.textContent = 'Enviando...';
             btnSubmit.disabled = true;
-            setTimeout(() => {
-                alert('Mensaje enviado correctamente. Nos pondremos en contacto contigo pronto.');
+            
+            try {
+                const formData = new FormData(contactForm);
+                const response = await fetch('../api/guardar-consulta.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Mensaje enviado correctamente. Nos pondremos en contacto contigo pronto.');
+                    contactForm.reset();
+                    clearAllErrors();
+                } else {
+                    alert('Error: ' + (result.message || 'Ha ocurrido un problema al enviar el mensaje.'));
+                }
+                
+            } catch (error) {
+                console.error("Error submitting contact form:", error);
+                alert('Error de conexión al enviar el mensaje. Inténtelo más tarde.');
+            } finally {
                 btnSubmit.textContent = originalText;
                 btnSubmit.disabled = false;
-                contactForm.reset();
-                clearAllErrors();
-            }, 1000);
+            }
         }
     });
 });

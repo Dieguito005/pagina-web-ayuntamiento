@@ -264,6 +264,7 @@ if (!isset($_SESSION['admin_id'])) {
             
             <nav class="admin-nav">
                 <a href="#" id="tab-buscador">🔍 Buscador e Historial</a>
+                <a href="#" id="tab-consultas">📬 Buzón de Consultas</a>
                 <a href="#" id="tab-bloqueos" class="active">📅 Calendario Bloqueos</a>
                 <a href="#" id="tab-precios">💰 Editar Precios</a>
             </nav>
@@ -360,6 +361,57 @@ if (!isset($_SESSION['admin_id'])) {
                     </table>
                 </div>
             </div>
+
+            <!-- VIEW: Buzón de Consultas -->
+            <div id="view-consultas" style="display:none;">
+                <form id="form-consultas" class="search-filters">
+                    <div class="control-group">
+                        <label>DNI / Correo</label>
+                        <input type="text" id="c-buscar" placeholder="Buscar usuario...">
+                    </div>
+                    <div class="control-group">
+                        <label>Tema</label>
+                        <select id="c-tipo">
+                            <option value="">Todos</option>
+                            <option value="reserva">Reservas</option>
+                            <option value="tarifas">Tarifas</option>
+                            <option value="quejas">Quejas</option>
+                            <option value="otros">Otros</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Estado</label>
+                        <select id="c-estado">
+                            <option value="pendiente">Pendiente</option>
+                            <option value="resuelta">Resuelta</option>
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Fecha Desde</label>
+                        <input type="date" id="c-fecha-inicio">
+                    </div>
+                    <button type="submit" class="btn-search">Buscar Consultas</button>
+                </form>
+
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Remitente</th>
+                                <th>DNI / Datos</th>
+                                <th>Tema</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-consultas-body">
+                            <tr><td colspan="6" style="text-align:center;">Cargando consultas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </main>
     </div>
     
@@ -398,7 +450,7 @@ if (!isset($_SESSION['admin_id'])) {
             <div id="details-modal-content" style="line-height:1.6; color:#333; font-size:0.95rem;">
                 <!-- Contenido generado dinámicamente -->
             </div>
-            <div style="margin-top:1.5rem; text-align:right;">
+            <div style="margin-top:1.5rem; text-align:right;" id="details-modal-actions">
                 <button id="btn-close-details2" class="btn-sm" style="background:#ccc; padding:0.6rem 1.2rem;">Cerrar</button>
             </div>
         </div>
@@ -408,7 +460,7 @@ if (!isset($_SESSION['admin_id'])) {
         // Pasar variables desde PHP u ocultarlo en variables globales si hace falta
         const defaultBasePrice = 4.00;
     </script>
-    <script src="../js/admin.js?v=1.5.0"></script>
+    <script src="../js/admin.js?v=1.9.0"></script>
 </body>
 </html>
 

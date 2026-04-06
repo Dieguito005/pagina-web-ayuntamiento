@@ -1,4 +1,18 @@
-﻿<!DOCTYPE html>
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$isUserLoggedIn = isset($_SESSION['user_id']);
+$formNombre = $isUserLoggedIn ? htmlspecialchars($_SESSION['user_nombre'] ?? '') : '';
+$formApellidos = $isUserLoggedIn ? htmlspecialchars($_SESSION['user_apellidos'] ?? '') : '';
+$formEmail = $isUserLoggedIn ? htmlspecialchars($_SESSION['user_email'] ?? '') : '';
+$formTelefono = $isUserLoggedIn ? htmlspecialchars($_SESSION['user_telefono'] ?? '') : '';
+$formDni = $isUserLoggedIn ? htmlspecialchars($_SESSION['user_dni'] ?? '') : '';
+
+// Optional readonly attribute if we want to lock it
+$readonlyAttr = ''; // $isUserLoggedIn ? 'readonly style="background-color: #f5f5f5;"' : '';
+?>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -8,7 +22,7 @@
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/contacto.css">
     <title>Contacto | Alquileres Tarancón</title>
-    <script src="../js/contacto.js" defer></script>
+    <script src="../js/contacto.js?v=1.9.0" defer></script>
     <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
 </head>
@@ -26,27 +40,38 @@
                 </p>
                 
                 <form id="contactForm" class="contact-form" novalidate>
+                    <div class="form-group" style="display:none;" aria-hidden="true">
+                        <label for="honeypot">No rellenar si eres humano</label>
+                        <input type="text" id="honeypot" name="honeypot" tabindex="-1" autocomplete="off">
+                    </div>
+
                     <div class="form-group">
                         <label for="contactNombre">Nombre *</label>
-                        <input type="text" id="contactNombre" name="nombre" placeholder="Ej. Juan" required>
+                        <input type="text" id="contactNombre" name="nombre" placeholder="Ej. Juan" value="<?= $formNombre ?>" <?= $readonlyAttr ?> required>
                         <span class="error-msg" id="errorNombre">El nombre es obligatorio.</span>
                     </div>
                     
                     <div class="form-group">
                         <label for="contactApellidos">Apellidos *</label>
-                        <input type="text" id="contactApellidos" name="apellidos" placeholder="Ej. Pérez García" required>
+                        <input type="text" id="contactApellidos" name="apellidos" placeholder="Ej. Pérez García" value="<?= $formApellidos ?>" <?= $readonlyAttr ?> required>
                         <span class="error-msg" id="errorApellidos">Los apellidos son obligatorios.</span>
                     </div>
                     
                     <div class="form-group">
+                        <label for="contactDni">DNI / NIE *</label>
+                        <input type="text" id="contactDni" name="dni" placeholder="Ej. 12345678Z" value="<?= $formDni ?>" <?= $readonlyAttr ?> required>
+                        <span class="error-msg" id="errorDni">El DNI es obligatorio y debe tener formato válido.</span>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="contactEmail">Correo Electrónico *</label>
-                        <input type="email" id="contactEmail" name="email" placeholder="ejemplo@correo.com" required>
+                        <input type="email" id="contactEmail" name="email" placeholder="ejemplo@correo.com" value="<?= $formEmail ?>" <?= $readonlyAttr ?> required>
                         <span class="error-msg" id="errorEmail">Ingrese un correo electrónico válido.</span>
                     </div>
                     
                     <div class="form-group">
                         <label for="contactTelefono">Número de Teléfono *</label>
-                        <input type="tel" id="contactTelefono" name="telefono" placeholder="Ej. 600123456" required>
+                        <input type="tel" id="contactTelefono" name="telefono" placeholder="Ej. 600123456" value="<?= $formTelefono ?>" <?= $readonlyAttr ?> required>
                         <span class="error-msg" id="errorTelefono">Ingrese un teléfono válido (al menos 9 dígitos).</span>
                     </div>
                     

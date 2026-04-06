@@ -6,11 +6,24 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
-## [1.8.0] - 31-03-2026
+## [1.9.0] - 06-04-2026
 
 ### Añadido 🚀
-- **Sección "Próximas Reservas"**: Nueva sección visual destacada en el perfil que muestra únicamente las reservas con fecha futura y estado activo. Cada tarjeta incluye instalación, fecha, horario, código de acceso y una **cuenta atrás dinámica** ("¡Hoy!", "Mañana", "En N días") calculada automáticamente.
-- **Edición de credenciales (modal tabbed)**: Nuevo botón "✏️ Editar datos" en la cabecera del perfil que abre un modal con tres pestañas:
+- **Portal de Consultas y Contacto Dinámico**: El formulario de contacto (`contacto.php`) ahora está conectado de forma real a la base de datos para almacenar y gestionar de forma centralizada todas las consultas de los usuarios.
+- **Auto-completado Inteligente en Contacto**: Si el ciudadano tiene iniciada sesión con su cuenta, los campos personales del formulario (Nombre, Apellidos, DNI, Email, Teléfono) se pre-rellenan automáticamente, reduciendo tiempo y garantizando la consistencia de datos (la sesión la auto-verifica PHP y la inyecta al cargar la vista).
+- **Nuevo panel Admin `Buzón de Consultas`**: Se ha creado un nuevo bloque interactivo dentro del panel administrativo (`admin-dashboard.php`) exclusivo para leer las peticiones de soporte.
+  - **Filtros Personalizados**: Búsquedas combinadas por DNI o Correo, "Tema/Motivo", y estado de resolución.
+  - **Historial Instantáneo**: Las peticiones entran a estado "Pendiente" y pueden expandirse para leer el mensaje al completo en formato emergente (modal).
+- **Control de Estados y Correos Automatizados**: Los administradores disponen de un botón rotulado "Marcar como Resuelta" en cada ticket detallado. Su pulsación manda silenciosamente una notificación por correo al ciudadano confirmándole que el problema expuesto detalladamente ha sido solventado con éxito (función sujeta a activación SMTP en produccion `enviar-correo-func.php`).
+- **Nuevas APIs de Infraestructura**: 
+  - `api/guardar-consulta.php` – Recibe y sanitiza campos POST, inyecta Honeypots anti-spam para envíos no autorizados y bloqueos, e inserta a BBDD de forma segura mediante bindings `PDO`.
+  - `api/admin-consultas.php` – Validador unificado de sesión de administrador para obtener listados JSON de incidencias o marcar "resoluciones" seguras.
+- **Protección Antispam Básica**: Añadido un campo honeypot invisible para humanos pero detectable por bots; previniendo el relleno y automatización masiva a la base de datos sin molestar nunca con CAPTCHAs a los usuarios reales de Tarancón.
+- **Script de Generación en Caliente**: Creado un archivo instalador `setup_db_consultas.php` para actualizar los esquemas relacionales `MySQL` de manera programática en cualquier entorno.
+
+---
+
+## [1.8.0] - 31-03-2026
   - 📞 **Teléfono** — Editable sin cierre de sesión. Se actualiza en BBDD y refresca la página.
   - 📧 **Email** — Requiere confirmar el nuevo email dos veces. Actualiza BBDD y cierra sesión automáticamente, forzando re-login con el nuevo correo.
   - 🔑 **Contraseña** — Requiere introducir la contraseña actual para confirmar identidad. Genera nuevo hash bcrypt, actualiza BBDD y cierra sesión.
