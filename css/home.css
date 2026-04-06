@@ -513,3 +513,54 @@ a:focus-visible, button:focus-visible {
         transform: translateX(-50%);
     }
 }
+
+/* ==========================================================
+   === SISTEMA DE ANUNCIOS ==================================
+   ========================================================== */
+#anuncios-container {
+    width: 100%;
+    z-index: 999;
+}
+
+.anuncio-banner {
+    position: relative;
+    padding: 1rem 3rem 1rem 1.5rem;
+    color: white;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    animation: slideDown 0.5s ease-out;
+}
+
+.anuncio-banner h4 {
+    margin: 0 0 0.3rem 0;
+    font-size: 1.1rem;
+}
+
+.anuncio-banner p {
+    margin: 0;
+}
+
+.btn-close-anuncio {
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+.btn-close-anuncio:hover {
+    opacity: 1;
+}
+
+.anuncio-info { background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); }
+.anuncio-aviso { background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%); }
+.anuncio-peligro { background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); }
+.anuncio-exito { background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%); }

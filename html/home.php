@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -7,7 +7,7 @@
     <meta name="description"
         content="Reserva tus pistas de pádel y tenis en el Ayuntamiento de Tarancón. Instalaciones modernas y accesibles.">
     <link rel="preload" href="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" as="image">
-    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/home.css?v=2.0.0">
     <title>Alquileres Tarancón</title>
     <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
@@ -16,6 +16,7 @@
 <body>
 
     <?php include '../includes/header.php'; ?>
+    <div id="anuncios-container"></div>
 
     <main class="main-content">
         <!-- SECCIÓN BANNER HERO -->
@@ -79,12 +80,51 @@
             document.getElementById('padel-options').style.display = 'block';
         }
 
+        // Sistema dinámico de anuncios
+        async function fetchAnuncios() {
+            const container = document.getElementById('anuncios-container');
+            if(!container) return;
+
+            try {
+                const resp = await fetch('../api/get-anuncios.php');
+                const result = await resp.json();
+
+                if (result.success && result.data.length > 0) {
+                    let html = '';
+                    result.data.forEach(a => {
+                        let icon = 'ℹ️';
+                        if(a.tipo === 'aviso') icon = '⚠️';
+                        if(a.tipo === 'peligro') icon = '⛔';
+                        if(a.tipo === 'exito') icon = '✅';
+
+                        html += `
+                        <div class="anuncio-banner anuncio-${a.tipo}" id="anuncio-${a.id}">
+                            <div>
+                                <h4>${icon} ${a.titulo}</h4>
+                                <p>${a.mensaje}</p>
+                            </div>
+                            <button class="btn-close-anuncio" onclick="closeAnuncio(${a.id})" title="Ocultar">&times;</button>
+                        </div>`;
+                    });
+                    container.innerHTML = html;
+                }
+            } catch (err) {
+                console.error("Error cargando anuncios", err);
+            }
+        }
+
+        function closeAnuncio(id) {
+            const el = document.getElementById('anuncio-' + id);
+            if(el) el.style.display = 'none';
+        }
+
         // 2. Obtener el año actual para el footer dinámicamente
         document.addEventListener('DOMContentLoaded', () => {
             const yearSpan = document.getElementById('current-year');
             if (yearSpan) {
                 yearSpan.textContent = new Date().getFullYear();
             }
+            fetchAnuncios();
         });
 
         // 4. Efecto Navbar más compacto al hacer scroll

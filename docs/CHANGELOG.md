@@ -6,6 +6,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.0.0] - 06-04-2026
+
+### Añadido 🚀
+- **Novedades en Home (Anuncios)**: Creación de un panel público y dinámico de "Anuncios y Novedades". Los administradores ahora pueden publicar `Avisos`, `Importantes` e `Informaciones` que aparecerán inmediatamente en forma de tarjetas vistosas (*banners* temáticos según color) en la cabecera. Es ideal para avisos meteorológicos, cierres inesperados o promociones de campeonatos.
+- **Herramienta Admin de Anuncios**: Pestaña incorporada al panel del gobierno para crear, ocultar temporalmente (toggle) o destruir (delete) notificaciones de la base de datos sin sobrecargar la interfaz.
+
+### Cambiado 🔄
+- **Sentido común en el Tiempo del Admin**: Ahora se neutralizan los botones de edición de las reservas en el panel de administrador para registros temporales que corresponden al pasado (físicamente imposibles de recuperar o ya en curso en este preciso instante local). Reemplaza visualmente los datos para remarcar el icono "⏳ Pasado/En Curso" logrando que nadie edite mal las tarifas de los partidos ya caducados por simple inercia.
+
+---
+
 ## [1.9.0] - 06-04-2026
 
 ### Añadido 🚀

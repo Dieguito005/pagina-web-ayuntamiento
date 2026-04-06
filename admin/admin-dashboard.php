@@ -11,7 +11,7 @@ if (!isset($_SESSION['admin_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración - Alquileres Tarancón</title>
-    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/home.css?v=2.0.0">
     <style>
         .admin-layout {
             display: flex;
@@ -265,6 +265,7 @@ if (!isset($_SESSION['admin_id'])) {
             <nav class="admin-nav">
                 <a href="#" id="tab-buscador">🔍 Buscador e Historial</a>
                 <a href="#" id="tab-consultas">📬 Buzón de Consultas</a>
+                <a href="#" id="tab-anuncios">📢 Anuncios</a>
                 <a href="#" id="tab-bloqueos" class="active">📅 Calendario Bloqueos</a>
                 <a href="#" id="tab-precios">💰 Editar Precios</a>
             </nav>
@@ -412,6 +413,51 @@ if (!isset($_SESSION['admin_id'])) {
                     </table>
                 </div>
             </div>
+
+            <!-- VIEW: Anuncios y Novedades -->
+            <div id="view-anuncios" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3>Publicar Nuevo Anuncio</h3>
+                </div>
+                <form id="form-nuevo-anuncio" class="search-filters" style="margin-bottom:2rem;">
+                    <div class="control-group">
+                        <label>Título del Anuncio</label>
+                        <input type="text" id="a-titulo" placeholder="Ej. Pistas cerradas por lluvia" required>
+                    </div>
+                    <div class="control-group">
+                        <label>Tipo / Estilo</label>
+                        <select id="a-tipo" required>
+                            <option value="info">🔵 Información / Noticia</option>
+                            <option value="aviso">🟠 Aviso / Recordatorio</option>
+                            <option value="peligro">🔴 Emergencia / Daño</option>
+                            <option value="exito">🟢 Éxito / Promoción</option>
+                        </select>
+                    </div>
+                    <div class="control-group" style="grid-column: 1 / -1;">
+                        <label>Mensaje o Descripción</label>
+                        <textarea id="a-mensaje" rows="2" style="width:100%; border:1px solid #ccc; border-radius:6px; padding:0.6rem 1rem;" placeholder="Escribe el cuerpo del anuncio..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn-search">📢 Publicar Anuncio</button>
+                </form>
+
+                <h3>Anuncios Publicados</h2>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Título</th>
+                                <th>Estilo</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-anuncios-body">
+                            <tr><td colspan="5" style="text-align:center;">Cargando anuncios...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </main>
     </div>
     
@@ -460,7 +506,7 @@ if (!isset($_SESSION['admin_id'])) {
         // Pasar variables desde PHP u ocultarlo en variables globales si hace falta
         const defaultBasePrice = 4.00;
     </script>
-    <script src="../js/admin.js?v=1.9.0"></script>
+    <script src="../js/admin.js?v=2.0.0"></script>
 </body>
 </html>
 

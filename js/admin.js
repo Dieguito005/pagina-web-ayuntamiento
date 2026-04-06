@@ -17,16 +17,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tabs y Modos
     const tabBuscador = document.getElementById('tab-buscador');
     const tabConsultas = document.getElementById('tab-consultas');
+    const tabAnuncios = document.getElementById('tab-anuncios');
     const tabBloqueos = document.getElementById('tab-bloqueos');
     const tabPrecios = document.getElementById('tab-precios');
     const titlePage = document.getElementById('admin-page-title');
-    let currentMode = 'bloqueos'; // 'bloqueos', 'precios', 'buscador' o 'consultas'
+    let currentMode = 'bloqueos'; // 'bloqueos', 'precios', 'buscador', 'consultas' o 'anuncios'
 
     // Elementos Consultas
     const viewConsultas = document.getElementById('view-consultas');
     const formConsultas = document.getElementById('form-consultas');
     const tablaConsultasBody = document.getElementById('tabla-consultas-body');
     let consultasActuales = [];
+
+    // Elementos Anuncios
+    const viewAnuncios = document.getElementById('view-anuncios');
+    const formAnuncio = document.getElementById('form-nuevo-anuncio');
+    const tablaAnunciosBody = document.getElementById('tabla-anuncios-body');
+    let anunciosActuales = [];
 
     // Elementos del Modal de Precios
     const priceModal = document.getElementById('price-modal');
@@ -93,12 +100,14 @@ document.addEventListener('DOMContentLoaded', () => {
             currentMode = 'buscador';
             tabBuscador.classList.add('active');
             tabConsultas?.classList.remove('active');
+            tabAnuncios?.classList.remove('active');
             tabBloqueos.classList.remove('active');
             tabPrecios.classList.remove('active');
             titlePage.textContent = 'Buscador e Historial';
             viewBuscador.style.display = 'block';
             viewBloqueos.style.display = 'none';
             if (viewConsultas) viewConsultas.style.display = 'none';
+            if (viewAnuncios) viewAnuncios.style.display = 'none';
         });
 
         if (tabConsultas) {
@@ -107,15 +116,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentMode = 'consultas';
                 tabConsultas.classList.add('active');
                 tabBuscador.classList.remove('active');
+                tabAnuncios?.classList.remove('active');
                 tabBloqueos.classList.remove('active');
                 tabPrecios.classList.remove('active');
                 titlePage.textContent = 'Buzón de Consultas';
                 viewConsultas.style.display = 'block';
                 viewBuscador.style.display = 'none';
                 viewBloqueos.style.display = 'none';
+                if (viewAnuncios) viewAnuncios.style.display = 'none';
                 if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
                 // Trigger form submission
                 if (formConsultas) formConsultas.dispatchEvent(new Event('submit'));
+            });
+        }
+
+        if (tabAnuncios) {
+            tabAnuncios.addEventListener('click', (e) => {
+                e.preventDefault();
+                currentMode = 'anuncios';
+                tabAnuncios.classList.add('active');
+                tabConsultas?.classList.remove('active');
+                tabBuscador.classList.remove('active');
+                tabBloqueos.classList.remove('active');
+                tabPrecios.classList.remove('active');
+                titlePage.textContent = '📢 Anuncios y Novedades';
+                viewAnuncios.style.display = 'block';
+                if (viewConsultas) viewConsultas.style.display = 'none';
+                viewBuscador.style.display = 'none';
+                viewBloqueos.style.display = 'none';
+                if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
+                loadAnuncios();
             });
         }
 
@@ -124,11 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
             currentMode = 'bloqueos';
             tabBloqueos.classList.add('active');
             tabConsultas?.classList.remove('active');
+            tabAnuncios?.classList.remove('active');
             tabPrecios.classList.remove('active');
             tabBuscador.classList.remove('active');
             titlePage.textContent = 'Gestión de Bloqueos';
             viewBloqueos.style.display = 'block';
             viewBuscador.style.display = 'none';
+            if (viewAnuncios) viewAnuncios.style.display = 'none';
             if (viewConsultas) viewConsultas.style.display = 'none';
             if (actionBarBloqueos) actionBarBloqueos.style.display = 'flex';
             loadSchedule();
@@ -139,11 +171,13 @@ document.addEventListener('DOMContentLoaded', () => {
             currentMode = 'precios';
             tabPrecios.classList.add('active');
             tabConsultas?.classList.remove('active');
+            tabAnuncios?.classList.remove('active');
             tabBloqueos.classList.remove('active');
             tabBuscador.classList.remove('active');
             titlePage.textContent = 'Edición de Precios';
             viewBloqueos.style.display = 'block';
             viewBuscador.style.display = 'none';
+            if (viewAnuncios) viewAnuncios.style.display = 'none';
             if (viewConsultas) viewConsultas.style.display = 'none';
             if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
             loadSchedule();
@@ -185,6 +219,13 @@ document.addEventListener('DOMContentLoaded', () => {
         scheduleGrid.innerHTML = '';
         const schedule = getScheduleForDay(dayOfWeek);
         
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const selectedDateStr = fechaSelect.value;
+        const isPastDay = selectedDateStr < todayStr;
+        const isToday = selectedDateStr === todayStr;
+        const currentTimeInt = now.getHours() * 60 + now.getMinutes();
+
         const renderBlock = (title, slots, timeOfDayClass) => {
             if (slots.length === 0) return;
             
@@ -202,6 +243,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ocupadoObj = ocupadosData.find(o => o.hora_inicio === slot.start);
                 const precioObj = preciosData.find(p => p.hora_inicio === slot.start);
                 
+                const slotStartInt = parseInt(slot.start.split(':')[0]) * 60 + parseInt(slot.start.split(':')[1]);
+                const isSlotPast = isPastDay || (isToday && slotStartInt <= currentTimeInt);
+
                 let extraHtml = '';
                 if (precioObj) {
                     let base = precioObj.precio_base !== null ? precioObj.precio_base.toFixed(2) : '-';
@@ -209,7 +253,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     extraHtml = `<span class="price-tag">C: Base ${base}€ | Luz ${luz}€</span>`;
                 }
 
-                if (ocupadoObj) {
+                if (isSlotPast) {
+                    btn.classList.add('disabled');
+                    let displayStatus = 'Pasado/En Curso ⏳';
+                    if (ocupadoObj) displayStatus = ocupadoObj.estado === 'bloqueada_admin' ? 'Pasado (Bloqueado)' : 'Pasado (Reservado)';
+                    btn.innerHTML = `<span class="time" style="color:#999">${slot.start} - ${slot.end}</span><span class="status" style="color:#aaa">${displayStatus}</span>${extraHtml.replace('price-tag', 'price-tag" style="color:#aaa;"')}`;
+                    btn.dataset.start = slot.start;
+                    btn.dataset.end = slot.end;
+                } else if (ocupadoObj) {
                     if (ocupadoObj.estado === 'bloqueada_admin') {
                          btn.classList.add('blocked_admin');
                          btn.innerHTML = `<span class="time">${slot.start} - ${slot.end}</span><span class="status">Bloqueo Admin</span>${extraHtml}`;
@@ -697,6 +748,121 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             showToast('Error de red', 'error');
+        }
+    };
+
+    // ── Logica Anuncios ──
+    async function loadAnuncios() {
+        if (!tablaAnunciosBody) return;
+        tablaAnunciosBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
+        
+        try {
+            const resp = await fetch('../api/admin-anuncios.php?action=get');
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                anunciosActuales = data.data;
+                renderAnuncios();
+            } else {
+                tablaAnunciosBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:red;">Error: ${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            tablaAnunciosBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:red;">Error de conexión.</td></tr>`;
+        }
+    }
+
+    function renderAnuncios() {
+        if (anunciosActuales.length === 0) {
+            tablaAnunciosBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay anuncios creados.</td></tr>';
+            return;
+        }
+        
+        tablaAnunciosBody.innerHTML = anunciosActuales.map(a => `
+            <tr>
+                <td><strong>${a.fecha_creacion.split(' ')[0].split('-').reverse().join('/')}</strong></td>
+                <td>${a.titulo}</td>
+                <td>
+                    <span class="badge" style="background-color:#eee; color:#333;">${a.tipo.toUpperCase()}</span>
+                </td>
+                <td>
+                    <span class="badge ${a.activo == 1 ? 'reservada' : 'cancelada'}">${a.activo == 1 ? 'Activo' : 'Oculto'}</span>
+                </td>
+                <td>
+                    <button class="btn-sm btn-view" onclick="toggleAnuncio(${a.id}, ${a.activo})">${a.activo == 1 ? '👁️ Ocultar' : '👁️ Mostrar'}</button>
+                    <button class="btn-sm btn-cancel" onclick="deleteAnuncio(${a.id})">❌ Borrar</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    if (formAnuncio) {
+        formAnuncio.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnObj = formAnuncio.querySelector('button[type="submit"]');
+            btnObj.disabled = true;
+            btnObj.textContent = 'Publicando...';
+            
+            try {
+                const fd = new FormData();
+                fd.append('action', 'create');
+                fd.append('titulo', document.getElementById('a-titulo').value);
+                fd.append('tipo', document.getElementById('a-tipo').value);
+                fd.append('mensaje', document.getElementById('a-mensaje').value);
+
+                const resp = await fetch('../api/admin-anuncios.php', { method: 'POST', body: fd });
+                const data = await resp.json();
+
+                if (resp.ok && data.success) {
+                    showToast(data.message, 'success');
+                    formAnuncio.reset();
+                    loadAnuncios();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('Error de red', 'error');
+            } finally {
+                btnObj.disabled = false;
+                btnObj.textContent = '📢 Publicar Anuncio';
+            }
+        });
+    }
+
+    window.toggleAnuncio = async (id, currentState) => {
+        const newState = currentState == 1 ? 0 : 1;
+        try {
+            const fd = new FormData();
+            fd.append('action', 'toggle');
+            fd.append('id', id);
+            fd.append('activo', newState);
+
+            const resp = await fetch('../api/admin-anuncios.php', { method: 'POST', body: fd });
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                loadAnuncios();
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (e) {
+            showToast('Error', 'error');
+        }
+    };
+
+    window.deleteAnuncio = async (id) => {
+        if(!confirm("¿Eliminar este anuncio permanentemente?")) return;
+        try {
+            const fd = new FormData();
+            fd.append('action', 'delete');
+            fd.append('id', id);
+
+            const resp = await fetch('../api/admin-anuncios.php', { method: 'POST', body: fd });
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                loadAnuncios();
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (e) {
+            showToast('Error', 'error');
         }
     };
 });
