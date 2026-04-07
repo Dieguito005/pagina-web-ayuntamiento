@@ -19,35 +19,77 @@ if (!isset($_SESSION['admin_id'])) {
             background-color: #f4f6f8;
         }
         .admin-sidebar {
-            width: 280px;
+            width: 290px;
+            min-width: 290px;
             background-color: #0b1c3c;
             color: white;
-            padding: 2rem 1.5rem;
+            padding: 2rem 1.2rem;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
         }
         .admin-sidebar h3 {
-            margin-bottom: 2rem;
-            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.15rem;
             color: #d15615;
             border-bottom: 1px solid rgba(255,255,255,0.1);
             padding-bottom: 0.8rem;
         }
-        .admin-sidebar p { margin-bottom: 0.5rem; font-size: 0.95rem; color: #ccc;}
-        .admin-nav { margin-top: 2rem; flex-grow: 1; }
-        .admin-nav a {
-            display: block;
-            color: white;
-            padding: 0.8rem 1rem;
-            text-decoration: none;
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-            background-color: rgba(255,255,255,0.05);
-            transition: background 0.3s;
+        .admin-sidebar p { margin-bottom: 0.3rem; font-size: 0.9rem; color: #ccc;}
+        .admin-nav { margin-top: 1.5rem; flex-grow: 1; }
+        /* Sección del nav */
+        .nav-group {
+            margin-bottom: 1.2rem;
         }
-        .admin-nav a:hover, .admin-nav a.active {
+        .nav-group-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.35);
+            padding: 0 0.6rem;
+            margin-bottom: 0.45rem;
+            display: block;
+        }
+        .admin-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: rgba(255,255,255,0.82);
+            padding: 0.65rem 0.9rem;
+            text-decoration: none;
+            border-radius: 7px;
+            margin-bottom: 0.2rem;
+            background-color: transparent;
+            transition: background 0.2s, color 0.2s;
+            font-size: 0.92rem;
+            position: relative;
+        }
+        .admin-nav a:hover {
+            background-color: rgba(255,255,255,0.08);
+            color: white;
+        }
+        .admin-nav a.active {
             background-color: #d15615;
             color: white;
+            font-weight: 600;
+        }
+        .nav-badge {
+            margin-left: auto;
+            background-color: #d15615;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 1px 7px;
+            display: none;
+        }
+        .nav-badge.visible { display: inline-block; }
+        .admin-nav a.active .nav-badge { background-color: rgba(255,255,255,0.3); }
+        .nav-divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin: 0.5rem 0 1rem;
         }
         
         .time-slot .price-tag {
@@ -235,6 +277,167 @@ if (!isset($_SESSION['admin_id'])) {
         
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        /* ── Centro de Actividad ── */
+        .actividad-controls {
+            background: white;
+            padding: 1.2rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .actividad-controls .control-group { margin-bottom: 0; }
+        .actividad-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .stat-card .stat-label { font-size: 0.8rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card .stat-value { font-size: 2rem; font-weight: 800; color: #0b1c3c; line-height: 1; }
+        .stat-card .stat-value.accent { color: #d15615; }
+        .actividad-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .aviso-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 1.3rem 1.5rem;
+            border-left: 4px solid #2e7d32;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: start;
+            transition: box-shadow 0.2s;
+        }
+        .aviso-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .aviso-card.es-hoy { border-left-color: #1565c0; }
+        .aviso-card.verificada { border-left-color: #9e9e9e; opacity: 0.7; }
+        .aviso-card.pasada { border-left-color: #aaa; }
+        .aviso-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .aviso-pista-badge {
+            background: #0b1c3c;
+            color: white;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.28rem 0.7rem;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .aviso-time-badge {
+            background: #fff4e5;
+            color: #d15615;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.28rem 0.7rem;
+            border-radius: 20px;
+        }
+        .aviso-hoy-badge {
+            background: #e3f2fd;
+            color: #1565c0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.28rem 0.7rem;
+            border-radius: 20px;
+        }
+        .aviso-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+        }
+        .aviso-body .field-label { font-weight: 600; color: #555; font-size: 0.78rem; display: block; margin-bottom: 0.1rem; }
+        .aviso-body .field-value { color: #222; font-weight: 500; }
+        .codigo-acceso-display {
+            background: linear-gradient(135deg, #0b1c3c 0%, #1a3673 100%);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            margin-top: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.8rem;
+            grid-column: 1 / -1;
+        }
+        .codigo-acceso-label { color: rgba(255,255,255,0.7); font-size: 0.78rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+        .codigo-acceso-value {
+            color: white;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+        }
+        .codigo-acceso-copy {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            padding: 0.35rem 0.7rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .codigo-acceso-copy:hover { background: rgba(255,255,255,0.25); }
+        .aviso-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; min-width: 130px; }
+        .btn-verificar {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1.5px solid #c8e6c9;
+            padding: 0.5rem 1rem;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-verificar:hover { background: #2e7d32; color: white; }
+        .btn-verificar.verificado {
+            background: #f5f5f5;
+            color: #9e9e9e;
+            border-color: #e0e0e0;
+        }
+        .btn-verificar.verificado:hover { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
+        .aviso-timestamp { font-size: 0.78rem; color: #aaa; text-align: right; }
+        .actividad-empty {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            color: #888;
+        }
+        .actividad-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .actividad-empty h3 { color: #555; margin-bottom: 0.5rem; }
+        .actividad-loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -258,16 +461,60 @@ if (!isset($_SESSION['admin_id'])) {
     <div class="admin-layout">
         <!-- Sidebar -->
         <aside class="admin-sidebar">
-            <h3>Mi Perfil</h3>
-            <p><strong>Usuario:</strong> <?= htmlspecialchars($_SESSION['admin_usuario'] ?? 'Admin') ?></p>
+            <h3>⚙️ Panel Admin</h3>
+            <p style="font-size:0.8rem; color:#aaa;">Sesión iniciada como:</p>
+            <p><strong style="color:white;"><?= htmlspecialchars($_SESSION['admin_usuario'] ?? 'Admin') ?></strong></p>
             
             <nav class="admin-nav">
-                <a href="#" id="tab-buscador">🔍 Buscador e Historial</a>
-                <a href="#" id="tab-consultas">📬 Buzón de Consultas</a>
-                <a href="#" id="tab-anuncios">📢 Anuncios</a>
-                <a href="#" id="tab-bloqueos" class="active">📅 Calendario Bloqueos</a>
-                <a href="#" id="tab-precios">💰 Editar Precios</a>
-                <a href="#" id="tab-admins">👥 Gestión de Admins</a>
+
+                <!-- GRUPO: PISTAS -->
+                <div class="nav-group">
+                    <span class="nav-group-label">🏟️ Pistas</span>
+                    <a href="#" id="tab-bloqueos" class="active">
+                        <span>📅</span> Calendario de Bloqueos
+                    </a>
+                    <a href="#" id="tab-precios">
+                        <span>💰</span> Editar Precios
+                    </a>
+                </div>
+
+                <hr class="nav-divider">
+
+                <!-- GRUPO: USUARIOS -->
+                <div class="nav-group">
+                    <span class="nav-group-label">👤 Usuarios y Reservas</span>
+                    <a href="#" id="tab-actividad">
+                        <span>🔔</span> Centro de Actividad
+                        <span class="nav-badge" id="badge-actividad">0</span>
+                    </a>
+                    <a href="#" id="tab-buscador">
+                        <span>🔍</span> Buscador e Historial
+                    </a>
+                </div>
+
+                <hr class="nav-divider">
+
+                <!-- GRUPO: COMUNICACIÓN -->
+                <div class="nav-group">
+                    <span class="nav-group-label">💬 Comunicación</span>
+                    <a href="#" id="tab-consultas">
+                        <span>📬</span> Buzón de Consultas
+                    </a>
+                    <a href="#" id="tab-anuncios">
+                        <span>📢</span> Anuncios y Novedades
+                    </a>
+                </div>
+
+                <hr class="nav-divider">
+
+                <!-- GRUPO: SISTEMA -->
+                <div class="nav-group">
+                    <span class="nav-group-label">🛠️ Sistema</span>
+                    <a href="#" id="tab-admins">
+                        <span>👥</span> Gestión de Admins
+                    </a>
+                </div>
+
             </nav>
         </aside>
 
@@ -303,6 +550,56 @@ if (!isset($_SESSION['admin_id'])) {
                 
                 <div class="action-bar" id="action-bar-bloqueos">
                     <button class="btn-block" id="btn-block-slot" disabled>Bloquear Horario Seleccionado</button>
+                </div>
+            </div>
+
+            <!-- VIEW: Centro de Actividad -->
+            <div id="view-actividad" style="display:none;">
+
+                <!-- Controles de filtro -->
+                <div class="actividad-controls">
+                    <div class="control-group">
+                        <label for="act-filtro-dia">Mostrar</label>
+                        <select id="act-filtro-dia">
+                            <option value="hoy">Solo hoy</option>
+                            <option value="proximas">Próximas 72 horas</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="act-filtro-pista">Pista</label>
+                        <select id="act-filtro-pista">
+                            <option value="">Todas las pistas</option>
+                            <option value="Tenis">Pista de Tenis</option>
+                            <option value="Pádel Cubierta">Pádel Cubierta</option>
+                            <option value="Pádel Descubierta">Pádel Descubierta</option>
+                        </select>
+                    </div>
+                    <button class="btn-search" id="btn-recargar-actividad" style="margin-top:1.4rem;">🔄 Actualizar</button>
+                </div>
+
+                <!-- Stats del día -->
+                <div class="actividad-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">Reservas hoy</span>
+                        <span class="stat-value accent" id="stat-hoy">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Mostrando</span>
+                        <span class="stat-value" id="stat-total">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Verificadas</span>
+                        <span class="stat-value" id="stat-verificadas">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Pendientes</span>
+                        <span class="stat-value accent" id="stat-pendientes">--</span>
+                    </div>
+                </div>
+
+                <!-- Feed de avisos -->
+                <div class="actividad-feed" id="actividad-feed">
+                    <div class="actividad-loading">Cargando actividad...</div>
                 </div>
             </div>
 
@@ -567,7 +864,7 @@ if (!isset($_SESSION['admin_id'])) {
         // Pasar variables desde PHP u ocultarlo en variables globales si hace falta
         const defaultBasePrice = 4.00;
     </script>
-    <script src="../js/admin.js?v=2.1.0"></script>
+    <script src="../js/admin.js?v=2.2.0"></script>
 </body>
 </html>
 

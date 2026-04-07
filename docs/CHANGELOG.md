@@ -6,6 +6,29 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.2.0] - 07-04-2026
+
+### Añadido 🚀
+- **Centro de Actividad (`🔔`)**: Nuevo módulo exclusivo para conserjes y administradores que centraliza todos los avisos de reservas activas. Accesible desde el panel de administración bajo el grupo «Usuarios y Reservas».
+  - **Tarjetas de aviso detalladas**: Cada reserva muestra nombre, DNI, email y teléfono del cliente, la pista reservada, el tramo horario y la fecha. Las tarjetas se colorean según su estado: azul (HOY), naranja (EN CURSO), gris (PASADA) y verde (pendiente de verificar).
+  - **Código de acceso prominente**: El código de entidad se muestra en grande con fuente monoespaciada sobre fondo oscuro. Incluye botón «📋 Copiar» que copia al portapapeles con feedback inmediato («✔ Copiado!»), permitiendo al conserje verificar de un vistazo si el cliente presenta el código correcto.
+  - **Verificación de identidad presencial**: Botón «✓ Verificar Identidad» en cada tarjeta para que el conserje marque al cliente como identificado. El estado se persiste en base de datos con fecha y hora exacta (`verificado_admin`, `fecha_verificacion`). Al volver a pulsar el botón, se retira la verificación.
+  - **Estadísticas en tiempo real**: Cuatro tarjetas resumen muestran el total de reservas hoy, el número visible con los filtros activos, las verificadas y las pendientes.
+  - **Filtros**: Permite filtrar por «Solo hoy» o «Próximas 72 horas» y por pista específica. Botón de actualización manual.
+  - **Nueva API `api/admin-actividad.php`**: Endpoint RESTful que gestiona la obtención de reservas activas con soporte de filtros, el conteo del badge y las acciones `verificar` / `desverificar`. Incluye migración automática de columnas (`ADD COLUMN IF NOT EXISTS`) para instalaciones existentes.
+
+### Cambiado 🔄
+- **Sidebar del panel de administración rediseñado**: Los enlaces del menú lateral se han reorganizado en cuatro grupos visuales con etiquetas de categoría, separadores y un nuevo estilo más limpio (sin fondo opaco en reposo, hover suave, fuente ligeramente menor). Los grupos son:
+  - 🏟️ **Pistas** — Calendario de Bloqueos / Editar Precios
+  - 👤 **Usuarios y Reservas** — Centro de Actividad / Buscador e Historial
+  - 💬 **Comunicación** — Buzón de Consultas / Anuncios y Novedades
+  - 🛠️ **Sistema** — Gestión de Admins
+- **Badge inteligente en «Centro de Actividad»**: El número rojo visible sobre el ítem de menú refleja exclusivamente las reservas de hoy **sin verificar**. Al marcar todas como verificadas, el contador desaparece automáticamente. El badge se actualiza en cada carga del panel y cada vez que se completa una verificación.
+- **Refactorización de la lógica de tabs**: Las funciones `hideAllViews()` y `deactivateAllTabs()` centralizan la gestión de visibilidad, eliminando la repetición de código que existía en cada handler de pestaña.
+- Versión de `admin.js` bumpeada a `v2.2.0`.
+
+---
+
 ## [2.1.1] - 07-04-2026
 
 ### Cambiado 🔄

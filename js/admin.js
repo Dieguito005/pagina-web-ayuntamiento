@@ -1,4 +1,4 @@
-/**
+﻿/**
  * js/admin.js — Lógica para el Panel de Administrador (Bloqueo y Desbloqueo de 30 días, Edición de Precios)
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,8 +20,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabAnuncios = document.getElementById('tab-anuncios');
     const tabBloqueos = document.getElementById('tab-bloqueos');
     const tabPrecios = document.getElementById('tab-precios');
+    const tabActividad = document.getElementById('tab-actividad');
     const titlePage = document.getElementById('admin-page-title');
-    let currentMode = 'bloqueos'; // 'bloqueos', 'precios', 'buscador', 'consultas', 'anuncios' o 'admins'
+    let currentMode = 'bloqueos'; // 'bloqueos', 'precios', 'buscador', 'consultas', 'anuncios', 'admins', 'actividad'
+
+    // Vista Actividad
+    const viewActividad = document.getElementById('view-actividad');
+    const badgeActividad = document.getElementById('badge-actividad');
 
     // Elementos Consultas
     const viewConsultas = document.getElementById('view-consultas');
@@ -93,43 +98,42 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
     }
 
+    // Helper: ocultar todas las vistas y desactivar todos los tabs
+    function hideAllViews() {
+        viewBloqueos.style.display = 'none';
+        viewBuscador.style.display = 'none';
+        if (viewConsultas) viewConsultas.style.display = 'none';
+        if (viewAnuncios) viewAnuncios.style.display = 'none';
+        if (viewActividad) viewActividad.style.display = 'none';
+        const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
+        if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
+    }
+    function deactivateAllTabs() {
+        [tabBuscador, tabConsultas, tabAnuncios, tabBloqueos, tabPrecios, tabActividad,
+         document.getElementById('tab-admins')].forEach(t => t?.classList.remove('active'));
+    }
+
     // ── Logica Cambio de Tabs ──
     if (tabBloqueos && tabPrecios && tabBuscador) {
         tabBuscador.addEventListener('click', (e) => {
             e.preventDefault();
             currentMode = 'buscador';
+            deactivateAllTabs();
             tabBuscador.classList.add('active');
-            tabConsultas?.classList.remove('active');
-            tabAnuncios?.classList.remove('active');
-            tabBloqueos.classList.remove('active');
-            tabPrecios.classList.remove('active');
-            document.getElementById('tab-admins')?.classList.remove('active');
-            titlePage.textContent = 'Buscador e Historial';
+            titlePage.textContent = '🔍 Buscador e Historial';
+            hideAllViews();
             viewBuscador.style.display = 'block';
-            viewBloqueos.style.display = 'none';
-            if (viewConsultas) viewConsultas.style.display = 'none';
-            if (viewAnuncios) viewAnuncios.style.display = 'none';
-            const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
         });
 
         if (tabConsultas) {
             tabConsultas.addEventListener('click', (e) => {
                 e.preventDefault();
                 currentMode = 'consultas';
+                deactivateAllTabs();
                 tabConsultas.classList.add('active');
-                tabBuscador.classList.remove('active');
-                tabAnuncios?.classList.remove('active');
-                tabBloqueos.classList.remove('active');
-                tabPrecios.classList.remove('active');
-                document.getElementById('tab-admins')?.classList.remove('active');
-                titlePage.textContent = 'Buzón de Consultas';
+                titlePage.textContent = '📬 Buzón de Consultas';
+                hideAllViews();
                 viewConsultas.style.display = 'block';
-                viewBuscador.style.display = 'none';
-                viewBloqueos.style.display = 'none';
-                if (viewAnuncios) viewAnuncios.style.display = 'none';
-                const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
-                if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
-                // Trigger form submission
                 if (formConsultas) formConsultas.dispatchEvent(new Event('submit'));
             });
         }
@@ -138,38 +142,36 @@ document.addEventListener('DOMContentLoaded', () => {
             tabAnuncios.addEventListener('click', (e) => {
                 e.preventDefault();
                 currentMode = 'anuncios';
+                deactivateAllTabs();
                 tabAnuncios.classList.add('active');
-                tabConsultas?.classList.remove('active');
-                tabBuscador.classList.remove('active');
-                tabBloqueos.classList.remove('active');
-                tabPrecios.classList.remove('active');
-                document.getElementById('tab-admins')?.classList.remove('active');
                 titlePage.textContent = '📢 Anuncios y Novedades';
+                hideAllViews();
                 viewAnuncios.style.display = 'block';
-                if (viewConsultas) viewConsultas.style.display = 'none';
-                viewBuscador.style.display = 'none';
-                viewBloqueos.style.display = 'none';
-                const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
-                if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
                 loadAnuncios();
+            });
+        }
+
+        if (tabActividad) {
+            tabActividad.addEventListener('click', (e) => {
+                e.preventDefault();
+                currentMode = 'actividad';
+                deactivateAllTabs();
+                tabActividad.classList.add('active');
+                titlePage.textContent = '🔔 Centro de Actividad';
+                hideAllViews();
+                viewActividad.style.display = 'block';
+                loadActividad();
             });
         }
 
         tabBloqueos.addEventListener('click', (e) => {
             e.preventDefault();
             currentMode = 'bloqueos';
+            deactivateAllTabs();
             tabBloqueos.classList.add('active');
-            tabConsultas?.classList.remove('active');
-            tabAnuncios?.classList.remove('active');
-            tabPrecios.classList.remove('active');
-            tabBuscador.classList.remove('active');
-            document.getElementById('tab-admins')?.classList.remove('active');
-            titlePage.textContent = 'Gestión de Bloqueos';
+            titlePage.textContent = '📅 Gestión de Bloqueos';
+            hideAllViews();
             viewBloqueos.style.display = 'block';
-            viewBuscador.style.display = 'none';
-            if (viewAnuncios) viewAnuncios.style.display = 'none';
-            if (viewConsultas) viewConsultas.style.display = 'none';
-            const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
             if (actionBarBloqueos) actionBarBloqueos.style.display = 'flex';
             loadSchedule();
         });
@@ -177,19 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tabPrecios.addEventListener('click', (e) => {
             e.preventDefault();
             currentMode = 'precios';
+            deactivateAllTabs();
             tabPrecios.classList.add('active');
-            tabConsultas?.classList.remove('active');
-            tabAnuncios?.classList.remove('active');
-            tabBloqueos.classList.remove('active');
-            tabBuscador.classList.remove('active');
-            document.getElementById('tab-admins')?.classList.remove('active');
-            titlePage.textContent = 'Edición de Precios';
+            titlePage.textContent = '💰 Edición de Precios';
+            hideAllViews();
             viewBloqueos.style.display = 'block';
-            viewBuscador.style.display = 'none';
-            if (viewAnuncios) viewAnuncios.style.display = 'none';
-            if (viewConsultas) viewConsultas.style.display = 'none';
-            const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
-            if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
             loadSchedule();
         });
     }
@@ -907,19 +901,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tabAdmins.addEventListener('click', (e) => {
             e.preventDefault();
             currentMode = 'admins';
+            deactivateAllTabs();
             tabAdmins.classList.add('active');
-            tabBuscador.classList.remove('active');
-            tabConsultas?.classList.remove('active');
-            tabAnuncios?.classList.remove('active');
-            tabBloqueos.classList.remove('active');
-            tabPrecios.classList.remove('active');
             titlePage.textContent = '👥 Gestión de Administradores';
+            hideAllViews();
             if (viewAdmins) viewAdmins.style.display = 'block';
-            viewBuscador.style.display = 'none';
-            viewBloqueos.style.display = 'none';
-            if (viewConsultas) viewConsultas.style.display = 'none';
-            if (viewAnuncios) viewAnuncios.style.display = 'none';
-            if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
             loadAdmins();
         });
     }
@@ -1131,4 +1117,211 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         );
     };
+
+    // ── CENTRO DE ACTIVIDAD ──
+    let actividadData = [];
+
+    // Cargar badge al inicio (reservas hoy)
+    async function refreshBadgeActividad() {
+        try {
+            const resp = await fetch('../api/admin-actividad.php?action=get&solo_hoy=1&limite=1');
+            const data = await resp.json();
+            if (resp.ok && data.status === 'success' && badgeActividad) {
+                const total = data.total_hoy || 0;
+                badgeActividad.textContent = total;
+                if (total > 0) badgeActividad.classList.add('visible');
+                else badgeActividad.classList.remove('visible');
+            }
+        } catch(e) { /* silencioso */ }
+    }
+    refreshBadgeActividad();
+
+    async function loadActividad() {
+        const feed = document.getElementById('actividad-feed');
+        if (!feed) return;
+        feed.innerHTML = '<div class="actividad-loading">⏳ Cargando reservas...</div>';
+
+        const filtroFecha = document.getElementById('act-filtro-dia')?.value || 'hoy';
+        const filtroPista = document.getElementById('act-filtro-pista')?.value || '';
+        const soloHoy = filtroFecha === 'hoy' ? '1' : '0';
+
+        let url = `../api/admin-actividad.php?action=get&solo_hoy=${soloHoy}&limite=100`;
+        if (filtroPista) url += `&pista=${encodeURIComponent(filtroPista)}`;
+
+        try {
+            const resp = await fetch(url);
+            const data = await resp.json();
+
+            if (resp.ok && data.status === 'success') {
+                actividadData = data.data;
+                const totalHoy = data.total_hoy || 0;
+
+                // Update badge
+                if (badgeActividad) {
+                    badgeActividad.textContent = totalHoy;
+                    if (totalHoy > 0) badgeActividad.classList.add('visible');
+                    else badgeActividad.classList.remove('visible');
+                }
+
+                renderActividad(actividadData, totalHoy);
+            } else {
+                feed.innerHTML = `<div class="actividad-empty"><p style="color:red">Error al cargar datos.</p></div>`;
+            }
+        } catch(e) {
+            feed.innerHTML = `<div class="actividad-empty"><p style="color:red">Error de conexión.</p></div>`;
+        }
+    }
+
+    function renderActividad(data, totalHoy) {
+        const feed = document.getElementById('actividad-feed');
+        if (!feed) return;
+
+        // Actualizar stats
+        const verificadas = data.filter(r => r.verificado_admin == 1).length;
+        const pendientes = data.filter(r => r.verificado_admin != 1).length;
+        const statHoy = document.getElementById('stat-hoy');
+        const statTotal = document.getElementById('stat-total');
+        const statVerificadas = document.getElementById('stat-verificadas');
+        const statPendientes = document.getElementById('stat-pendientes');
+        if (statHoy) statHoy.textContent = totalHoy;
+        if (statTotal) statTotal.textContent = data.length;
+        if (statVerificadas) statVerificadas.textContent = verificadas;
+        if (statPendientes) statPendientes.textContent = pendientes;
+
+        if (data.length === 0) {
+            feed.innerHTML = `
+                <div class="actividad-empty">
+                    <div class="empty-icon">🏟️</div>
+                    <h3>No hay reservas para mostrar</h3>
+                    <p>No se encontraron reservas activas con los filtros aplicados.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Calcular fecha de hoy para comparar
+        const now = new Date();
+        const todayStr = now.getFullYear() + '-' +
+            String(now.getMonth()+1).padStart(2,'0') + '-' +
+            String(now.getDate()).padStart(2,'0');
+        const currentTimeInt = now.getHours() * 60 + now.getMinutes();
+
+        feed.innerHTML = '';
+
+        data.forEach(r => {
+            const esHoy = r.fecha === todayStr;
+            const isVerificada = r.verificado_admin == 1;
+            const [h, m] = r.hora_inicio.substring(0,5).split(':').map(Number);
+            const slotInt = h * 60 + m;
+            const isPast = r.fecha < todayStr || (esHoy && slotInt < currentTimeInt);
+            const isActive = esHoy && slotInt <= currentTimeInt && (slotInt + 120) > currentTimeInt;
+
+            let cardClass = '';
+            if (isVerificada) cardClass = 'verificada';
+            else if (esHoy) cardClass = 'es-hoy';
+            else if (isPast) cardClass = 'pasada';
+
+            const fechaDisplay = r.fecha.split('-').reverse().join('/');
+            const horaInicio = r.hora_inicio.substring(0,5);
+            const horaFin = r.hora_fin.substring(0,5);
+
+            let diaLabel = '';
+            if (esHoy) diaLabel = `<span class="aviso-hoy-badge">HOY</span>`;
+            else if (isActive) diaLabel = `<span class="aviso-hoy-badge" style="background:#fff8e1;color:#f57f17">EN CURSO</span>`;
+            else if (isPast) diaLabel = `<span class="aviso-hoy-badge" style="background:#f5f5f5;color:#9e9e9e">PASADA</span>`;
+
+            const codigoAcceso = r.codigo_acceso || '---';
+            const btnVerLabel = isVerificada ? '✔ Verificado' : '✓ Verificar Identidad';
+            const btnVerClass = isVerificada ? 'btn-verificar verificado' : 'btn-verificar';
+            const btnVerTitle = isVerificada ? 'Haz clic para retirar la verificación' : 'Marcar al cliente como verificado presencialmente';
+
+            const fechaVerif = r.fecha_verificacion
+                ? `<span class="aviso-timestamp">Verificado el ${r.fecha_verificacion.substring(0,16).replace('T',' ')}</span>`
+                : '';
+
+            const card = document.createElement('div');
+            card.className = `aviso-card ${cardClass}`;
+            card.id = `aviso-${r.id}`;
+            card.innerHTML = `
+                <div>
+                    <div class="aviso-header">
+                        <span class="aviso-pista-badge">${r.pista}</span>
+                        <span class="aviso-time-badge">${horaInicio} – ${horaFin}</span>
+                        ${diaLabel}
+                        <span style="margin-left:auto; font-size:0.8rem; color:#aaa;">${fechaDisplay}</span>
+                    </div>
+                    <div class="aviso-body">
+                        <div>
+                            <span class="field-label">Cliente</span>
+                            <span class="field-value">${r.usuario_nombre || r.cliente_nombre || '---'}</span>
+                        </div>
+                        <div>
+                            <span class="field-label">DNI</span>
+                            <span class="field-value">${r.dni || '---'}</span>
+                        </div>
+                        <div>
+                            <span class="field-label">Email</span>
+                            <span class="field-value">${r.usuario_email || '---'}</span>
+                        </div>
+                        <div>
+                            <span class="field-label">Teléfono</span>
+                            <span class="field-value">${r.telefono || '---'}</span>
+                        </div>
+                        <div class="codigo-acceso-display">
+                            <span class="codigo-acceso-label">🔑 Código de acceso</span>
+                            <span class="codigo-acceso-value" title="Haz clic para copiar" onclick="copiarCodigo('${codigoAcceso}', this)">${codigoAcceso}</span>
+                            <button class="codigo-acceso-copy" onclick="copiarCodigo('${codigoAcceso}', this)">📋 Copiar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="aviso-actions">
+                    <button class="${btnVerClass}" title="${btnVerTitle}" onclick="toggleVerificar(${r.id}, ${isVerificada ? 1 : 0})">${btnVerLabel}</button>
+                    ${fechaVerif}
+                    <span class="aviso-timestamp">Reserva #${r.id}</span>
+                </div>
+            `;
+            feed.appendChild(card);
+        });
+    }
+
+    window.copiarCodigo = (codigo, el) => {
+        if (!codigo || codigo === '---') return;
+        navigator.clipboard.writeText(codigo).then(() => {
+            const original = el.textContent;
+            el.textContent = '\u2714 Copiado!';
+            setTimeout(() => { el.textContent = original; }, 1800);
+        }).catch(() => {
+            showToast('\u00a1C\u00f3digo copiado!', 'success');
+        });
+    };
+
+    window.toggleVerificar = async (id, currentState) => {
+        const accion = currentState == 1 ? 'desverificar' : 'verificar';
+        try {
+            const resp = await fetch('../api/admin-actividad.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: accion, id: id })
+            });
+            const data = await resp.json();
+            if (resp.ok && data.status === 'success') {
+                showToast(data.message, 'success');
+                loadActividad();
+            } else {
+                showToast(data.message || 'Error', 'error');
+            }
+        } catch(e) {
+            showToast('Error de conexi\u00f3n', 'error');
+        }
+    };
+
+    // Bot\u00f3n actualizar actividad
+    const btnRecargarActividad = document.getElementById('btn-recargar-actividad');
+    if (btnRecargarActividad) {
+        btnRecargarActividad.addEventListener('click', loadActividad);
+    }
+    // Cambio de filtros tambi\u00e9n recarga
+    document.getElementById('act-filtro-dia')?.addEventListener('change', loadActividad);
+    document.getElementById('act-filtro-pista')?.addEventListener('change', loadActividad);
+
 });
