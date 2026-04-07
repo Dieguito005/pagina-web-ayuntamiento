@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabBloqueos = document.getElementById('tab-bloqueos');
     const tabPrecios = document.getElementById('tab-precios');
     const titlePage = document.getElementById('admin-page-title');
-    let currentMode = 'bloqueos'; // 'bloqueos', 'precios', 'buscador', 'consultas' o 'anuncios'
+    let currentMode = 'bloqueos'; // 'bloqueos', 'precios', 'buscador', 'consultas', 'anuncios' o 'admins'
 
     // Elementos Consultas
     const viewConsultas = document.getElementById('view-consultas');
@@ -103,11 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
             tabAnuncios?.classList.remove('active');
             tabBloqueos.classList.remove('active');
             tabPrecios.classList.remove('active');
+            document.getElementById('tab-admins')?.classList.remove('active');
             titlePage.textContent = 'Buscador e Historial';
             viewBuscador.style.display = 'block';
             viewBloqueos.style.display = 'none';
             if (viewConsultas) viewConsultas.style.display = 'none';
             if (viewAnuncios) viewAnuncios.style.display = 'none';
+            const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
         });
 
         if (tabConsultas) {
@@ -119,11 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 tabAnuncios?.classList.remove('active');
                 tabBloqueos.classList.remove('active');
                 tabPrecios.classList.remove('active');
+                document.getElementById('tab-admins')?.classList.remove('active');
                 titlePage.textContent = 'Buzón de Consultas';
                 viewConsultas.style.display = 'block';
                 viewBuscador.style.display = 'none';
                 viewBloqueos.style.display = 'none';
                 if (viewAnuncios) viewAnuncios.style.display = 'none';
+                const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
                 if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
                 // Trigger form submission
                 if (formConsultas) formConsultas.dispatchEvent(new Event('submit'));
@@ -139,11 +143,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 tabBuscador.classList.remove('active');
                 tabBloqueos.classList.remove('active');
                 tabPrecios.classList.remove('active');
+                document.getElementById('tab-admins')?.classList.remove('active');
                 titlePage.textContent = '📢 Anuncios y Novedades';
                 viewAnuncios.style.display = 'block';
                 if (viewConsultas) viewConsultas.style.display = 'none';
                 viewBuscador.style.display = 'none';
                 viewBloqueos.style.display = 'none';
+                const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
                 if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
                 loadAnuncios();
             });
@@ -157,11 +163,13 @@ document.addEventListener('DOMContentLoaded', () => {
             tabAnuncios?.classList.remove('active');
             tabPrecios.classList.remove('active');
             tabBuscador.classList.remove('active');
+            document.getElementById('tab-admins')?.classList.remove('active');
             titlePage.textContent = 'Gestión de Bloqueos';
             viewBloqueos.style.display = 'block';
             viewBuscador.style.display = 'none';
             if (viewAnuncios) viewAnuncios.style.display = 'none';
             if (viewConsultas) viewConsultas.style.display = 'none';
+            const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
             if (actionBarBloqueos) actionBarBloqueos.style.display = 'flex';
             loadSchedule();
         });
@@ -174,11 +182,13 @@ document.addEventListener('DOMContentLoaded', () => {
             tabAnuncios?.classList.remove('active');
             tabBloqueos.classList.remove('active');
             tabBuscador.classList.remove('active');
+            document.getElementById('tab-admins')?.classList.remove('active');
             titlePage.textContent = 'Edición de Precios';
             viewBloqueos.style.display = 'block';
             viewBuscador.style.display = 'none';
             if (viewAnuncios) viewAnuncios.style.display = 'none';
             if (viewConsultas) viewConsultas.style.display = 'none';
+            const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
             if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
             loadSchedule();
         });
@@ -872,5 +882,257 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             showToast('Error', 'error');
         }
+    };
+
+    // ── Logica Gestión de Admins ──
+    const tabAdmins = document.getElementById('tab-admins');
+    const viewAdmins = document.getElementById('view-admins');
+    const tablaAdminsBody = document.getElementById('tabla-admins-body');
+    const adminCountBadge = document.getElementById('admin-count-badge');
+    const formCrearAdmin = document.getElementById('form-crear-admin');
+    let adminsActuales = [];
+
+    // Security modal elements
+    const securityModal = document.getElementById('admin-security-modal');
+    const securityModalTitle = document.getElementById('security-modal-title');
+    const securityModalDesc = document.getElementById('security-modal-desc');
+    const securityModalExtra = document.getElementById('security-modal-extra');
+    const securityModalPassword = document.getElementById('security-modal-password');
+    const btnSecurityCancel = document.getElementById('btn-security-cancel');
+    const btnSecurityConfirm = document.getElementById('btn-security-confirm');
+    let securityModalCallback = null; // Stores the function to call on confirm
+
+    // Tab switch for Admins
+    if (tabAdmins) {
+        tabAdmins.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentMode = 'admins';
+            tabAdmins.classList.add('active');
+            tabBuscador.classList.remove('active');
+            tabConsultas?.classList.remove('active');
+            tabAnuncios?.classList.remove('active');
+            tabBloqueos.classList.remove('active');
+            tabPrecios.classList.remove('active');
+            titlePage.textContent = '👥 Gestión de Administradores';
+            if (viewAdmins) viewAdmins.style.display = 'block';
+            viewBuscador.style.display = 'none';
+            viewBloqueos.style.display = 'none';
+            if (viewConsultas) viewConsultas.style.display = 'none';
+            if (viewAnuncios) viewAnuncios.style.display = 'none';
+            if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
+            loadAdmins();
+        });
+    }
+
+    async function loadAdmins() {
+        if (!tablaAdminsBody) return;
+        tablaAdminsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando administradores...</td></tr>';
+        try {
+            const resp = await fetch('../api/admin-users.php?action=get');
+            const data = await resp.json();
+            if (resp.ok && data.status === 'success') {
+                adminsActuales = data.data;
+                renderAdminsTable();
+            } else {
+                tablaAdminsBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:red;">Error: ${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            tablaAdminsBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:red;">Error de conexión.</td></tr>`;
+        }
+    }
+
+    function renderAdminsTable() {
+        if (adminCountBadge) adminCountBadge.textContent = `Total: ${adminsActuales.length}`;
+        if (adminsActuales.length === 0) {
+            tablaAdminsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay administradores.</td></tr>';
+            return;
+        }
+        tablaAdminsBody.innerHTML = adminsActuales.map(a => {
+            const rolBadgeColor = a.rol === 'concejal' ? 'background-color:#fff3e0; color:#ef6c00;' : 'background-color:#e8f5e9; color:#2e7d32;';
+            const ultimoAcceso = a.ultimo_acceso ? a.ultimo_acceso.substring(0,16).replace('T',' ') : 'Nunca';
+            return `
+            <tr>
+                <td><strong>#${a.id}</strong></td>
+                <td><strong>${a.usuario}</strong></td>
+                <td><span class="badge" style="${rolBadgeColor}">${a.rol.charAt(0).toUpperCase() + a.rol.slice(1)}</span></td>
+                <td>${ultimoAcceso}</td>
+                <td>
+                    <button class="btn-sm btn-view" onclick="resetPasswordAdmin(${a.id}, '${a.usuario}')">🔑 Cambiar Clave</button>
+                    <button class="btn-sm btn-cancel" onclick="deleteAdmin(${a.id}, '${a.usuario}')">❌ Eliminar</button>
+                </td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    // ── Security Modal helpers ──
+    function openSecurityModal(title, desc, extraHtml, callback) {
+        securityModalTitle.textContent = title;
+        securityModalDesc.innerHTML = desc;
+        securityModalExtra.innerHTML = extraHtml || '';
+        securityModalPassword.value = '';
+        securityModalCallback = callback;
+        securityModal.style.display = 'flex';
+        securityModalPassword.focus();
+    }
+
+    if (btnSecurityCancel) {
+        btnSecurityCancel.addEventListener('click', () => {
+            securityModal.style.display = 'none';
+            securityModalCallback = null;
+        });
+    }
+
+    if (btnSecurityConfirm) {
+        btnSecurityConfirm.addEventListener('click', () => {
+            if (securityModalCallback) {
+                securityModalCallback(securityModalPassword.value);
+            }
+        });
+    }
+
+    // ── Crear admin ──
+    if (formCrearAdmin) {
+        formCrearAdmin.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnObj = formCrearAdmin.querySelector('button[type="submit"]');
+            const nuevoUser = document.getElementById('new-admin-user').value.trim();
+            const nuevoRol = document.getElementById('new-admin-rol').value;
+            const nuevaPass = document.getElementById('new-admin-pass').value;
+            const authPass = document.getElementById('new-admin-auth').value;
+
+            if (!nuevoUser || !nuevaPass || !authPass) {
+                showToast('Completa todos los campos.', 'error');
+                return;
+            }
+            if (nuevaPass.length < 8) {
+                showToast('La contraseña debe tener al menos 8 caracteres.', 'error');
+                return;
+            }
+
+            btnObj.disabled = true;
+            btnObj.textContent = 'Creando...';
+
+            try {
+                const resp = await fetch('../api/admin-users.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'create',
+                        nuevo_usuario: nuevoUser,
+                        nueva_password: nuevaPass,
+                        nuevo_rol: nuevoRol,
+                        auth_password: authPass
+                    })
+                });
+                const data = await resp.json();
+                if (resp.ok && data.status === 'success') {
+                    showToast(data.message, 'success');
+                    formCrearAdmin.reset();
+                    loadAdmins();
+                } else {
+                    showToast(data.message || 'Error al crear', 'error');
+                }
+            } catch (err) {
+                showToast('Error de red.', 'error');
+            } finally {
+                btnObj.disabled = false;
+                btnObj.textContent = '➕ Crear Administrador';
+            }
+        });
+    }
+
+    // ── Resetear contraseña vía modal ──
+    window.resetPasswordAdmin = (id, username) => {
+        openSecurityModal(
+            'Cambiar Contraseña',
+            `Vas a establecer una <strong>nueva contraseña</strong> para el usuario <strong>${username}</strong>.`,
+            `<div class="control-group" style="margin-bottom:0;">
+                <label for="reset-new-password">Nueva Contraseña</label>
+                <input type="password" id="reset-new-password" placeholder="Mínimo 8 caracteres" style="padding:0.6rem; border:1px solid #ccc; border-radius:6px; width:100%; box-sizing:border-box;">
+            </div>`,
+            async (authPass) => {
+                const newPass = document.getElementById('reset-new-password').value;
+                if (!newPass || newPass.length < 8) {
+                    showToast('La nueva contraseña debe tener al menos 8 caracteres.', 'error');
+                    return;
+                }
+                if (!authPass) {
+                    showToast('Introduce tu contraseña de confirmación.', 'error');
+                    return;
+                }
+
+                btnSecurityConfirm.disabled = true;
+                btnSecurityConfirm.textContent = 'Procesando...';
+
+                try {
+                    const resp = await fetch('../api/admin-users.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'reset',
+                            target_id: id,
+                            nueva_password: newPass,
+                            auth_password: authPass
+                        })
+                    });
+                    const data = await resp.json();
+                    if (resp.ok && data.status === 'success') {
+                        showToast(data.message, 'success');
+                        securityModal.style.display = 'none';
+                    } else {
+                        showToast(data.message || 'Error', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error de red.', 'error');
+                } finally {
+                    btnSecurityConfirm.disabled = false;
+                    btnSecurityConfirm.textContent = 'Confirmar';
+                }
+            }
+        );
+    };
+
+    // ── Eliminar admin vía modal ──
+    window.deleteAdmin = (id, username) => {
+        openSecurityModal(
+            'Eliminar Administrador',
+            `⚠️ Vas a <strong>eliminar permanentemente</strong> al administrador <strong>${username}</strong>. Esta acción no se puede deshacer.`,
+            '',
+            async (authPass) => {
+                if (!authPass) {
+                    showToast('Introduce tu contraseña de confirmación.', 'error');
+                    return;
+                }
+
+                btnSecurityConfirm.disabled = true;
+                btnSecurityConfirm.textContent = 'Eliminando...';
+
+                try {
+                    const resp = await fetch('../api/admin-users.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'delete',
+                            target_id: id,
+                            auth_password: authPass
+                        })
+                    });
+                    const data = await resp.json();
+                    if (resp.ok && data.status === 'success') {
+                        showToast(data.message, 'success');
+                        securityModal.style.display = 'none';
+                        loadAdmins();
+                    } else {
+                        showToast(data.message || 'Error', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error de red.', 'error');
+                } finally {
+                    btnSecurityConfirm.disabled = false;
+                    btnSecurityConfirm.textContent = 'Confirmar';
+                }
+            }
+        );
     };
 });

@@ -268,6 +268,7 @@ if (!isset($_SESSION['admin_id'])) {
                 <a href="#" id="tab-anuncios">📢 Anuncios</a>
                 <a href="#" id="tab-bloqueos" class="active">📅 Calendario Bloqueos</a>
                 <a href="#" id="tab-precios">💰 Editar Precios</a>
+                <a href="#" id="tab-admins">👥 Gestión de Admins</a>
             </nav>
         </aside>
 
@@ -414,6 +415,55 @@ if (!isset($_SESSION['admin_id'])) {
                 </div>
             </div>
 
+            <!-- VIEW: Gestión de Administradores -->
+            <div id="view-admins" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3 style="margin:0; color:#0b1c3c;">Administradores Registrados</h3>
+                    <span class="badge" style="background-color:#e3f2fd; color:#1565c0; font-size:0.9rem; padding:0.4rem 1rem;" id="admin-count-badge">Total: --</span>
+                </div>
+
+                <div class="table-container" style="margin-bottom:2rem;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Rol</th>
+                                <th>Último Acceso</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-admins-body">
+                            <tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="color:#0b1c3c; border-bottom:2px solid #f0f0f0; padding-bottom:0.5rem;">Añadir Nuevo Administrador</h3>
+                <form id="form-crear-admin" class="search-filters" style="margin-top:1rem;">
+                    <div class="control-group">
+                        <label>Nombre de Usuario</label>
+                        <input type="text" id="new-admin-user" placeholder="Ej: admin_pedro" required minlength="3">
+                    </div>
+                    <div class="control-group">
+                        <label>Rol</label>
+                        <select id="new-admin-rol">
+                            <option value="admin">Admin</option>
+                            <option value="concejal">Concejal</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Contraseña Inicial</label>
+                        <input type="password" id="new-admin-pass" placeholder="Mínimo 8 caracteres" required minlength="8">
+                    </div>
+                    <div class="control-group">
+                        <label>Tu Contraseña (confirmar)</label>
+                        <input type="password" id="new-admin-auth" placeholder="Tu clave actual" required>
+                    </div>
+                    <button type="submit" class="btn-search">➕ Crear Administrador</button>
+                </form>
+            </div>
+
             <!-- VIEW: Anuncios y Novedades -->
             <div id="view-anuncios" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
@@ -502,11 +552,31 @@ if (!isset($_SESSION['admin_id'])) {
         </div>
     </div>
 
+    <!-- Modal de seguridad para acciones sensibles de Admins -->
+    <div id="admin-security-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:2rem; border-radius:8px; width:420px; max-width:90%;">
+            <h3 style="margin-top:0; color:#0b1c3c;" id="security-modal-title">Confirmar Acción</h3>
+            <p id="security-modal-desc" style="color:#666; font-size:0.9rem; margin-bottom:1rem;"></p>
+            
+            <div id="security-modal-extra" style="margin-bottom:1rem;"></div>
+
+            <div class="control-group" style="margin-bottom:1.5rem;">
+                <label for="security-modal-password">Tu Contraseña Actual</label>
+                <input type="password" id="security-modal-password" placeholder="Introduce tu contraseña para confirmar" style="padding:0.6rem; border:1px solid #ccc; border-radius:6px; width:100%; box-sizing:border-box;">
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; gap:1rem;">
+                <button id="btn-security-cancel" style="background:#ccc; color:#333; border:none; padding:0.6rem 1.2rem; border-radius:6px; cursor:pointer;">Cancelar</button>
+                <button id="btn-security-confirm" style="background:#d15615; color:white; border:none; padding:0.6rem 1.2rem; border-radius:6px; cursor:pointer; font-weight:600;">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Pasar variables desde PHP u ocultarlo en variables globales si hace falta
         const defaultBasePrice = 4.00;
     </script>
-    <script src="../js/admin.js?v=2.0.0"></script>
+    <script src="../js/admin.js?v=2.1.0"></script>
 </body>
 </html>
 
