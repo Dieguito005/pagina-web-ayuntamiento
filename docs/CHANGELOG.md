@@ -6,11 +6,23 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.1.1] - 07-04-2026
+
+### Cambiado 🔄
+- **Eliminación del rol "Concejal"**: Se ha simplificado el sistema de roles de administrador. Ahora todos los administradores tienen el mismo nivel de acceso bajo el rol `admin` único. Se han eliminado todas las referencias al rol `concejal` del código (frontend, backend, formularios y estilos).
+  - `setup_db.php` — La columna `rol` pasa de `ENUM('admin','concejal')` a `VARCHAR(20)`. El usuario `concejal_deportes` ya no se genera.
+  - `api/admin-users.php` — El endpoint de creación siempre asigna `'admin'` como rol, ignorando cualquier valor externo.
+  - `admin-dashboard.php` — Eliminados: campo selector de Rol del formulario y línea de Rol del perfil en el sidebar. Eliminada columna Rol de la tabla.
+  - `js/admin.js` — Eliminado el badge de color diferenciado por rol y la referencia al selector.
+- **Script de Migración `migrate_remove_rol.php`**: Script de un solo uso para actualizar las instalaciones existentes, convirtiendo la columna `ENUM` a `VARCHAR`, actualizando filas `concejal` a `admin` y eliminando el usuario `concejal_deportes` de la BBDD.
+
+---
+
 ## [2.1.0] - 07-04-2026
 
 ### Añadido 🚀
 - **Gestión de Administradores (CRUD completo)**: Nueva pestaña «👥 Gestión de Admins» en el panel de administración que permite listar, crear, resetear contraseñas y eliminar usuarios administradores directamente desde la interfaz web.
-  - **Tabla de Administradores**: Muestra ID, nombre de usuario, rol (Admin/Concejal), último acceso y contador total de admins registrados.
+  - **Tabla de Administradores**: Muestra ID, nombre de usuario y último acceso, con contador total de admins registrados.
   - **Crear Nuevo Admin**: Formulario integrado para dar de alta nuevos administradores especificando nombre de usuario, rol y contraseña inicial. Requiere verificación con la contraseña del admin que realiza la operación.
   - **Cambiar Contraseña (Resetear)**: Modal de seguridad que permite establecer una nueva contraseña para cualquier administrador. Solicita la contraseña actual del admin operador como doble factor de confirmación.
   - **Eliminar Administrador**: Botón de eliminación permanente protegido por modal de seguridad con verificación de contraseña. Incluye protecciones contra auto-eliminación y contra dejar la tabla sin ningún administrador.

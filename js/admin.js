@@ -948,13 +948,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         tablaAdminsBody.innerHTML = adminsActuales.map(a => {
-            const rolBadgeColor = a.rol === 'concejal' ? 'background-color:#fff3e0; color:#ef6c00;' : 'background-color:#e8f5e9; color:#2e7d32;';
             const ultimoAcceso = a.ultimo_acceso ? a.ultimo_acceso.substring(0,16).replace('T',' ') : 'Nunca';
             return `
             <tr>
                 <td><strong>#${a.id}</strong></td>
                 <td><strong>${a.usuario}</strong></td>
-                <td><span class="badge" style="${rolBadgeColor}">${a.rol.charAt(0).toUpperCase() + a.rol.slice(1)}</span></td>
                 <td>${ultimoAcceso}</td>
                 <td>
                     <button class="btn-sm btn-view" onclick="resetPasswordAdmin(${a.id}, '${a.usuario}')">🔑 Cambiar Clave</button>
@@ -997,7 +995,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const btnObj = formCrearAdmin.querySelector('button[type="submit"]');
             const nuevoUser = document.getElementById('new-admin-user').value.trim();
-            const nuevoRol = document.getElementById('new-admin-rol').value;
             const nuevaPass = document.getElementById('new-admin-pass').value;
             const authPass = document.getElementById('new-admin-auth').value;
 
@@ -1021,7 +1018,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         action: 'create',
                         nuevo_usuario: nuevoUser,
                         nueva_password: nuevaPass,
-                        nuevo_rol: nuevoRol,
                         auth_password: authPass
                     })
                 });

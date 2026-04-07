@@ -260,7 +260,6 @@ if (!isset($_SESSION['admin_id'])) {
         <aside class="admin-sidebar">
             <h3>Mi Perfil</h3>
             <p><strong>Usuario:</strong> <?= htmlspecialchars($_SESSION['admin_usuario'] ?? 'Admin') ?></p>
-            <p><strong>Rol:</strong> <?= htmlspecialchars(ucfirst($_SESSION['admin_rol'] ?? 'Admin')) ?></p>
             
             <nav class="admin-nav">
                 <a href="#" id="tab-buscador">🔍 Buscador e Historial</a>
@@ -428,7 +427,6 @@ if (!isset($_SESSION['admin_id'])) {
                             <tr>
                                 <th>ID</th>
                                 <th>Usuario</th>
-                                <th>Rol</th>
                                 <th>Último Acceso</th>
                                 <th>Acciones</th>
                             </tr>
@@ -444,13 +442,6 @@ if (!isset($_SESSION['admin_id'])) {
                     <div class="control-group">
                         <label>Nombre de Usuario</label>
                         <input type="text" id="new-admin-user" placeholder="Ej: admin_pedro" required minlength="3">
-                    </div>
-                    <div class="control-group">
-                        <label>Rol</label>
-                        <select id="new-admin-rol">
-                            <option value="admin">Admin</option>
-                            <option value="concejal">Concejal</option>
-                        </select>
                     </div>
                     <div class="control-group">
                         <label>Contraseña Inicial</label>

@@ -23,7 +23,7 @@ try {
         id INT AUTO_INCREMENT PRIMARY KEY,
         usuario VARCHAR(50) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
-        rol ENUM('admin', 'concejal') DEFAULT 'admin',
+        rol VARCHAR(20) DEFAULT 'admin',
         ultimo_acceso DATETIME NULL
     )";
     $pdo->exec($sql_usuarios);
@@ -46,13 +46,12 @@ try {
     $pdo->exec($sql_reservas);
     echo "Tabla 'reservas' creada.<br>";
 
-    // 6. Insertar las 5 credenciales de prueba pre-establecidas
+    // 6. Insertar las credenciales de prueba pre-establecidas
     $credenciales = [
         ['usuario' => 'admin_juan', 'pass' => 'Tarancon2026!'],
         ['usuario' => 'admin_maria', 'pass' => 'Tarancon2026!'],
         ['usuario' => 'admin_carlos', 'pass' => 'Tarancon2026!'],
-        ['usuario' => 'admin_laura', 'pass' => 'Tarancon2026!'],
-        ['usuario' => 'concejal_deportes', 'pass' => 'Deportes2026!', 'rol' => 'concejal']
+        ['usuario' => 'admin_laura', 'pass' => 'Tarancon2026!']
     ];
 
     $stmt = $pdo->prepare("INSERT IGNORE INTO usuarios_admin (usuario, password_hash, rol) VALUES (?, ?, ?)");

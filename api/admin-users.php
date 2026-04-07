@@ -70,7 +70,7 @@ if ($method === 'POST') {
     if ($action === 'create') {
         $nuevoUsuario = trim($data['nuevo_usuario'] ?? '');
         $nuevaPassword = $data['nueva_password'] ?? '';
-        $nuevoRol = $data['nuevo_rol'] ?? 'admin';
+        $nuevoRol = 'admin';
 
         if (empty($nuevoUsuario) || empty($nuevaPassword)) {
             http_response_code(400);
@@ -82,10 +82,6 @@ if ($method === 'POST') {
             http_response_code(400);
             echo json_encode(["status" => "error", "message" => "La contraseña debe tener al menos 8 caracteres."]);
             exit;
-        }
-
-        if (!in_array($nuevoRol, ['admin', 'concejal'])) {
-            $nuevoRol = 'admin';
         }
 
         try {
