@@ -522,7 +522,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        tablaReservasBody.innerHTML = data.map(r => `
+        const now = new Date();
+        const strDate = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        const strTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+        tablaReservasBody.innerHTML = data.map(r => {
+            const isPast = r.fecha < strDate || (r.fecha === strDate && r.hora_inicio.substring(0,5) <= strTime);
+            const canCancel = r.estado !== 'cancelada' && r.estado !== 'bloqueada_admin' && !isPast;
+            
+            return `
             <tr>
                 <td><strong>${r.fecha.split('-').reverse().join('/')}</strong><br><span style="color:#666;font-size:0.85rem;">${r.hora_inicio.substring(0,5)} - ${r.hora_fin.substring(0,5)}</span></td>
                 <td>${r.pista}</td>
@@ -532,10 +540,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><strong>${r.precio_total ? r.precio_total + '€' : '---'}</strong></td>
                 <td>
                     <button class="btn-sm btn-view" onclick="verDetalles(${r.id})">🔍 Ver</button>
-                    ${r.estado !== 'cancelada' && r.estado !== 'bloqueada_admin' ? `<button class="btn-sm btn-cancel" onclick="cancelarReserva(${r.id})">❌ Anular</button>` : ''}
+                    ${canCancel ? `<button class="btn-sm btn-cancel" onclick="cancelarReserva(${r.id})">❌ Anular</button>` : ''}
                 </td>
             </tr>
-        `).join('');
+        `}).join('');
     }
 
     window.verDetalles = (id) => {

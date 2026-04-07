@@ -75,6 +75,23 @@ if ($method === 'GET') {
         }
 
         try {
+            $stmtCheck = $pdo->prepare("SELECT fecha, hora_inicio FROM reservas WHERE id = ?");
+            $stmtCheck->execute([$id]);
+            $res = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            if ($res) {
+                date_default_timezone_set('Europe/Madrid');
+                $fechaActual = date('Y-m-d');
+                $horaActual = date('H:i');
+                $horaInicio = substr($res['hora_inicio'], 0, 5);
+
+                if ($res['fecha'] < $fechaActual || ($res['fecha'] === $fechaActual && $horaInicio <= $horaActual)) {
+                    http_response_code(400);
+                    echo json_encode(["status" => "error", "message" => "No se puede anular una reserva pasada o en curso."]);
+                    exit;
+                }
+            }
+
             $stmt = $pdo->prepare("UPDATE reservas SET estado = 'cancelada' WHERE id = ?");
             if ($stmt->execute([$id])) {
                 echo json_encode(["status" => "success", "message" => "Reserva cancelada exitosamente"]);
