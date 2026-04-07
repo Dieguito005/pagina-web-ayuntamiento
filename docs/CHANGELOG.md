@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.0.1] - 07-04-2026
+
+### Arreglado 🐛
+- **Error 404 al iniciar sesión desde reservas ("Not Found")**: Solucionado un problema en la redirección. Cuando un usuario no registrado intentaba reservar, la web le enviaba correctamente a iniciar sesión recordando la ruta destino (ej. `checkout.php`). Sin embargo, al mandar estos datos a los validadores `api/user-auth.php` o `api/user-register.php`, las APIs lo redirigían literalmente y de forma relativa hacia `api/checkout.php` en vez de enviarlo a `html/checkout.php`, lo que lanzaba un Error 404 (No Encontrado). Corregido inyectando `../html/` como prefijo base para resolver la redirección pertinentemente.
+
+---
+
 ## [2.0.0] - 06-04-2026
 
 ### Añadido 🚀

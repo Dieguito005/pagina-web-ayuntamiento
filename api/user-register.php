@@ -90,6 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $redirect = !empty($_POST['redirect']) ? $_POST['redirect'] : '../html/home.php';
         if (strpos($redirect, '://') !== false || strpos($redirect, '//') === 0) {
             $redirect = '../html/home.php';
+        } elseif (!empty($_POST['redirect']) && strpos($redirect, '../html/') !== 0) {
+            $redirect = '../html/' . ltrim($redirect, '/');
         }
         safe_redirect($redirect);
 
