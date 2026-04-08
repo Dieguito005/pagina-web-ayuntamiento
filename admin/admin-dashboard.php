@@ -29,6 +29,8 @@ if (!isset($_SESSION['admin_id'])) {
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            transition: left 0.3s ease;
+            z-index: 1000;
         }
         .admin-sidebar h3 {
             margin-bottom: 1.5rem;
@@ -440,13 +442,54 @@ if (!isset($_SESSION['admin_id'])) {
             padding: 2rem;
             color: #666;
         }
+        
+        /* ── RESPONSIVE ── */
+        .mobile-menu-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0 1rem;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 990;
+        }
+        @media (max-width: 992px) {
+            .mobile-menu-btn { display: block; }
+            .header-title h1 { font-size: 1.2rem; }
+            .admin-sidebar {
+                position: fixed;
+                left: -320px;
+                top: var(--header-height, 80px);
+                bottom: 0;
+                width: 300px;
+                box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+            }
+            .admin-sidebar.show { left: 0; }
+            .sidebar-overlay.show { display: block; }
+            .admin-main { padding: 1.5rem 1rem; }
+            .schedule-grid-admin { padding: 1rem; }
+            .slots-container { justify-content: center; }
+            .time-slot { width: calc(50% - 0.5rem); min-width: 120px; }
+            .actividad-controls { flex-direction: column; align-items: stretch; }
+        }
+        @media (max-width: 480px) {
+            .time-slot { width: 100%; min-width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-    <header class="main-header" style="position: sticky; z-index: 100;">
+    <header class="main-header" style="position: sticky; z-index: 1000; top: 0;">
         <div class="header-container">
-            <div class="header-logo">
+            <div class="header-logo" style="display:flex; align-items:center;">
+                <button class="mobile-menu-btn" id="mobile-toggle">☰</button>
                 <a href="../html/home.php" class="logo-home">
                     <div class="logo-image-box">
                         <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo">
@@ -456,9 +499,11 @@ if (!isset($_SESSION['admin_id'])) {
             <div class="header-title">
                 <h1> Portal Administrador </h1>
             </div>
-            <div style="width: 120px;"></div>
+            <div style="width: 120px; text-align:right;"></div>
         </div>
     </header>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <div class="admin-layout">
         <!-- Sidebar -->
@@ -863,6 +908,28 @@ if (!isset($_SESSION['admin_id'])) {
     </div>
 
     <script>
+        // -- Mobile Sidebar Toggle --
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const sidebar = document.querySelector('.admin-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+
+        if (mobileToggle && sidebar && overlay) {
+            mobileToggle.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+            
+            const navLinks = document.querySelectorAll('.admin-nav a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 992) toggleSidebar();
+                });
+            });
+        }
+
         // Pasar variables desde PHP u ocultarlo en variables globales si hace falta
         const defaultBasePrice = 4.00;
     </script>

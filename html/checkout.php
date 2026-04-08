@@ -1,4 +1,7 @@
-<?php require_once '../includes/user-auth-check.php'; ?>
+<?php
+require_once '../config.php';
+require_once '../includes/user-auth-check.php';
+?>
 <!DOCTYPE html>
 <html lang="es">
 
