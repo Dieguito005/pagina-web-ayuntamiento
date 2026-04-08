@@ -30,7 +30,7 @@ if (!isset($_SESSION['admin_id'])) {
             flex-direction: column;
             overflow-y: auto;
             transition: left 0.3s ease;
-            z-index: 1000;
+            z-index: 100;
         }
         .admin-sidebar h3 {
             margin-bottom: 1.5rem;
@@ -462,14 +462,15 @@ if (!isset($_SESSION['admin_id'])) {
         }
         @media (max-width: 992px) {
             .mobile-menu-btn { display: block; }
-            .header-title h1 { font-size: 1.2rem; }
+            .header-title h1 { font-size: 1.1rem; }
             .admin-sidebar {
                 position: fixed;
                 left: -320px;
-                top: var(--header-height, 80px);
+                top: 70px;
                 bottom: 0;
-                width: 300px;
+                width: 280px;
                 box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+                z-index: 1500;
             }
             .admin-sidebar.show { left: 0; }
             .sidebar-overlay.show { display: block; }
@@ -486,20 +487,20 @@ if (!isset($_SESSION['admin_id'])) {
 </head>
 <body>
 
-    <header class="main-header" style="position: sticky; z-index: 1000; top: 0;">
-        <div class="header-container">
-            <div class="header-logo" style="display:flex; align-items:center;">
-                <button class="mobile-menu-btn" id="mobile-toggle">☰</button>
+    <header class="main-header" style="position: sticky; z-index: 2000; top: 0; background-color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div class="header-container" style="display:flex; justify-content:space-between; align-items:center; width:100%; padding:0 1rem;">
+            <div class="header-logo" style="display:flex; align-items:center; gap:1rem;">
+                <button class="mobile-menu-btn" id="mobile-toggle" style="color:#0b1c3c;">☰</button>
                 <a href="../html/home.php" class="logo-home">
                     <div class="logo-image-box">
-                        <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo">
+                        <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo" style="max-height: 50px;">
                     </div>
                 </a>
             </div>
             <div class="header-title">
-                <h1> Portal Administrador </h1>
+                <h1 style="color:#0b1c3c; margin:0; font-size:1.4rem;"> Portal Administrador </h1>
             </div>
-            <div style="width: 120px; text-align:right;"></div>
+            <div style="width: 50px; text-align:right;"></div>
         </div>
     </header>
 
@@ -507,7 +508,7 @@ if (!isset($_SESSION['admin_id'])) {
 
     <div class="admin-layout">
         <!-- Sidebar -->
-        <aside class="admin-sidebar">
+        <aside class="admin-sidebar" id="admin-sidebar-nav">
             <h3>⚙️ Panel Admin</h3>
             <p style="font-size:0.8rem; color:#aaa;">Sesión iniciada como:</p>
             <p><strong style="color:white;"><?= htmlspecialchars($_SESSION['admin_usuario'] ?? 'Admin') ?></strong></p>
@@ -910,7 +911,7 @@ if (!isset($_SESSION['admin_id'])) {
     <script>
         // -- Mobile Sidebar Toggle --
         const mobileToggle = document.getElementById('mobile-toggle');
-        const sidebar = document.querySelector('.admin-sidebar');
+        const sidebar = document.getElementById('admin-sidebar-nav');
         const overlay = document.getElementById('sidebar-overlay');
 
         function toggleSidebar() {
