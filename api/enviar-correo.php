@@ -117,23 +117,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </html>
             ";
 
-            $headers = "MIME-Version: 1.0" . "\r\n";
-            $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-            $headers .= "From: reservas@tarancon.es" . "\r\n"; 
+            // Enviar email via Brevo API o mail() fallback
+            require_once __DIR__ . '/mailer.php';
+            $emailResult = send_email($to, $nombre, $subject, $message);
 
-            $sent = @mail($to, $subject, $message, $headers);
-            
-            if ($sent) {
+            if ($emailResult['sent']) {
                 http_response_code(200);
-                echo json_encode(["status" => "success", "message" => "Reserva creada y correo enviado.", "codigo" => $codigo_acceso]);
+                echo json_encode(["status" => "success", "message" => "Reserva creada y correo enviado via " . $emailResult['method'] . ".", "codigo" => $codigo_acceso]);
             } else {
-                // La reserva SÍ se guardó en BBDD, solo falla el envío de correo (normal en XAMPP local)
+                // La reserva SÍ se guardó en BBDD, solo falla el envío de correo
                 http_response_code(200);
-                echo json_encode(["status" => "success", "message" => "Reserva creada correctamente. El correo no se pudo enviar (SMTP no configurado en entorno local).", "codigo" => $codigo_acceso]);
+                echo json_encode(["status" => "success", "message" => "Reserva creada correctamente. " . ($emailResult['error'] ?? 'El correo no se pudo enviar.'), "codigo" => $codigo_acceso]);
             }
         } catch (\PDOException $e) {
+            error_log("Reserva DB error: " . $e->getMessage());
             http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Error de BBDD al procesar la reserva: " . $e->getMessage()]);
+            echo json_encode(["status" => "error", "message" => "Error al procesar la reserva. Inténtelo de nuevo."]);
         }
     } else {
         http_response_code(400);

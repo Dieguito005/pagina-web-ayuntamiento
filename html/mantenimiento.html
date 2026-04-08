@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mantenimiento - Alquileres Tarancón</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0b1c3c 0%, #1e3a5f 50%, #2d5f8a 100%);
+            color: #e8ecf1;
+            padding: 2rem;
+        }
+        .container {
+            text-align: center;
+            max-width: 540px;
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeUp 0.8s ease-out;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #b0c4de;
+            margin-bottom: 0.8rem;
+        }
+        .badge {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.5rem 1.2rem;
+            background: rgba(209, 86, 21, 0.2);
+            border: 1px solid rgba(209, 86, 21, 0.4);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #f0a070;
+        }
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #6b8ab0;
+        }
+        .footer a {
+            color: #8ab0d0;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔧</div>
+        <h1>Sitio en Mantenimiento</h1>
+        <p>Estamos realizando pruebas internas para garantizar la mejor experiencia en el servicio de reservas deportivas.</p>
+        <p>El acceso estará disponible al público próximamente.</p>
+        <div class="badge">⏳ Pruebas internas en curso</div>
+        <div class="footer">
+            <p>Ayuntamiento de Tarancón</p>
+            <p><a href="tel:+34969321016">📞 +34 969 32 10 16</a></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,5 +1,7 @@
-﻿<?php
+<?php
+require_once __DIR__ . '/../config.php';
 session_start();
+send_security_headers();
 if (isset($_SESSION['admin_id'])) {
     header("Location: admin-dashboard.php");
     exit;
@@ -10,6 +12,7 @@ if (isset($_GET['error'])) {
     if ($_GET['error'] === 'empty') $error_msg = "Por favor, completa todos los campos.";
     else if ($_GET['error'] === 'invalid') $error_msg = "Usuario o contraseña incorrectos.";
     else if ($_GET['error'] === 'db') $error_msg = "Error al conectar con la base de datos.";
+    else if ($_GET['error'] === 'ratelimit') $error_msg = "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo.";
 }
 ?>
 <!DOCTYPE html>

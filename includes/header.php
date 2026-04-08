@@ -1,8 +1,16 @@
 <?php
 // includes/header.php
+require_once __DIR__ . '/../config.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+// Regenerar ID de sesión en primer acceso (anti-fixation)
+if (!isset($_SESSION['_initiated'])) {
+    session_regenerate_id(true);
+    $_SESSION['_initiated'] = true;
+}
+send_security_headers();
+check_maintenance();
 $isUserLoggedIn = isset($_SESSION['user_id']);
 $userName = $_SESSION['user_nombre'] ?? '';
 ?>

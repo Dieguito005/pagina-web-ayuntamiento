@@ -1,14 +1,10 @@
 <?php
-// conexion.php
-// Archivo de conexión a la base de datos
+// api/conexion.php
+// Archivo de conexión a la base de datos — Versión producción-ready
 
-$host = '127.0.0.1';
-$db   = 'ayuntamiento_reservas';
-$user = 'root'; // Usuario por defecto en XAMPP
-$pass = '';     // Contraseña por defecto en XAMPP
-$charset = 'utf8mb4';
+require_once __DIR__ . '/../config.php';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -16,8 +12,14 @@ $options = [
 ];
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
 } catch (\PDOException $e) {
-    // Si la base de datos no existe, mostramos un error amigable
-    die("Error de conexión a la base de datos. Por favor, asegúrate de haber ejecutado setup_db.php primero. Detalles: " . $e->getMessage());
+    // En producción: NUNCA mostrar detalles del error al usuario
+    if (IS_PRODUCTION) {
+        error_log("DB Connection Error: " . $e->getMessage());
+        http_response_code(503);
+        die("Servicio temporalmente no disponible. Inténtelo más tarde.");
+    } else {
+        die("Error de conexión a la base de datos. Asegúrate de haber ejecutado setup_db.php. Detalles: " . $e->getMessage());
+    }
 }

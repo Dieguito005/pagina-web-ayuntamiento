@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const dniInput = document.getElementById('dni');
     if (dniInput) {
         dniInput.addEventListener('input', (e) => {
-            // Convertir a mayúsculas y remover caracteres no válidos
             e.target.value = e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, '');
         });
     }
@@ -51,12 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const telInput = document.getElementById('telefono');
     if (telInput) {
         telInput.addEventListener('input', (e) => {
-            // Solo dígitos, máximo 9
             e.target.value = e.target.value.replace(/\D/g, '').substring(0, 9);
         });
     }
 
-    // ── Formateo visual de inputs de tarjeta ──
+    // ── Formateo visual de inputs de tarjeta (solo para modo simulado) ──
     const cardNumber = document.getElementById('cardNumber');
     const expiry     = document.getElementById('expiry');
 
@@ -76,104 +74,158 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── Envío de formulario (pago simulado) ──
+    // ── Envío de formulario ──
     const bookingForm  = document.getElementById('booking-form');
     const formView     = document.getElementById('checkout-form-view');
     const successView  = document.getElementById('checkout-success-view');
     const submitBtn    = document.getElementById('submit-btn');
-    const btnText      = submitBtn.querySelector('.btn-text');
+    const btnText      = submitBtn?.querySelector('.btn-text');
     const spinner      = document.getElementById('loading-spinner');
     const displayEmail = document.getElementById('display-email');
     const displayCode  = document.getElementById('display-code');
-
-    function generateAccessCode() {
-        return "Cargando...";
-    }
 
     if (bookingForm) {
         bookingForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
             submitBtn.disabled = true;
-            btnText.classList.add('hidden');
-            spinner.classList.remove('hidden');
+            if (btnText) btnText.classList.add('hidden');
+            if (spinner) spinner.classList.remove('hidden');
 
             const userEmail = document.getElementById('email').value;
 
-            setTimeout(async () => {
-                // Envío de correo y reserva vía PHP
-                try {
-                    const bookingInfo = storedBooking ? JSON.parse(storedBooking) : {};
-                    const formData = new FormData();
-                    formData.append('email', userEmail);
-                    formData.append('nombre', document.getElementById('nombre').value);
-                    formData.append('dni', document.getElementById('dni').value);
-                    formData.append('telefono', document.getElementById('telefono').value);
-                    formData.append('pista', bookingInfo.sport || 'Pista Deportiva');
-                    formData.append('fecha', bookingInfo.date || 'Día seleccionado');
-                    formData.append('hora', bookingInfo.time || 'Hora seleccionada');
-                    // Calculate total price
-                    const basePrice = bookingInfo.basePrice ? parseFloat(bookingInfo.basePrice) : 4.00;
-                    const supplement = bookingInfo.supplement ? parseFloat(bookingInfo.supplement) : 0;
-                    formData.append('precio_total', (basePrice + supplement).toFixed(2));
-
-                    const response = await fetch('../api/enviar-correo.php', { method: 'POST', body: formData });
-                    const result = await response.json();
-
-                    if (result.status === 'success' && result.codigo) {
-                        // Reserva creada correctamente (correo enviado o no)
-                        displayEmail.textContent = userEmail;
-                        displayCode.textContent = result.codigo;
-
-                        formView.classList.add('hidden');
-                        successView.classList.remove('hidden');
-
-                        localStorage.removeItem('bookingData');
-
-                        // ── Copiar al portapapeles al hacer clic en el code-box ──
-                        const codeBox   = document.getElementById('code-box-copy');
-                        const copyIcon  = document.getElementById('copy-icon');
-                        const copyText  = document.getElementById('copy-text');
-
-                        if (codeBox) {
-                            codeBox.style.cursor = 'pointer';
-                            codeBox.addEventListener('click', () => {
-                                const code = result.codigo;
-                                navigator.clipboard.writeText(code).then(() => {
-                                    // Feedback visual de éxito
-                                    if (copyIcon)  copyIcon.textContent  = '✅';
-                                    if (copyText)  copyText.textContent  = '¡Copiado!';
-                                    codeBox.classList.add('copied');
-                                    setTimeout(() => {
-                                        if (copyIcon) copyIcon.textContent = '📋';
-                                        if (copyText) copyText.textContent = 'Haz clic para copiar';
-                                        codeBox.classList.remove('copied');
-                                    }, 2000);
-                                }).catch(() => {
-                                    // Fallback: seleccionar el texto manualmente
-                                    const range = document.createRange();
-                                    range.selectNodeContents(displayCode);
-                                    const sel = window.getSelection();
-                                    sel.removeAllRanges();
-                                    sel.addRange(range);
-                                });
-                            });
-                        }
-                    } else {
-                        alert("Error al procesar la reserva: " + (result.message || "La pista ya no está disponible."));
-                        submitBtn.disabled = false;
-                        btnText.classList.remove('hidden');
-                        spinner.classList.add('hidden');
-                    }
-                } catch (error) {
-                    console.error('Error detallado:', error);
-                    alert('Error de conexión con el servidor. Comprueba que XAMPP (Apache y MySQL) están encendidos y vuelve a intentarlo.');
-                    submitBtn.disabled = false;
-                    btnText.classList.remove('hidden');
-                    spinner.classList.add('hidden');
-                }
-            }, 1000);
+            // Decidir flujo según si Stripe está activo
+            if (window.USE_STRIPE) {
+                handleStripeCheckout(userEmail);
+            } else {
+                handleSimulatedPayment(userEmail);
+            }
         });
     }
-});
 
+    // ── FLUJO STRIPE: Redirige a pasarela externa ──
+    async function handleStripeCheckout(userEmail) {
+        try {
+            const bookingInfo = storedBooking ? JSON.parse(storedBooking) : {};
+            const basePrice = bookingInfo.basePrice ? parseFloat(bookingInfo.basePrice) : 4.00;
+            const supplement = bookingInfo.supplement ? parseFloat(bookingInfo.supplement) : 0;
+
+            const payload = {
+                email: userEmail,
+                nombre: document.getElementById('nombre').value,
+                dni: document.getElementById('dni').value,
+                telefono: document.getElementById('telefono').value,
+                pista: bookingInfo.sport || 'Pista Deportiva',
+                fecha: bookingInfo.date || '',
+                hora: bookingInfo.time || '',
+                precio_total: (basePrice + supplement).toFixed(2)
+            };
+
+            const response = await fetch('../api/stripe-checkout.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success' && result.checkout_url) {
+                // Redirigir a Stripe Checkout
+                window.location.href = result.checkout_url;
+            } else {
+                alert("Error al iniciar el pago: " + (result.message || "Error desconocido."));
+                resetButton();
+            }
+        } catch (error) {
+            console.error('Error Stripe:', error);
+            alert('Error de conexión con la pasarela de pago. Comprueba tu conexión e inténtalo de nuevo.');
+            resetButton();
+        }
+    }
+
+    // ── FLUJO SIMULADO: Pago ficticio + reserva directa (original) ──
+    function handleSimulatedPayment(userEmail) {
+        setTimeout(async () => {
+            try {
+                const bookingInfo = storedBooking ? JSON.parse(storedBooking) : {};
+                const formData = new FormData();
+                formData.append('email', userEmail);
+                formData.append('nombre', document.getElementById('nombre').value);
+                formData.append('dni', document.getElementById('dni').value);
+                formData.append('telefono', document.getElementById('telefono').value);
+                formData.append('pista', bookingInfo.sport || 'Pista Deportiva');
+                formData.append('fecha', bookingInfo.date || 'Día seleccionado');
+                formData.append('hora', bookingInfo.time || 'Hora seleccionada');
+
+                const basePrice = bookingInfo.basePrice ? parseFloat(bookingInfo.basePrice) : 4.00;
+                const supplement = bookingInfo.supplement ? parseFloat(bookingInfo.supplement) : 0;
+                formData.append('precio_total', (basePrice + supplement).toFixed(2));
+
+                const response = await fetch('../api/enviar-correo.php', { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (result.status === 'success' && result.codigo) {
+                    displayEmail.textContent = userEmail;
+                    displayCode.textContent = result.codigo;
+
+                    formView.classList.add('hidden');
+                    successView.classList.remove('hidden');
+
+                    localStorage.removeItem('bookingData');
+
+                    // Copiar al portapapeles al hacer clic en el code-box
+                    const codeBox  = document.getElementById('code-box-copy');
+                    const copyIcon = document.getElementById('copy-icon');
+                    const copyText = document.getElementById('copy-text');
+
+                    if (codeBox) {
+                        codeBox.style.cursor = 'pointer';
+                        codeBox.addEventListener('click', () => {
+                            const code = result.codigo;
+                            navigator.clipboard.writeText(code).then(() => {
+                                if (copyIcon)  copyIcon.textContent  = '✅';
+                                if (copyText)  copyText.textContent  = '¡Copiado!';
+                                codeBox.classList.add('copied');
+                                setTimeout(() => {
+                                    if (copyIcon) copyIcon.textContent = '📋';
+                                    if (copyText) copyText.textContent = 'Haz clic para copiar';
+                                    codeBox.classList.remove('copied');
+                                }, 2000);
+                            }).catch(() => {
+                                const range = document.createRange();
+                                range.selectNodeContents(displayCode);
+                                const sel = window.getSelection();
+                                sel.removeAllRanges();
+                                sel.addRange(range);
+                            });
+                        });
+                    }
+                } else {
+                    alert("Error al procesar la reserva: " + (result.message || "La pista ya no está disponible."));
+                    resetButton();
+                }
+            } catch (error) {
+                console.error('Error detallado:', error);
+                alert('Error de conexión con el servidor. Comprueba que el servidor esté encendido.');
+                resetButton();
+            }
+        }, 1000);
+    }
+
+    // ── Restaurar botón tras error ──
+    function resetButton() {
+        submitBtn.disabled = false;
+        if (btnText) btnText.classList.remove('hidden');
+        if (spinner) spinner.classList.add('hidden');
+    }
+
+    // ── Comprobar si viene de un pago cancelado ──
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('pago') === 'cancelado') {
+        const alert = document.createElement('div');
+        alert.style.cssText = 'background:#fff3e0;border:1px solid #ff9800;color:#e65100;padding:1rem;border-radius:8px;margin-bottom:1.5rem;text-align:center;font-weight:500;';
+        alert.textContent = '⚠️ Has cancelado el proceso de pago. Puedes volver a intentarlo.';
+        const form = document.getElementById('booking-form');
+        if (form) form.parentNode.insertBefore(alert, form);
+    }
+});

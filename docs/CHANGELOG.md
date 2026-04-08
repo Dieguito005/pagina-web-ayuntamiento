@@ -6,6 +6,67 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.4.0] - 07-04-2026
+
+### Añadido 🚀
+- **Pasarela de Pago Stripe Checkout**: Integración completa con Stripe para pagos reales con tarjeta de crédito/débito. El sistema detecta automáticamente si Stripe está configurado (`STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY`); si no lo está, mantiene el flujo de pago simulado original.
+  - **`api/stripe-checkout.php`**: Endpoint que crea sesiones de Stripe Checkout via API REST (cURL puro, sin librerías externas). Guarda los datos de reserva en sesión PHP para recuperarlos tras el pago.
+  - **`html/pago-exitoso.php`**: Página post-pago que verifica la sesión con Stripe, crea la reserva en BBDD (idempotente — soporta recargas de página), envía email de confirmación y muestra el código de acceso. Reutiliza los estilos existentes de checkout.
+  - **Checkout adaptativo** (`checkout.php` + `checkout.js`): Cuando Stripe está activo, se ocultan los campos de tarjeta simulada y se muestra un mensaje indicando la redirección segura a Stripe. El botón cambia a "💳 Pagar con Stripe". Si el usuario cancela en Stripe, se le devuelve al checkout con un aviso.
+  - Modo test de Stripe (claves `sk_test_` / `pk_test_`) — ideal para pruebas internas antes de activar pagos reales.
+- **Servicio de correo Brevo (ex-Sendinblue)**: Sistema de emails transaccionales con 300 envíos/día gratuitos.
+  - **`api/mailer.php`**: Helper centralizado que usa la API HTTP de Brevo via cURL. Fallback automático a `mail()` cuando no hay API key configurada.
+  - **`api/enviar-correo.php`**: Actualizado para usar el nuevo mailer en lugar de `mail()` directo. Los emails de confirmación ahora se envían realmente en producción.
+- **Modo Mantenimiento / Beta Interna**: Sistema de acceso restringido para pruebas internas del Ayuntamiento.
+  - Cuando `MAINTENANCE_MODE = true` (automático en producción), los visitantes ven una página de mantenimiento profesional (`html/mantenimiento.html`) con diseño glassmorphism.
+  - Los empleados del Ayuntamiento acceden añadiendo `?beta_key=TaranconTest2026` a cualquier URL, lo que crea una cookie de 30 días que permite navegar normalmente.
+  - El panel admin (`/admin/`) y las APIs (`/api/`) siempre son accesibles — no se ven afectados por el modo mantenimiento.
+  - La clave beta es configurable via variable de entorno `BETA_KEY`.
+
+### Cambiado 🔄
+- **`config.php` ampliado**: Nuevas secciones 5 (Mantenimiento), 6 (Brevo), 7 (Stripe) con detección automática de si los servicios están configurados (`USE_BREVO`, `USE_STRIPE`).
+- **`checkout.js` reescrito (v2.3.0)**: Flujo dual de pago. Variable global `window.USE_STRIPE` inyectada desde PHP determina qué flujo usar. Gestión de pago cancelado via query param `?pago=cancelado`.
+- **`includes/header.php`**: Ahora ejecuta `check_maintenance()` antes de renderizar HTML.
+
+---
+
+## [2.3.0] - 07-04-2026
+
+### Añadido 🚀
+- **Sistema de configuración centralizado (`config.php`)**: Nuevo archivo maestro que detecta automáticamente el entorno (local vs producción) mediante `APP_ENV` o el hostname. Controla error reporting, seguridad de sesiones y credenciales de BBDD desde un solo lugar.
+  - **Local (XAMPP)**: errores visibles, cookies sin flag `Secure`, credenciales por defecto.
+  - **Producción**: errores ocultos (solo en log del servidor), cookies `Secure + HttpOnly + SameSite=Lax + StrictMode`, credenciales leídas desde variables de entorno del hosting.
+- **Cabeceras HTTP de seguridad** en todas las páginas (`send_security_headers()`):
+  - `X-Content-Type-Options: nosniff` — Previene MIME sniffing.
+  - `X-Frame-Options: SAMEORIGIN` — Bloquea clickjacking.
+  - `X-XSS-Protection: 1; mode=block` — Filtro XSS del navegador.
+  - `Referrer-Policy: strict-origin-when-cross-origin` — Limita la información del Referer.
+  - `Strict-Transport-Security` (solo producción) — Fuerza HTTPS 1 año.
+- **Protección anti brute-force en login admin** (`admin-auth.php`):
+  - Máximo 5 intentos de login cada 15 minutos por sesión.
+  - Delay artificial aleatorio (200-500ms) en cada intento fallido.
+  - Mensaje de error dedicado "Demasiados intentos" en la interfaz.
+  - `session_regenerate_id(true)` al hacer login correcto (anti-fixation).
+- **Ficheros `.htaccess` de seguridad**:
+  - **Raíz**: Bloquea acceso a `config.php`, scripts de setup/migración, `check*.php`, `.git`, archivos `.md/.log/.sql`. Desactiva listado de directorios. Gzip y caché de assets.
+  - **`/api/`**: Bloquea acceso directo a `conexion.php` y `setup-precios-db.php`.
+  - **`/includes/`**: Acceso denegado completamente (solo PHP `include`).
+  - **`/docs/`**: Acceso denegado completamente.
+- **`.gitignore` completo**: Excluye `.env`, `check*.php`, scripts de migración, `refactor.ps1`, logs y configuraciones de IDE.
+
+### Cambiado 🔄
+- **`api/conexion.php` endurecido**: Las credenciales de BBDD ahora se leen desde `config.php` (variables de entorno en producción, valores XAMPP en local). Los errores de conexión se registran en el log del servidor sin mostrar detalles al usuario en producción (responde HTTP 503 genérico).
+- **`includes/header.php`**: Ahora carga `config.php`, aplica cabeceras de seguridad y regenera el ID de sesión en el primer acceso (anti-fixation).
+- **`admin/admin-dashboard.php` y `admin-login.php`**: Integrados con el sistema de configuración y cabeceras de seguridad.
+- **`api/enviar-correo.php`**: Los errores PDO ya no exponen el mensaje de la excepción al cliente; se registran en el log del servidor.
+
+### Seguridad 🔒
+- Eliminada la exposición de `$e->getMessage()` en respuestas JSON de producción.
+- Todas las cookies de sesión marcadas como `HttpOnly` (inaccesibles desde JavaScript).
+- Scripts de setup/migración bloqueados por `.htaccess` (no ejecutables desde navegador en producción).
+
+---
+
 ## [2.2.0] - 07-04-2026
 
 ### Añadido 🚀

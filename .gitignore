@@ -1,0 +1,36 @@
+# ==========================================
+# .gitignore — Página Web Ayuntamiento
+# ==========================================
+
+# Entorno y credenciales
+.env
+.env.*
+*.env
+
+# Ficheros de debug/test
+check.php
+check2.php
+debug_*.txt
+debug_*.ps1
+
+# Scripts de migración (un solo uso, no deben estar en producción)
+migrate_*.php
+update_reservas_table.php
+refactor.ps1
+
+# IDE y sistema
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+
+# Dependencias (si se añaden en el futuro)
+vendor/
+node_modules/
+
+# Logs
+*.log
+error_log

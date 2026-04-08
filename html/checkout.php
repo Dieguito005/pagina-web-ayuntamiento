@@ -11,7 +11,11 @@
     <link rel="stylesheet" href="../css/checkout.css">
     <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
-    <script src="../js/checkout.js?v=1.7.1" defer></script>
+    <script>
+        // Config inyectada desde PHP — el JS decide qué flujo usar
+        window.USE_STRIPE = <?= defined('USE_STRIPE') && USE_STRIPE ? 'true' : 'false' ?>;
+    </script>
+    <script src="../js/checkout.js?v=2.3.0" defer></script>
     <title>Reserva y Pago - Alquileres Tarancón</title>
     <style>
         /* Hint de copiar código */
@@ -122,7 +126,8 @@
                         </div>
                     </fieldset>
 
-                    <!-- DATOS DE TARJETA -->
+                    <!-- DATOS DE TARJETA (solo si NO hay Stripe) -->
+                    <?php if (!defined('USE_STRIPE') || !USE_STRIPE): ?>
                     <fieldset class="form-section payment-section">
                         <legend>Datos de Pago</legend>
                         <p class="payment-disclaimer">Cobro seguro. Formulario simulado para pruebas.</p>
@@ -152,6 +157,15 @@
                             </div>
                         </div>
                     </fieldset>
+                    <?php else: ?>
+                    <fieldset class="form-section payment-section">
+                        <legend>💳 Pago Seguro</legend>
+                        <div style="text-align:center; padding: 1rem; background: #f0f7ff; border-radius: 8px; border: 1px solid #bdd4f0;">
+                            <p style="margin:0; font-size:1rem; color:#1e3a5f;">🔒 Al pulsar el botón serás redirigido a la <strong>pasarela segura de Stripe</strong> para completar el pago con tarjeta.</p>
+                            <p style="margin:0.5rem 0 0; font-size:0.85rem; color:#666;">Tus datos de tarjeta nunca pasan por nuestro servidor.</p>
+                        </div>
+                    </fieldset>
+                    <?php endif; ?>
 
                     <!-- Políticas -->
                     <div class="form-group checkbox-group">
@@ -162,7 +176,7 @@
                     </div>
 
                     <button type="submit" class="btn-primary btn-submit-form" id="submit-btn">
-                        <span class="btn-text">Pagar y Generar Reserva</span>
+                        <span class="btn-text"><?= (defined('USE_STRIPE') && USE_STRIPE) ? '💳 Pagar con Stripe' : 'Pagar y Generar Reserva' ?></span>
                         <div class="spinner hidden" id="loading-spinner"></div>
                     </button>
                     <p class="error-msg hidden" id="form-error-msg">Por favor, rellena los campos correctamente.</p>
