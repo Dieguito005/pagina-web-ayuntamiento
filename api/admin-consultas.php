@@ -3,6 +3,7 @@
 session_start();
 header('Content-Type: application/json');
 require_once 'conexion.php';
+require_once 'mailer.php'; // Cargamos el helper de correos centralizado
 
 // Verificar si es administrador
 if (!isset($_SESSION['admin_id'])) {
@@ -88,7 +89,13 @@ if ($action === 'get') {
                                 <p>Si tiene más dudas, no dude en contactarnos de nuevo.</p>
                                 <p>Gracias,<br>El equipo del Ayuntamiento de Tarancón.</p>";
                 // Ignoramos el error si falla en local y asumimos que se llamará a PHPMailer si el entorno lo permite
-                @enviarCorreoSMTP($emailDestino, $nombreUsuario, $asunto, $mensajeHTML);
+                // Usamos la función send_email definida en mailer.php (vía Brevo o mail)
+                if (function_exists('send_email')) {
+                    send_email($emailDestino, $nombreUsuario, $asunto, $mensajeHTML);
+                } else {
+                    // Fallback si por alguna razón no se cargó mailer.php
+                    @mail($emailDestino, $asunto, $mensajeHTML, "From: no-reply@tarancon.es\r\nContent-Type: text/html; charset=UTF-8");
+                }
             } else {
                 // Alternativa simple con mail() fallback, aunque estemos en local
                 $subject = "Su consulta ha sido resuelta - Ayuntamiento de Tarancón";
