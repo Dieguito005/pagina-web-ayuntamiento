@@ -1,11 +1,12 @@
 <?php
+require_once __DIR__ . '/config.php';
 // setup_db_consultas.php
 // Script para crear la tabla de consultas
 
-$host = '127.0.0.1';
-$user = 'root';
-$pass = '';
-$dbname = 'ayuntamiento_reservas';
+$host = DB_HOST;
+$user = DB_USER;
+$pass = DB_PASS;
+$dbname = DB_NAME;
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);

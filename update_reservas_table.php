@@ -1,12 +1,13 @@
 <?php
+require_once __DIR__ . '/config.php';
 // update_reservas_table.php
 // Ejecuta UNA VEZ para añadir las columnas que faltan a la tabla 'reservas'
 // URL: http://localhost/pagina-web-ayuntamiento/update_reservas_table.php
 
-$host = '127.0.0.1';
-$user = 'root';
-$pass = '';
-$dbname = 'ayuntamiento_reservas';
+$host = DB_HOST;
+$user = DB_USER;
+$pass = DB_PASS;
+$dbname = DB_NAME;
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);

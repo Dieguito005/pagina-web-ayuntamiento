@@ -1,11 +1,12 @@
 <?php
+require_once __DIR__ . '/config.php';
 // setup_db_update.php
 // Script para actualizar la base de datos con las nuevas columnas necesarias para el historial y buscador avanzado.
 
-$host = '127.0.0.1';
-$user = 'root'; // Usuario por defecto en XAMPP
-$pass = '';     // Contraseña por defecto en XAMPP
-$dbname = 'ayuntamiento_reservas';
+$host = DB_HOST;
+$user = DB_USER; // Usuario por defecto en XAMPP
+$pass = DB_PASS;     // Contraseña por defecto en XAMPP
+$dbname = DB_NAME;
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
@@ -39,6 +40,9 @@ try {
     echo "<br><strong>¡Actualización completada!</strong> La base de datos está lista para guardar los DNI, Teléfonos y Precios de ahora en adelante, y permitir cancelaciones.";
 
 } catch (\PDOException $e) {
+    die("<span style='color:red;'>Error de conexión:</span> " . $e->getMessage());
+}
+?>
     die("<span style='color:red;'>Error de conexión:</span> " . $e->getMessage());
 }
 ?>

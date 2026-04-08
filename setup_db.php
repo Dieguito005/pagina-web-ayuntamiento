@@ -1,22 +1,17 @@
 <?php
+require_once __DIR__ . '/config.php';
 // setup_db.php
-// Ejecuta este archivo en el navegador (http://localhost/tu-carpeta/setup_db.php) una sola vez para crear la BBDD y usuarios.
 
-$host = '127.0.0.1';
-$user = 'root'; // Usuario por defecto en XAMPP
-$pass = '';     // Contraseña por defecto en XAMPP
+$host = DB_HOST;
+$user = DB_USER;
+$pass = DB_PASS;
+$dbname = DB_NAME;
 
 try {
-    // 1. Conectamos a MySQL (sin seleccionar base de datos aún)
-    $pdo = new PDO("mysql:host=$host;charset=utf8mb4", $user, $pass);
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // 2. Crear la base de datos si no existe
-    $pdo->exec("CREATE DATABASE IF NOT EXISTS ayuntamiento_reservas DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    echo "Base de datos 'ayuntamiento_reservas' creada o ya existía.<br>";
-
-    // 3. Seleccionar la base de datos
-    $pdo->exec("USE ayuntamiento_reservas");
+    echo "Base de datos '$dbname' seleccionada.<br>";
 
     // 4. Crear la tabla de usuarios administradores
     $sql_usuarios = "CREATE TABLE IF NOT EXISTS usuarios_admin (
@@ -58,13 +53,12 @@ try {
     
     foreach ($credenciales as $cred) {
         $hash = password_hash($cred['pass'], PASSWORD_DEFAULT);
-        $rol = $cred['rol'] ?? 'admin';
-        $stmt->execute([$cred['usuario'], $hash, $rol]);
+        $stmt->execute([$cred['usuario'], $hash, 'admin']);
     }
-    echo "Usuarios administradores creados (si no existían previamente).<br>";
-    echo "<br><strong>¡Instalación completada con éxito!</strong> Por seguridad, te recomendamos eliminar o renombrar este archivo 'setup_db.php' después de usarlo.";
+    
+    echo "Usuarios de prueba creados (si no existían).<br>";
+    echo "<strong>¡Instalación completada!</strong><br>";
 
 } catch (\PDOException $e) {
     die("Error durante la instalación: " . $e->getMessage());
 }
-?>

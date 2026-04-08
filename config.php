@@ -1,12 +1,22 @@
 <?php
 // config.php — Configuración centralizada del proyecto
+if (file_exists(__DIR__ . '/env.php')) {
+    require_once __DIR__ . '/env.php';
+}
 // Este archivo detecta el entorno (local vs producción) y carga las variables adecuadas.
 // NUNCA subir credenciales de producción a Git.
+
+function get_env_var($key, $default = '') {
+    $constant = 'ENV_' . $key;
+    if (defined($constant)) return constant($constant);
+    $val = getenv($key);
+    return $val !== false ? $val : $default;
+}
 
 // ──────────────────────────────────────────
 // 1. DETECCIÓN DE ENTORNO
 // ──────────────────────────────────────────
-$_APP_ENV = getenv('APP_ENV') ?: 'local';
+$_APP_ENV = get_env_var('APP_ENV', 'local');
 
 if ($_APP_ENV === 'local' && isset($_SERVER['HTTP_HOST'])) {
     $host = $_SERVER['HTTP_HOST'];
@@ -46,10 +56,10 @@ if (session_status() === PHP_SESSION_NONE) {
 // ──────────────────────────────────────────
 // 4. CREDENCIALES DE BASE DE DATOS
 // ──────────────────────────────────────────
-define('DB_HOST',    IS_PRODUCTION ? (getenv('DB_HOST')    ?: '127.0.0.1') : '127.0.0.1');
-define('DB_NAME',    IS_PRODUCTION ? (getenv('DB_NAME')    ?: 'ayuntamiento_reservas') : 'ayuntamiento_reservas');
-define('DB_USER',    IS_PRODUCTION ? (getenv('DB_USER')    ?: 'root') : 'root');
-define('DB_PASS',    IS_PRODUCTION ? (getenv('DB_PASS')    ?: '') : '');
+define('DB_HOST', IS_PRODUCTION ? get_env_var('DB_HOST', '127.0.0.1') : '127.0.0.1');
+define('DB_NAME', IS_PRODUCTION ? get_env_var('DB_NAME', 'ayuntamiento_reservas') : 'ayuntamiento_reservas');
+define('DB_USER', IS_PRODUCTION ? get_env_var('DB_USER', 'root') : 'root');
+define('DB_PASS', IS_PRODUCTION ? get_env_var('DB_PASS', '') : '');
 define('DB_CHARSET', 'utf8mb4');
 
 // ──────────────────────────────────────────
@@ -60,16 +70,16 @@ define('DB_CHARSET', 'utf8mb4');
 // Eso crea una cookie que permite navegar normalmente.
 // En local (XAMPP) el modo mantenimiento está DESACTIVADO siempre.
 define('MAINTENANCE_MODE', IS_PRODUCTION ? true : false);
-define('MAINTENANCE_BETA_KEY', getenv('BETA_KEY') ?: 'TaranconTest2026');
+define('MAINTENANCE_BETA_KEY', get_env_var('BETA_KEY', 'TaranconTest2026'));
 
 // ──────────────────────────────────────────
 // 6. BREVO (ex-Sendinblue) — Servicio SMTP
 // ──────────────────────────────────────────
 // Registro gratuito en https://app.brevo.com → 300 emails/día gratis
 // Obtener API Key en: Configuración → Claves API → Generar nueva clave
-define('BREVO_API_KEY',    getenv('BREVO_API_KEY')    ?: '');
-define('MAIL_FROM_EMAIL',  getenv('MAIL_FROM_EMAIL')  ?: 'reservas@tarancon.es');
-define('MAIL_FROM_NAME',   getenv('MAIL_FROM_NAME')   ?: 'Ayuntamiento de Tarancón - Reservas');
+define('BREVO_API_KEY', get_env_var('BREVO_API_KEY', ''));
+define('MAIL_FROM_EMAIL', get_env_var('MAIL_FROM_EMAIL', 'reservas@tarancon.es'));
+define('MAIL_FROM_NAME', get_env_var('MAIL_FROM_NAME', 'Ayuntamiento de Tarancón - Reservas'));
 // Si la API key está vacía, se usa mail() como fallback (solo funciona en local)
 define('USE_BREVO', !empty(BREVO_API_KEY));
 
@@ -79,16 +89,18 @@ define('USE_BREVO', !empty(BREVO_API_KEY));
 // Registro en https://dashboard.stripe.com → Modo Test activado por defecto
 // Las claves de TEST empiezan por sk_test_ y pk_test_
 // Las claves de PRODUCCIÓN empiezan por sk_live_ y pk_live_
-define('STRIPE_SECRET_KEY',      getenv('STRIPE_SECRET_KEY')      ?: '');
-define('STRIPE_PUBLISHABLE_KEY', getenv('STRIPE_PUBLISHABLE_KEY') ?: '');
+define('STRIPE_SECRET_KEY', get_env_var('STRIPE_SECRET_KEY', ''));
+define('STRIPE_PUBLISHABLE_KEY', get_env_var('STRIPE_PUBLISHABLE_KEY', ''));
 // Si las claves están vacías, se usa el flujo de pago simulado original
 define('USE_STRIPE', !empty(STRIPE_SECRET_KEY) && !empty(STRIPE_PUBLISHABLE_KEY));
 
 // ──────────────────────────────────────────
 // 8. CABECERAS DE SEGURIDAD HTTP
 // ──────────────────────────────────────────
-function send_security_headers() {
-    if (headers_sent()) return;
+function send_security_headers()
+{
+    if (headers_sent())
+        return;
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: SAMEORIGIN');
     header('X-XSS-Protection: 1; mode=block');
@@ -105,13 +117,17 @@ function send_security_headers() {
 // ──────────────────────────────────────────
 // Llamar a check_maintenance() en las páginas públicas (header.php ya lo hace).
 // Las APIs y el admin panel NO pasan por esto.
-function check_maintenance() {
-    if (!MAINTENANCE_MODE) return; // Desactivado
+function check_maintenance()
+{
+    if (!MAINTENANCE_MODE)
+        return; // Desactivado
 
     // Permitir acceso a admin panel siempre
     $uri = $_SERVER['REQUEST_URI'] ?? '';
-    if (strpos($uri, '/admin/') !== false) return;
-    if (strpos($uri, '/api/') !== false) return;
+    if (strpos($uri, '/admin/') !== false)
+        return;
+    if (strpos($uri, '/api/') !== false)
+        return;
 
     // Comprobar si el usuario está entrando con la beta key
     if (isset($_GET['beta_key']) && $_GET['beta_key'] === MAINTENANCE_BETA_KEY) {

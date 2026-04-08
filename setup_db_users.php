@@ -1,11 +1,12 @@
 <?php
+require_once __DIR__ . '/config.php';
 // setup_db_users.php
 // Ejecuta una sola vez: http://localhost/pagina-web-ayuntamiento/setup_db_users.php
 
-$host = '127.0.0.1';
-$user = 'root';
-$pass = '';
-$dbname = 'ayuntamiento_reservas';
+$host = DB_HOST;
+$user = DB_USER;
+$pass = DB_PASS;
+$dbname = DB_NAME;
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
