@@ -9,14 +9,19 @@ if (isset($_SESSION['admin_id'])) {
 
 $error_msg = "";
 if (isset($_GET['error'])) {
-    if ($_GET['error'] === 'empty') $error_msg = "Por favor, completa todos los campos.";
-    else if ($_GET['error'] === 'invalid') $error_msg = "Usuario o contraseña incorrectos.";
-    else if ($_GET['error'] === 'db') $error_msg = "Error al conectar con la base de datos.";
-    else if ($_GET['error'] === 'ratelimit') $error_msg = "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo.";
+    if ($_GET['error'] === 'empty')
+        $error_msg = "Por favor, completa todos los campos.";
+    else if ($_GET['error'] === 'invalid')
+        $error_msg = "Usuario o contraseña incorrectos.";
+    else if ($_GET['error'] === 'db')
+        $error_msg = "Error al conectar con la base de datos.";
+    else if ($_GET['error'] === 'ratelimit')
+        $error_msg = "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo.";
 }
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,6 +36,7 @@ if (isset($_GET['error'])) {
             background-color: #f4f6f8;
             padding: 2rem;
         }
+
         .admin-login-card {
             background-color: #fff;
             border-radius: 12px;
@@ -40,24 +46,29 @@ if (isset($_GET['error'])) {
             padding: 2.5rem;
             text-align: center;
         }
+
         .admin-login-card img {
             max-width: 150px;
             margin-bottom: 1.5rem;
         }
+
         .admin-login-card h2 {
             color: #0b1c3c;
             margin-bottom: 0.5rem;
             font-size: 1.75rem;
         }
+
         .admin-login-card p {
             color: #666;
             margin-bottom: 2rem;
             font-size: 0.95rem;
         }
+
         .form-group {
             margin-bottom: 1.25rem;
             text-align: left;
         }
+
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
@@ -65,6 +76,7 @@ if (isset($_GET['error'])) {
             font-weight: 600;
             font-size: 0.9rem;
         }
+
         .form-group input {
             width: 100%;
             padding: 0.8rem 1rem;
@@ -74,11 +86,13 @@ if (isset($_GET['error'])) {
             transition: border-color 0.3s;
             box-sizing: border-box;
         }
+
         .form-group input:focus {
             outline: none;
             border-color: #d15615;
             box-shadow: 0 0 0 3px rgba(209, 86, 21, 0.1);
         }
+
         .btn-submit {
             background-color: #d15615;
             color: white;
@@ -92,12 +106,15 @@ if (isset($_GET['error'])) {
             transition: background-color 0.3s, transform 0.2s;
             margin-top: 1rem;
         }
+
         .btn-submit:hover {
             background-color: #a44310;
         }
+
         .btn-submit:active {
             transform: translateY(1px);
         }
+
         .alert-error {
             background-color: #ffebee;
             color: #c62828;
@@ -109,6 +126,7 @@ if (isset($_GET['error'])) {
         }
     </style>
 </head>
+
 <body>
 
     <header class="main-header" style="position: sticky;">
@@ -116,7 +134,7 @@ if (isset($_GET['error'])) {
             <div class="header-logo">
                 <a href="../html/home.php" class="logo-home">
                     <div class="logo-image-box">
-                         <!-- Reusing the black logo logic from navbar if wanted, or forcing the white one for dark header -->
+                        <!-- Reusing the black logo logic from navbar if wanted, or forcing the white one for dark header -->
                         <img class="logo-ayuntamiento" src="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" alt="Logo">
                     </div>
                 </a>
@@ -140,7 +158,7 @@ if (isset($_GET['error'])) {
             <form action="admin-auth.php" method="POST">
                 <div class="form-group">
                     <label for="usuario">Usuario</label>
-                    <input type="text" id="usuario" name="usuario" required autofocus placeholder="Ej. admin_juan">
+                    <input type="text" id="usuario" name="usuario" required autofocus>
                 </div>
                 <div class="form-group">
                     <label for="password">Contraseña</label>
@@ -149,12 +167,12 @@ if (isset($_GET['error'])) {
                 <button type="submit" class="btn-submit">Entrar al Panel</button>
             </form>
             <div style="margin-top: 20px;">
-                <a href="../html/home.php" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Volver al inicio</a>
+                <a href="../html/home.php" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Volver al
+                    inicio</a>
             </div>
         </div>
     </main>
 
 </body>
+
 </html>
-
-
