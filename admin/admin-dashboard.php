@@ -832,6 +832,8 @@ if (!isset($_SESSION['admin_id'])) {
                 </form>
             </div>
 
+
+
             <!-- VIEW: Anuncios y Novedades -->
             <div id="view-anuncios" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">

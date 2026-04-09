@@ -22,8 +22,8 @@
         <!-- SECCIÓN BANNER HERO -->
         <section class="hero-banner">
             <div class="hero-content scroll-animate" data-animation="fade-in-up">
-                <h2>Alquila ya tu pista de Tenis y Pádel en Tarancón</h2>
-                <p>Nuevas instalaciones deportivas disponibles para todos. ¡Reserva tu pista hoy mismo!</p>
+                <h2>Alquila ya tu pista de Tenis o Pádel en Tarancón</h2>
+                <p>Nuevas instalaciones deportivas municipales a tu disposición. ¡Reserva hoy mismo!</p>
             </div>
         </section>
 
@@ -65,6 +65,8 @@
                         <a href="tenis.php" class="btn-primary">Ver pistas disponibles</a>
                     </div>
                 </article>
+
+
             </div>
         </section>
     </main>

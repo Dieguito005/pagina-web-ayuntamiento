@@ -178,10 +178,11 @@ require_once '../includes/user-auth-check.php';
                             Ayuntamiento de Tarancón.</label>
                     </div>
 
-                    <button type="submit" class="btn-primary btn-submit-form" id="submit-btn">
+                    <button type="submit" class="btn-primary btn-submit-form" id="submit-btn" style="width: 100%;">
                         <span class="btn-text"><?= (defined('USE_STRIPE') && USE_STRIPE) ? '💳 Pagar con Stripe' : 'Pagar y Generar Reserva' ?></span>
                         <div class="spinner hidden" id="loading-spinner"></div>
                     </button>
+
                     <p class="error-msg hidden" id="form-error-msg">Por favor, rellena los campos correctamente.</p>
                 </form>
             </div>
