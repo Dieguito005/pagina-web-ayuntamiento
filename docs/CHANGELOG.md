@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.5.2] - 09-04-2026 (Mejoras Internas)
+
+### Añadido 🚀
+- **Middleware de Seguridad (`SecurityHandler.php`)**: Implementación centralizada de protección CSRF, prevención de redirecciones abiertas y gestión de cabeceras de seguridad (HSTS, CSP, X-Frame-Options).
+- **Mejoras de Accesibilidad (`js/horarios-accesibles.js`)**: Soporte para navegación por teclado en la cuadrícula de horarios y notificaciones ARIA Live para lectores de pantalla.
+
+---
+
 ## [2.5.0] - 08-04-2026
 
 ### Añadido 🚀
