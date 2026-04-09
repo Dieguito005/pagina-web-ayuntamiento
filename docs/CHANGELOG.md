@@ -6,6 +6,20 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.5.0] - 08-04-2026
+
+### Añadido 🚀
+- **Módulo de Estadísticas**: Nueva sección en el panel de administrador ("📊 Resumen y Estadísticas") construida mediante gráficos interactivos con la librería `Chart.js`.
+  - Tarjetas indicadoras del mes actual con los Ingresos (€) y Cantidad de Reservas comparativos al mes pasado.
+  - Gráfico Donut (Circular) ilustrando la capacidad explotada por parte de todas las pistas.
+  - Diagrama de Líneas ilustrando la demanda de reservas por día de los últimos 7 días con un backend dinámico en PDO `api/admin-stats.php`.
+
+### Cambiado 🔄
+- **Correo de Confirmaciones más minimalista**: Se ha removido la imagen física del código de barras (QR devueltos desde generador de API externa) y ahora se ha optado directamente por enclarecer los datos de facturación personal y mostrar el Alfanumérico a gran escala, resultando en carga mucho más limpia e instantánea.
+  - Modificado en `html/pago-exitoso.php` y en `api/enviar-correo.php`.
+
+---
+
 ## [2.4.0] - 07-04-2026
 
 ### Añadido 🚀

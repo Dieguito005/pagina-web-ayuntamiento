@@ -518,6 +518,9 @@ if (!isset($_SESSION['admin_id'])) {
                 <!-- GRUPO: PISTAS -->
                 <div class="nav-group">
                     <span class="nav-group-label">🏟️ Pistas</span>
+                    <a href="#" id="tab-estadisticas">
+                        <span>📊</span> Resumen y Estadísticas
+                    </a>
                     <a href="#" id="tab-bloqueos" class="active">
                         <span>📅</span> Calendario de Bloqueos
                     </a>
@@ -571,6 +574,35 @@ if (!isset($_SESSION['admin_id'])) {
             <div class="admin-header">
                 <h2 id="admin-page-title">Gestión de Bloqueos</h2>
                 <a href="admin-logout.php" class="btn-logout">Cerrar Sesión</a>
+            </div>
+
+            <!-- VISTA: ESTADÍSTICAS -->
+            <div id="view-estadisticas" style="display: none;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;">
+                        <h3 style="color: #666; font-size: 1rem; margin-bottom: 0.5rem; text-transform: uppercase;">Ingresos (Mes Actual)</h3>
+                        <p id="stat-ingresos-actual" style="font-size: 2rem; font-weight: 800; color: #2e7d32; margin: 0;">0.00 €</p>
+                    </div>
+                    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;">
+                        <h3 style="color: #666; font-size: 1rem; margin-bottom: 0.5rem; text-transform: uppercase;">Reservas (Mes Actual)</h3>
+                        <p id="stat-reservas-actual" style="font-size: 2rem; font-weight: 800; color: #0b1c3c; margin: 0;">0</p>
+                    </div>
+                    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;">
+                        <h3 style="color: #666; font-size: 1rem; margin-bottom: 0.5rem; text-transform: uppercase;">Ingresos (Mes Pasado)</h3>
+                        <p id="stat-ingresos-pasado" style="font-size: 2rem; font-weight: 800; color: #555; margin: 0;">0.00 €</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+                    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <h3 style="color: #333; margin-bottom: 1rem;">Distribución por Instalación</h3>
+                        <canvas id="chartPistas" style="max-height: 300px; width: 100%;"></canvas>
+                    </div>
+                    <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <h3 style="color: #333; margin-bottom: 1rem;">Reservas (Últimos 7 Días)</h3>
+                        <canvas id="chartDias" style="max-height: 300px; width: 100%;"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div id="view-bloqueos-precios">
@@ -934,7 +966,8 @@ if (!isset($_SESSION['admin_id'])) {
         // Pasar variables desde PHP u ocultarlo en variables globales si hace falta
         const defaultBasePrice = 4.00;
     </script>
-    <script src="../js/admin.js?v=2.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/admin.js?v=2.5.1"></script>
 </body>
 </html>
 

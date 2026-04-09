@@ -98,7 +98,6 @@ if (empty($session_id)) {
                 $insertStmt->execute($insertVals);
 
                 // Enviar email de confirmación
-                $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($codigo_acceso);
                 $emailHtml = "
                 <html><head><title>Confirmación de Reserva</title></head>
                 <body style='font-family: Arial, sans-serif; color: #333; line-height: 1.6;'>
@@ -108,13 +107,14 @@ if (empty($session_id)) {
                         <tr><td><strong>Instalación:</strong></td><td>{$reservaData['pista']}</td></tr>
                         <tr><td><strong>Fecha:</strong></td><td>{$reservaData['fecha']}</td></tr>
                         <tr><td><strong>Hora:</strong></td><td>{$reservaData['hora']}</td></tr>
+                        <tr><td><strong>Titular:</strong></td><td>{$reservaData['nombre']}</td></tr>
+                        " . (!empty($reservaData['dni']) ? "<tr><td><strong>DNI/NIE:</strong></td><td>{$reservaData['dni']}</td></tr>" : "") . "
                     </table>
                     <div style='background-color: #fff4e5; border: 2px dashed #c36a33; padding: 20px; text-align: center; border-radius: 8px;'>
-                        <p style='margin: 0; color: #914f26; font-size: 14px;'><strong>TU CÓDIGO DE ACCESO</strong></p>
+                        <p style='margin: 0; color: #914f26; font-size: 14px;'><strong>TU CÓDIGO DE ACCESO (MUESTRA ESTO AL CONSERJE)</strong></p>
                         <h1 style='margin: 10px 0; font-size: 42px; letter-spacing: 5px; color: #522d16;'>$codigo_acceso</h1>
-                        <img src='$qr_url' alt='QR' style='margin-top: 15px; border-radius: 8px; width: 200px; height: 200px;'/>
                     </div>
-                    <p style='color: #d32f2f; font-size: 0.9em;'><em>⚠️ Cancelación hasta 30 minutos antes. Después, no se devuelve el importe.</em></p>
+                    <p style='color: #d32f2f; font-size: 0.9em; margin-top:20px;'><em>⚠️ Cancelación hasta 30 minutos antes de la reserva. Después no se devuelve el importe.</em></p>
                 </body></html>";
 
                 send_email($reservaData['email'], $reservaData['nombre'], 'Confirmación de Reserva - Ayuntamiento de Tarancón', $emailHtml);

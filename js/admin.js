@@ -1,4 +1,4 @@
-﻿/**
+/**
  * js/admin.js — Lógica para el Panel de Administrador (Bloqueo y Desbloqueo de 30 días, Edición de Precios)
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,11 +22,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabPrecios = document.getElementById('tab-precios');
     const tabActividad = document.getElementById('tab-actividad');
     const titlePage = document.getElementById('admin-page-title');
-    let currentMode = 'bloqueos'; // 'bloqueos', 'precios', 'buscador', 'consultas', 'anuncios', 'admins', 'actividad'
+    let currentMode = 'bloqueos'; // 'bloqueos', 'precios', 'buscador', 'consultas', 'anuncios', 'admins', 'actividad', 'estadisticas'
 
     // Vista Actividad
     const viewActividad = document.getElementById('view-actividad');
     const badgeActividad = document.getElementById('badge-actividad');
+
+    // Vista Estadisticas
+    const tabEstadisticas = document.getElementById('tab-estadisticas');
+    const viewEstadisticas = document.getElementById('view-estadisticas');
 
     // Elementos Consultas
     const viewConsultas = document.getElementById('view-consultas');
@@ -105,16 +109,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewConsultas) viewConsultas.style.display = 'none';
         if (viewAnuncios) viewAnuncios.style.display = 'none';
         if (viewActividad) viewActividad.style.display = 'none';
+        if (viewEstadisticas) viewEstadisticas.style.display = 'none';
         const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
         if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
     }
     function deactivateAllTabs() {
-        [tabBuscador, tabConsultas, tabAnuncios, tabBloqueos, tabPrecios, tabActividad,
+        [tabBuscador, tabConsultas, tabAnuncios, tabBloqueos, tabPrecios, tabActividad, tabEstadisticas,
          document.getElementById('tab-admins')].forEach(t => t?.classList.remove('active'));
     }
 
     // ── Logica Cambio de Tabs ──
     if (tabBloqueos && tabPrecios && tabBuscador) {
+        if (tabEstadisticas) {
+            tabEstadisticas.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log("Stats tab clicked");
+                currentMode = 'estadisticas';
+                deactivateAllTabs();
+                tabEstadisticas.classList.add('active');
+                titlePage.textContent = '📊 Resumen y Estadísticas';
+                hideAllViews();
+                if (viewEstadisticas) {
+                    viewEstadisticas.style.display = 'block';
+                    loadEstadisticas();
+                } else {
+                    console.error("viewEstadisticas element not found");
+                }
+            });
+        }
+
         tabBuscador.addEventListener('click', (e) => {
             e.preventDefault();
             currentMode = 'buscador';
@@ -1323,5 +1346,92 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cambio de filtros tambi\u00e9n recarga
     document.getElementById('act-filtro-dia')?.addEventListener('change', loadActividad);
     document.getElementById('act-filtro-pista')?.addEventListener('change', loadActividad);
+    // ── CARGA DE ESTADÍSTICAS ──
+    let chartPistas = null;
+    let chartDias = null;
 
+    async function loadEstadisticas() {
+        try {
+            const resp = await fetch('../api/admin-stats.php');
+            const data = await resp.json();
+            if (data.status === 'success') {
+                const d = data.data;
+
+                document.getElementById('stat-ingresos-actual').textContent = d.mes_actual.ingresos.toFixed(2) + ' €';
+                document.getElementById('stat-reservas-actual').textContent = d.mes_actual.reservas;
+                document.getElementById('stat-ingresos-pasado').textContent = d.mes_pasado.ingresos.toFixed(2) + ' €';
+
+                renderChartPistas(d.pistas);
+                renderChartDias(d.ultimos_dias);
+            }
+        } catch (e) {
+            console.error("Error cargando stats", e);
+        }
+    }
+
+    function renderChartPistas(pistasData) {
+        const ctx = document.getElementById('chartPistas');
+        if (!ctx) return;
+        if (chartPistas) chartPistas.destroy();
+
+        if (pistasData.length === 0) {
+            // No destruimos el canvas, solo ponemos texto encima si acaso
+            return;
+        }
+
+        const labels = pistasData.map(p => p.pista);
+        const vals = pistasData.map(p => p.cantidad);
+
+        chartPistas = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: vals,
+                    backgroundColor: ['#0b1c3c', '#d15615', '#2e7d32', '#fbc02d', '#8e24aa', '#00acc1']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function renderChartDias(diasData) {
+        const ctx = document.getElementById('chartDias');
+        if (!ctx) return;
+        if (chartDias) chartDias.destroy();
+
+        if (diasData.length === 0) {
+            return;
+        }
+
+        const labels = diasData.map(d => {
+            const date = new Date(d.fecha);
+            return date.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit' });
+        });
+        const vals = diasData.map(d => d.cantidad);
+
+        chartDias = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Reservas por día',
+                    data: vals,
+                    borderColor: '#d15615',
+                    backgroundColor: 'rgba(209, 86, 21, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+    }
+
+    console.log("Admin Dashboard JS v2.5.1 Loaded");
 });

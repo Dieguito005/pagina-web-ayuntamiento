@@ -77,10 +77,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $insertStmt = $pdo->prepare("INSERT INTO reservas ($colsStr) VALUES ($placeholders)");
             $insertStmt->execute($insertVals);
 
-            // Generar URL del QR dinámico
-            $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($codigo_acceso);
-
-            $subject = "Confirmación de Reserva y Código QR - Ayuntamiento de Tarancón";
+            $subject = "Confirmación de Reserva y Código - Ayuntamiento de Tarancón";
             
             $message = "
             <html>
@@ -95,19 +92,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <tr><td><strong>Instalación:</strong></td><td>$pista</td></tr>
                     <tr><td><strong>Fecha:</strong></td><td>$fecha</td></tr>
                     <tr><td><strong>Hora:</strong></td><td>$hora_string</td></tr>
+                    <tr><td><strong>Titular:</strong></td><td>$nombre</td></tr>
+                    " . (!empty($dni) ? "<tr><td><strong>DNI/NIE:</strong></td><td>$dni</td></tr>" : "") . "
                 </table>
                 
                 <div style='background-color: #fff4e5; border: 2px dashed #c36a33; padding: 20px; text-align: center; border-radius: 8px;'>
                     <p style='margin: 0; color: #914f26; font-size: 14px; text-transform: uppercase;'><strong>TU CÓDIGO DE ACCESO AUTOMÁTICO</strong></p>
                     <h1 style='margin: 10px 0; font-size: 42px; letter-spacing: 5px; color: #522d16;'>$codigo_acceso</h1>
-                    <img src='$qr_url' alt='Código QR de Acceso' style='margin-top: 15px; border-radius: 8px; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 200px; height: 200px;'/>
                 </div>
                 
                 <h3 style='color: #333;'>¿Qué debo hacer ahora?</h3>
                 <ul style='color: #555;'>
-                    <li>Guarda este código alfanumérico o el Código QR.</li>
+                    <li>Guarda este código alfanumérico.</li>
                     <li>Acude a las instalaciones elegidas unos minutos antes de la hora acordada.</li>
-                    <li>Enséñale o escanea este código al conserje de la instalación para que te permita la entrada a la pista.</li>
+                    <li>Enséñale/díctale este código al conserje de la instalación para que te permita la entrada a la pista.</li>
                 </ul>
 
                 <p style='color: #d32f2f; font-size: 0.9em;'><em>⚠️ Regla de Cancelación: El límite máximo de cancelación es hasta 30 minutos antes de la hora de la reserva. En caso de sobrepasar este límite, el importe no será devuelto.</em></p>

@@ -57,6 +57,7 @@ function send_via_brevo($toEmail, $toName, $subject, $htmlBody) {
 
     if ($curlError) {
         error_log("Brevo cURL error: " . $curlError);
+        file_put_contents(__DIR__ . '/brevo_log.txt', date('Y-m-d H:i:s') . " - CURL ERROR: $curlError\n", FILE_APPEND);
         return ['sent' => false, 'method' => 'brevo', 'error' => 'Error de conexión con el servicio de email.'];
     }
 
@@ -68,6 +69,7 @@ function send_via_brevo($toEmail, $toName, $subject, $htmlBody) {
     $decoded = json_decode($response, true);
     $msg = $decoded['message'] ?? "HTTP $httpCode";
     error_log("Brevo API error ($httpCode): $msg");
+    file_put_contents(__DIR__ . '/brevo_log.txt', date('Y-m-d H:i:s') . " - API ERROR: " . print_r($decoded, true) . "\n", FILE_APPEND);
     return ['sent' => false, 'method' => 'brevo', 'error' => "Error del servicio de email: $msg"];
 }
 

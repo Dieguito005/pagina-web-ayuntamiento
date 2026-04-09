@@ -15,6 +15,7 @@ $isUserLoggedIn = isset($_SESSION['user_id']);
 $userName = $_SESSION['user_nombre'] ?? '';
 ?>
 <!-- includes/header.php -->
+
 <header class="main-header">
     <div class="header-container">
         <div class="header-logo">
