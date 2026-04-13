@@ -39,6 +39,11 @@ $userName = $_SESSION['user_nombre'] ?? '';
                         <span style="font-size:1.3rem;">👤</span>
                     </div>
                 </a>
+                <a href="bonos.php" class="social-icon" aria-label="Bonos" title="Mis Bonos">
+                    <div class="icon-placeholder fade-in-delay-1" style="font-size:1.1rem;">
+                        🎟️
+                    </div>
+                </a>
                 <a href="../api/user-logout.php" class="social-icon" aria-label="Cerrar sesión" title="Cerrar sesión">
                     <div class="icon-placeholder fade-in-delay-2" style="font-size:1.1rem;">
                         🚪

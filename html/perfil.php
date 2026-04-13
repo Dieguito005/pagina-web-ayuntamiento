@@ -50,6 +50,21 @@ $reservasActivas    = count(array_filter($reservas, fn($r) => $r['estado'] === '
 $reservasCanceladas = count(array_filter($reservas, fn($r) => $r['estado'] === 'cancelada'));
 $totalGastado       = array_sum(array_map(fn($r) => (float)($r['precio_total'] ?? 0),
     array_filter($reservas, fn($r) => $r['estado'] === 'reservada')));
+
+// ── Bonos del usuario ────────────────────────────────────────────────────
+$userBonos = [];
+try {
+    // Caducar bonos expirados
+    $pdo->prepare("UPDATE bonos SET estado = 'caducado' WHERE usuario_id = ? AND estado = 'activo' AND fecha_caducidad IS NOT NULL AND fecha_caducidad < CURDATE()")
+        ->execute([$_SESSION['user_id']]);
+    $bonoStmt = $pdo->prepare("SELECT * FROM bonos WHERE usuario_id = ? ORDER BY FIELD(estado, 'activo', 'agotado', 'caducado', 'cancelado'), fecha_compra DESC");
+    $bonoStmt->execute([$_SESSION['user_id']]);
+    $userBonos = $bonoStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (\PDOException $e) { $userBonos = []; }
+
+$bonosActivos = count(array_filter($userBonos, fn($b) => $b['estado'] === 'activo'));
+$totalUsosDisponibles = array_sum(array_map(fn($b) => (int)$b['usos_restantes'],
+    array_filter($userBonos, fn($b) => $b['estado'] === 'activo')));
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -60,6 +75,7 @@ $totalGastado       = array_sum(array_map(fn($r) => (float)($r['precio_total'] ?
     <meta name="description" content="Gestiona tu cuenta, consulta tus reservas y edita tus datos de contacto.">
     <link rel="preload" href="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" as="image">
     <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/bonos.css?v=1.0.0">
     <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
     <style>
@@ -398,7 +414,48 @@ $totalGastado       = array_sum(array_map(fn($r) => (float)($r['precio_total'] ?
                     <div class="num"><?= number_format($totalGastado, 2, ',', '.') ?> €</div>
                     <div class="label">Total Gastado</div>
                 </div>
+                <div class="stat-card" style="border-left: 3px solid #d15615;">
+                    <div class="num" style="color: #d15615;"><?= $bonosActivos ?></div>
+                    <div class="label">Bonos Activos</div>
+                </div>
             </div>
+
+            <!-- ── Mis Bonos ── -->
+            <?php if (!empty($userBonos)): ?>
+                <h3 class="section-title">🎟️ Mis Bonos</h3>
+                <div class="bonos-grid mis-bonos-section">
+                    <?php foreach ($userBonos as $bono):
+                        $pct = $bono['usos_totales'] > 0 ? ($bono['usos_restantes'] / $bono['usos_totales']) * 100 : 0;
+                        $barClass = $pct > 40 ? '' : ($pct > 15 ? 'low' : 'critical');
+                        $estadoBono = ucfirst($bono['estado']);
+                    ?>
+                    <div class="bono-card-perfil" style="<?= $bono['estado'] !== 'activo' ? 'opacity:0.6; border-left-color:#aaa;' : '' ?>">
+                        <div class="bono-nombre"><?= htmlspecialchars($bono['nombre']) ?></div>
+                        <div class="bono-meta">💰 Pagado: <?= number_format((float)$bono['precio_pagado'], 2, ',', '.') ?> €</div>
+                        <div class="bono-meta">📊 Estado: <strong><?= $estadoBono ?></strong></div>
+                        <div class="bono-progress-bar">
+                            <div class="bono-progress-fill <?= $barClass ?>" style="width: <?= $pct ?>%"></div>
+                        </div>
+                        <div class="bono-usos-text">
+                            <span><?= $bono['usos_restantes'] ?> / <?= $bono['usos_totales'] ?> usos</span>
+                            <span><?= round($pct) ?>%</span>
+                        </div>
+                        <?php if ($bono['fecha_caducidad']): ?>
+                            <div class="bono-caducidad-text">📅 Válido hasta: <?= date('d/m/Y', strtotime($bono['fecha_caducidad'])) ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <h3 class="section-title">🎟️ Mis Bonos</h3>
+                <div class="history-table-container" style="margin-bottom: 2rem;">
+                    <div class="empty-state">
+                        <div class="icon">🎟️</div>
+                        <p>No tienes bonos.</p>
+                        <p><a href="bonos.php">¡Compra tu primer bono y ahorra!</a></p>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <!-- ── Próximas Reservas ── -->
             <?php if (!empty($proximasReservas)): ?>

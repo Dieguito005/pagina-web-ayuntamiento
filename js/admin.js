@@ -111,11 +111,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewActividad) viewActividad.style.display = 'none';
         if (viewEstadisticas) viewEstadisticas.style.display = 'none';
         const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
+        const vb = document.getElementById('view-bonos'); if (vb) vb.style.display = 'none';
         if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
     }
     function deactivateAllTabs() {
         [tabBuscador, tabConsultas, tabAnuncios, tabBloqueos, tabPrecios, tabActividad, tabEstadisticas,
-         document.getElementById('tab-admins')].forEach(t => t?.classList.remove('active'));
+         document.getElementById('tab-admins'), document.getElementById('tab-bonos')].forEach(t => t?.classList.remove('active'));
     }
 
     // ── Logica Cambio de Tabs ──
@@ -1433,5 +1434,203 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    console.log("Admin Dashboard JS v2.5.1 Loaded");
+    // ══════════════════════════════════════════════════════════════
+    // ═══ SISTEMA DE BONOS (ADMIN) ════════════════════════════════
+    // ══════════════════════════════════════════════════════════════
+    const tabBonos = document.getElementById('tab-bonos');
+    const viewBonos = document.getElementById('view-bonos');
+
+    if (tabBonos) {
+        tabBonos.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentMode = 'bonos';
+            deactivateAllTabs();
+            tabBonos.classList.add('active');
+            titlePage.textContent = '🎟️ Gestión de Bonos';
+            hideAllViews();
+            if (viewBonos) viewBonos.style.display = 'block';
+            loadBonosAdmin();
+            loadBonosConfig();
+        });
+    }
+
+    // Buscar bonos button
+    const btnBuscarBonos = document.getElementById('btn-buscar-bonos');
+    if (btnBuscarBonos) {
+        btnBuscarBonos.addEventListener('click', () => loadBonosAdmin());
+    }
+
+    async function loadBonosAdmin() {
+        const tbody = document.getElementById('tabla-bonos-body');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Cargando bonos...</td></tr>';
+
+        const buscar = document.getElementById('b-buscar')?.value.trim() || '';
+        const estado = document.getElementById('b-estado')?.value || '';
+
+        let query = `../api/admin-bonos.php?action=get_all`;
+        if (buscar) query += `&buscar=${encodeURIComponent(buscar)}`;
+        if (estado) query += `&estado=${encodeURIComponent(estado)}`;
+
+        try {
+            const resp = await fetch(query);
+            const data = await resp.json();
+
+            if (resp.ok && data.status === 'success') {
+                // Update stats
+                const s = data.stats || {};
+                const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+                el('bstat-total', s.total || 0);
+                el('bstat-activos', s.activos || 0);
+                el('bstat-agotados', s.agotados || 0);
+                el('bstat-ingresos', parseFloat(s.ingresos_total || 0).toFixed(2) + ' €');
+
+                renderBonosTable(data.data, tbody);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;">Error: ${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;">Error de conexión.</td></tr>`;
+        }
+    }
+
+    function renderBonosTable(bonos, tbody) {
+        if (!bonos || bonos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No hay bonos registrados.</td></tr>';
+            return;
+        }
+
+        const estadoBadge = (est) => {
+            const map = { activo: 'reservada', agotado: 'bloqueada_admin', caducado: 'cancelada', cancelado: 'cancelada' };
+            return map[est] || '';
+        };
+
+        tbody.innerHTML = bonos.map(b => `
+            <tr>
+                <td>#${b.id}</td>
+                <td>
+                    <strong>${b.user_nombre || ''} ${b.user_apellidos || ''}</strong><br>
+                    <small style="color:#888;">${b.user_email || '---'}</small>
+                </td>
+                <td>${b.nombre}</td>
+                <td><strong>${b.usos_restantes}</strong> / ${b.usos_totales}</td>
+                <td>${parseFloat(b.precio_pagado).toFixed(2)} €</td>
+                <td><span class="badge ${estadoBadge(b.estado)}">${b.estado.charAt(0).toUpperCase() + b.estado.slice(1)}</span></td>
+                <td>${b.fecha_compra ? b.fecha_compra.substring(0,10).split('-').reverse().join('/') : '---'}</td>
+                <td>${b.fecha_caducidad ? b.fecha_caducidad.split('-').reverse().join('/') : 'Sin caducidad'}</td>
+                <td>
+                    ${b.estado === 'activo' ? `<button class="btn-sm btn-cancel" onclick="cancelarBonoAdmin(${b.id})">❌ Cancelar</button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.cancelarBonoAdmin = async (id) => {
+        if (!confirm('¿Cancelar este bono? Los usos restantes se perderán.')) return;
+        try {
+            const resp = await fetch('../api/admin-bonos.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'cancel_bono', bono_id: id })
+            });
+            const data = await resp.json();
+            if (resp.ok && data.status === 'success') {
+                showToast('Bono cancelado correctamente', 'success');
+                loadBonosAdmin();
+            } else {
+                showToast(data.message || 'Error al cancelar', 'error');
+            }
+        } catch (e) {
+            showToast('Error de red', 'error');
+        }
+    };
+
+    async function loadBonosConfig() {
+        const container = document.getElementById('bonos-config-container');
+        if (!container) return;
+        container.innerHTML = '<p style="color:#888; text-align:center;">Cargando configuración...</p>';
+
+        try {
+            const resp = await fetch('../api/admin-bonos.php?action=get_config');
+            const data = await resp.json();
+
+            if (resp.ok && data.status === 'success' && data.data.length > 0) {
+                let html = '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1rem;">';
+                data.data.forEach(pack => {
+                    html += `
+                    <div style="background:white; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.06); padding:1.3rem; border-left: 4px solid ${pack.activo == 1 ? '#d15615' : '#ccc'};">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                            <strong style="color:#0b1c3c; font-size:1rem;">${pack.nombre}</strong>
+                            <span class="badge ${pack.activo == 1 ? 'reservada' : 'cancelada'}">${pack.activo == 1 ? 'Activo' : 'Inactivo'}</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.8rem; margin-bottom:0.8rem;">
+                            <div>
+                                <label style="font-size:0.78rem; color:#888; font-weight:600;">PRECIO (€)</label>
+                                <input type="number" step="0.01" min="0" value="${parseFloat(pack.precio).toFixed(2)}" id="cfg-precio-${pack.id}" style="width:100%; padding:0.5rem; border:1px solid #ddd; border-radius:6px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.78rem; color:#888; font-weight:600;">CADUCIDAD (MESES)</label>
+                                <input type="number" min="1" max="36" value="${pack.caducidad_meses}" id="cfg-caducidad-${pack.id}" style="width:100%; padding:0.5rem; border:1px solid #ddd; border-radius:6px;">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="btn-sm btn-view" onclick="guardarConfigBono(${pack.id})" style="flex:1;">💾 Guardar</button>
+                            <button class="btn-sm" onclick="toggleActivoBono(${pack.id}, ${pack.activo})" style="flex:1; background-color:${pack.activo == 1 ? '#fff3e0' : '#e8f5e9'}; color:${pack.activo == 1 ? '#ef6c00' : '#2e7d32'};">
+                                ${pack.activo == 1 ? '⏸️ Desactivar' : '▶️ Activar'}
+                            </button>
+                        </div>
+                    </div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p style="color:#888; text-align:center;">No hay packs configurados.</p>';
+            }
+        } catch (e) {
+            container.innerHTML = '<p style="color:red; text-align:center;">Error al cargar configuración.</p>';
+        }
+    }
+
+    window.guardarConfigBono = async (id) => {
+        const precio = document.getElementById(`cfg-precio-${id}`)?.value;
+        const caducidad = document.getElementById(`cfg-caducidad-${id}`)?.value;
+
+        try {
+            const resp = await fetch('../api/admin-bonos.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'update_config', id, precio: parseFloat(precio), caducidad_meses: parseInt(caducidad) })
+            });
+            const data = await resp.json();
+            if (resp.ok && data.status === 'success') {
+                showToast('Configuración guardada', 'success');
+                loadBonosConfig();
+            } else {
+                showToast(data.message || 'Error al guardar', 'error');
+            }
+        } catch (e) {
+            showToast('Error de red', 'error');
+        }
+    };
+
+    window.toggleActivoBono = async (id, currentState) => {
+        try {
+            const resp = await fetch('../api/admin-bonos.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'update_config', id, activo: currentState == 1 ? 0 : 1 })
+            });
+            const data = await resp.json();
+            if (resp.ok && data.status === 'success') {
+                showToast(currentState == 1 ? 'Pack desactivado' : 'Pack activado', 'success');
+                loadBonosConfig();
+            } else {
+                showToast(data.message || 'Error', 'error');
+            }
+        } catch (e) {
+            showToast('Error de red', 'error');
+        }
+    };
+
+    console.log("Admin Dashboard JS v2.6.0 Loaded");
 });

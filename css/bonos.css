@@ -1,0 +1,596 @@
+/* ══════════════════════════════════════════════
+   bonos.css — Estilos para el sistema de bonos
+   ══════════════════════════════════════════════ */
+
+/* ── Página de Bonos (bonos.php) ── */
+.bonos-wrapper {
+    background: linear-gradient(135deg, #f4f6f8 0%, #e8ecf1 100%);
+    min-height: calc(100vh - 100px);
+    padding: 2rem;
+}
+
+.bonos-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.bonos-hero {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: bonoSlideUp 0.5s ease-out;
+}
+
+.bonos-hero h2 {
+    color: #0b1c3c;
+    font-size: 2rem;
+    margin-bottom: 0.6rem;
+}
+
+.bonos-hero p {
+    color: #666;
+    font-size: 1.05rem;
+    max-width: 550px;
+    margin: 0 auto;
+}
+
+/* ── Tarjetas de Packs ── */
+.bonos-packs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.bono-pack-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    animation: bonoSlideUp 0.6s ease-out;
+    position: relative;
+}
+
+.bono-pack-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.bono-pack-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.14);
+}
+
+.bono-pack-header {
+    background: linear-gradient(135deg, #2d5f8a 0%, #1e3d5c 100%);
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.bono-pack-header::before {
+    content: '🎟️';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 5rem;
+    opacity: 0.1;
+    transform: rotate(15deg);
+}
+
+.bono-pack-header .pack-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.bono-pack-header h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+}
+
+.bono-pack-header .pack-usos {
+    font-size: 1rem;
+    opacity: 0.85;
+    font-weight: 500;
+}
+
+.bono-pack-body {
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+}
+
+.bono-pack-precio {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #0b1c3c;
+    margin-bottom: 0.2rem;
+    line-height: 1;
+}
+
+.bono-pack-precio small {
+    font-size: 0.4em;
+    font-weight: 500;
+    color: #888;
+}
+
+.bono-pack-per-sesion {
+    font-size: 0.92rem;
+    color: #d15615;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+}
+
+.bono-pack-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem;
+    text-align: left;
+}
+
+.bono-pack-features li {
+    padding: 0.45rem 0;
+    font-size: 0.92rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.bono-pack-features li::before {
+    content: '✓';
+    color: #2e7d32;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.bono-pack-caducidad {
+    font-size: 0.82rem;
+    color: #999;
+    margin-bottom: 1.2rem;
+}
+
+.btn-comprar-bono {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, #d15615, #a44310);
+    color: white;
+    border: none;
+    padding: 0.9rem 1.5rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn-comprar-bono:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(209, 86, 21, 0.35);
+}
+
+.btn-comprar-bono:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ── Popular badge ── */
+.bono-pack-card.popular .bono-pack-header {
+    background: linear-gradient(135deg, #d15615 0%, #a44310 100%);
+}
+
+.bono-popular-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #fff;
+    color: #d15615;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+}
+
+/* ── Mis Bonos en Perfil ── */
+.mis-bonos-section {
+    margin-bottom: 2rem;
+    animation: bonoSlideUp 0.55s ease-out;
+}
+
+.bonos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.bono-card-perfil {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    padding: 1.3rem 1.5rem;
+    border-left: 4px solid #2e7d32;
+    position: relative;
+    overflow: hidden;
+}
+
+.bono-card-perfil::before {
+    content: '🎟️';
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 1.8rem;
+    opacity: 0.12;
+}
+
+.bono-card-perfil .bono-nombre {
+    font-weight: 700;
+    color: #0b1c3c;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.bono-card-perfil .bono-meta {
+    color: #555;
+    font-size: 0.88rem;
+    margin-bottom: 0.3rem;
+}
+
+/* Barra de progreso de usos */
+.bono-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0.7rem 0 0.4rem;
+}
+
+.bono-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2e7d32, #4caf50);
+    border-radius: 4px;
+    transition: width 0.5s ease-out;
+}
+
+.bono-progress-fill.low {
+    background: linear-gradient(90deg, #f57c00, #ff9800);
+}
+
+.bono-progress-fill.critical {
+    background: linear-gradient(90deg, #d32f2f, #f44336);
+}
+
+.bono-usos-text {
+    font-size: 0.82rem;
+    color: #888;
+    display: flex;
+    justify-content: space-between;
+}
+
+.bono-caducidad-text {
+    font-size: 0.78rem;
+    color: #aaa;
+    margin-top: 0.3rem;
+}
+
+/* ── Widget de Bonos en Checkout ── */
+.checkout-bono-widget {
+    background: linear-gradient(135deg, #f0f7ff, #e8f0fe);
+    border: 2px solid #bbdefb;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    animation: bonoSlideUp 0.4s ease-out;
+}
+
+.checkout-bono-widget.active {
+    background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+    border-color: #a5d6a7;
+}
+
+.bono-widget-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.6rem;
+}
+
+.bono-widget-header .widget-icon {
+    font-size: 1.5rem;
+}
+
+.bono-widget-header h4 {
+    color: #0b1c3c;
+    font-size: 1rem;
+    margin: 0;
+    flex: 1;
+}
+
+.bono-widget-header .bono-count {
+    background: #1565c0;
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+}
+
+.bono-widget-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.bono-widget-body p {
+    font-size: 0.9rem;
+    color: #555;
+    margin: 0;
+}
+
+.bono-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.bono-toggle-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Toggle switch */
+.bono-toggle {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.bono-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.bono-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #ccc;
+    border-radius: 26px;
+    transition: 0.3s;
+}
+
+.bono-toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.bono-toggle input:checked + .bono-toggle-slider {
+    background: #2e7d32;
+}
+
+.bono-toggle input:checked + .bono-toggle-slider::before {
+    transform: translateX(22px);
+}
+
+.bono-widget-saving {
+    display: none;
+    margin-top: 0.6rem;
+    padding: 0.5rem 0.8rem;
+    background: rgba(46, 125, 50, 0.1);
+    border-radius: 6px;
+    color: #2e7d32;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.checkout-bono-widget.active .bono-widget-saving {
+    display: block;
+}
+
+/* ── Bono Exitoso ── */
+.bono-exitoso-container {
+    max-width: 560px;
+    margin: 2rem auto;
+}
+
+.bono-exitoso-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    padding: 2.5rem;
+    text-align: center;
+}
+
+.bono-exitoso-card.error {
+    border-top: 4px solid #d32f2f;
+}
+
+.exitoso-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.exitoso-icon.success-pulse {
+    animation: successPulse 0.6s ease-out;
+}
+
+.bono-exitoso-card h2 {
+    color: #0b1c3c;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.bono-exitoso-card > p {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
+.bono-exitoso-details {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+}
+
+.bono-exitoso-details .detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.bono-exitoso-details .detail-item:last-child {
+    border-bottom: none;
+}
+
+.bono-exitoso-details .detail-label {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.bono-exitoso-details .detail-value {
+    color: #0b1c3c;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.bono-exitoso-info {
+    text-align: left;
+    background: #f0f7ff;
+    border: 1px solid #bbdefb;
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+}
+
+.bono-exitoso-info p {
+    color: #0b1c3c;
+    margin-bottom: 0.5rem;
+}
+
+.bono-exitoso-info ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.bono-exitoso-info li {
+    padding: 0.3rem 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.bono-exitoso-info li::before {
+    content: '→ ';
+    color: #1565c0;
+    font-weight: 700;
+}
+
+.bono-exitoso-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.bono-exitoso-actions .btn-primary,
+.bono-exitoso-actions .btn-secondary {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.95rem;
+}
+
+/* ── Bonos section en Home ── */
+.bonos-home-card {
+    background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
+    border: 2px solid #ffe0b2;
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    max-width: 28.125rem;
+    min-width: 20rem;
+    flex: 1;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.bonos-home-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 35px rgba(209, 86, 21, 0.15);
+}
+
+.bonos-home-card .bonos-icon {
+    font-size: 3rem;
+    margin-bottom: 0.8rem;
+}
+
+.bonos-home-card h3 {
+    color: #d15615;
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.bonos-home-card p {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+}
+
+/* ── Animaciones ── */
+@keyframes bonoSlideUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes successPulse {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+    .bonos-packs-grid {
+        grid-template-columns: 1fr;
+    }
+    .bonos-hero h2 {
+        font-size: 1.5rem;
+    }
+    .bono-pack-precio {
+        font-size: 2.2rem;
+    }
+    .bono-widget-body {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .bono-exitoso-actions {
+        flex-direction: column;
+    }
+    .bono-exitoso-actions .btn-primary,
+    .bono-exitoso-actions .btn-secondary {
+        width: 100%;
+        text-align: center;
+    }
+}

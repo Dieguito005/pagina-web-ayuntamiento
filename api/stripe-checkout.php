@@ -94,7 +94,8 @@ curl_setopt_array($ch, [
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
-curl_close($ch);
+// curl_close() omitido: desde PHP 8.5 el handle se libera automáticamente
+unset($ch);
 
 if ($curlError) {
     error_log("Stripe cURL error: $curlError");

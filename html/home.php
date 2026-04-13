@@ -8,6 +8,7 @@
         content="Reserva tus pistas de pádel y tenis en el Ayuntamiento de Tarancón. Instalaciones modernas y accesibles.">
     <link rel="preload" href="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" as="image">
     <link rel="stylesheet" href="../css/home.css?v=2.0.0">
+    <link rel="stylesheet" href="../css/bonos.css?v=1.0.0">
     <title>Alquileres Tarancón</title>
     <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
@@ -66,10 +67,13 @@
                     </div>
                 </article>
 
-                </article>
-
-
-
+                <!-- Tarjeta Bonos -->
+                <div class="bonos-home-card scroll-animate" data-animation="fade-in-up">
+                    <div class="bonos-icon">🎟️</div>
+                    <h3>Bonos de Sesiones</h3>
+                    <p>Ahorra comprando packs de sesiones. Usa tu bono en cualquier pista sin pagar la reserva individual.</p>
+                    <a href="bonos.php" class="btn-primary" style="background: linear-gradient(135deg, #d15615, #a44310); box-shadow: 0 4px 10px rgba(209, 86, 21, 0.3);">Comprar Bonos</a>
+                </div>
 
             </div>
         </section>

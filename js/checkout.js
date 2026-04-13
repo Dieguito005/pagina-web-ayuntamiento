@@ -74,12 +74,66 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ══════════════════════════════════════════════
+    // ═══ SISTEMA DE BONOS EN CHECKOUT ═════════════
+    // ══════════════════════════════════════════════
+    const bonoWidget   = document.getElementById('bono-widget');
+    const bonoToggle   = document.getElementById('use-bono-toggle');
+    const bonoBadge    = document.getElementById('bono-count-badge');
+    const submitBtn    = document.getElementById('submit-btn');
+    const btnText      = submitBtn?.querySelector('.btn-text');
+    let usarBono       = false;
+    let bonosDisponibles = 0;
+
+    // Texto original del botón
+    const originalBtnText = btnText ? btnText.textContent : '';
+
+    // Cargar bonos del usuario
+    async function loadUserBonos() {
+        try {
+            const resp = await fetch('../api/bonos.php?action=get_user_bonos');
+            const result = await resp.json();
+            if (result.status === 'success' && result.total_usos_disponibles > 0) {
+                bonosDisponibles = result.total_usos_disponibles;
+                window.BONOS_DISPONIBLES = bonosDisponibles;
+                if (bonoWidget) bonoWidget.style.display = 'block';
+                if (bonoBadge) bonoBadge.textContent = bonosDisponibles + ' uso(s)';
+            }
+        } catch (err) {
+            console.warn('No se pudieron cargar bonos:', err);
+        }
+    }
+    loadUserBonos();
+
+    // Toggle de bono
+    if (bonoToggle) {
+        bonoToggle.addEventListener('change', () => {
+            usarBono = bonoToggle.checked;
+            const widget = document.getElementById('bono-widget');
+            
+            if (usarBono) {
+                widget.classList.add('active');
+                if (btnText) btnText.textContent = '🎟️ Reservar con Bono (Gratis)';
+                if (totalPriceEl) {
+                    totalPriceEl.dataset.originalPrice = totalPriceEl.textContent;
+                    totalPriceEl.textContent = '0,00 € (Bono)';
+                    totalPriceEl.style.color = '#2e7d32';
+                }
+            } else {
+                widget.classList.remove('active');
+                if (btnText) btnText.textContent = originalBtnText;
+                if (totalPriceEl && totalPriceEl.dataset.originalPrice) {
+                    totalPriceEl.textContent = totalPriceEl.dataset.originalPrice;
+                    totalPriceEl.style.color = '';
+                }
+            }
+        });
+    }
+
     // ── Envío de formulario ──
     const bookingForm  = document.getElementById('booking-form');
     const formView     = document.getElementById('checkout-form-view');
     const successView  = document.getElementById('checkout-success-view');
-    const submitBtn    = document.getElementById('submit-btn');
-    const btnText      = submitBtn?.querySelector('.btn-text');
     const spinner      = document.getElementById('loading-spinner');
     const displayEmail = document.getElementById('display-email');
     const displayCode  = document.getElementById('display-code');
@@ -94,13 +148,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const userEmail = document.getElementById('email').value;
 
-            // Decidir flujo según si Stripe está activo
-            if (window.USE_STRIPE) {
+            // Decidir flujo
+            if (usarBono && bonosDisponibles > 0) {
+                handleBonoReservation(userEmail);
+            } else if (window.USE_STRIPE) {
                 handleStripeCheckout(userEmail);
             } else {
                 handleSimulatedPayment(userEmail);
             }
         });
+    }
+
+    // ── FLUJO BONO: Reserva sin pago ──
+    async function handleBonoReservation(userEmail) {
+        try {
+            const bookingInfo = storedBooking ? JSON.parse(storedBooking) : {};
+
+            const payload = {
+                action: 'use_bono',
+                email: userEmail,
+                nombre: document.getElementById('nombre').value,
+                dni: document.getElementById('dni').value,
+                telefono: document.getElementById('telefono').value,
+                pista: bookingInfo.sport || 'Pista Deportiva',
+                fecha: bookingInfo.date || '',
+                hora: bookingInfo.time || '',
+            };
+
+            const response = await fetch('../api/bonos.php?action=use_bono', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success' && result.codigo) {
+                displayEmail.textContent = userEmail;
+                displayCode.textContent = result.codigo;
+
+                formView.classList.add('hidden');
+                successView.classList.remove('hidden');
+
+                localStorage.removeItem('bookingData');
+
+                // Copiar al portapapeles
+                setupCodeCopy(result.codigo);
+            } else {
+                alert("Error: " + (result.message || "No se pudo procesar la reserva con bono."));
+                resetButton();
+            }
+        } catch (error) {
+            console.error('Error bono:', error);
+            alert('Error de conexión. Inténtalo de nuevo.');
+            resetButton();
+        }
     }
 
     // ── FLUJO STRIPE: Redirige a pasarela externa ──
@@ -173,33 +275,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     localStorage.removeItem('bookingData');
 
-                    // Copiar al portapapeles al hacer clic en el code-box
-                    const codeBox  = document.getElementById('code-box-copy');
-                    const copyIcon = document.getElementById('copy-icon');
-                    const copyText = document.getElementById('copy-text');
-
-                    if (codeBox) {
-                        codeBox.style.cursor = 'pointer';
-                        codeBox.addEventListener('click', () => {
-                            const code = result.codigo;
-                            navigator.clipboard.writeText(code).then(() => {
-                                if (copyIcon)  copyIcon.textContent  = '✅';
-                                if (copyText)  copyText.textContent  = '¡Copiado!';
-                                codeBox.classList.add('copied');
-                                setTimeout(() => {
-                                    if (copyIcon) copyIcon.textContent = '📋';
-                                    if (copyText) copyText.textContent = 'Haz clic para copiar';
-                                    codeBox.classList.remove('copied');
-                                }, 2000);
-                            }).catch(() => {
-                                const range = document.createRange();
-                                range.selectNodeContents(displayCode);
-                                const sel = window.getSelection();
-                                sel.removeAllRanges();
-                                sel.addRange(range);
-                            });
-                        });
-                    }
+                    // Copiar al portapapeles
+                    setupCodeCopy(result.codigo);
                 } else {
                     alert("Error al procesar la reserva: " + (result.message || "La pista ya no está disponible."));
                     resetButton();
@@ -212,10 +289,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
+    // ── Copiar código al portapapeles (reutilizable) ──
+    function setupCodeCopy(code) {
+        const codeBox  = document.getElementById('code-box-copy');
+        const copyIcon = document.getElementById('copy-icon');
+        const copyText = document.getElementById('copy-text');
+
+        if (codeBox) {
+            codeBox.style.cursor = 'pointer';
+            codeBox.addEventListener('click', () => {
+                navigator.clipboard.writeText(code).then(() => {
+                    if (copyIcon)  copyIcon.textContent  = '✅';
+                    if (copyText)  copyText.textContent  = '¡Copiado!';
+                    codeBox.classList.add('copied');
+                    setTimeout(() => {
+                        if (copyIcon) copyIcon.textContent = '📋';
+                        if (copyText) copyText.textContent = 'Haz clic para copiar';
+                        codeBox.classList.remove('copied');
+                    }, 2000);
+                }).catch(() => {
+                    const range = document.createRange();
+                    range.selectNodeContents(displayCode);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                });
+            });
+        }
+    }
+
     // ── Restaurar botón tras error ──
     function resetButton() {
         submitBtn.disabled = false;
-        if (btnText) btnText.classList.remove('hidden');
+        if (btnText) {
+            btnText.classList.remove('hidden');
+            btnText.textContent = usarBono ? '🎟️ Reservar con Bono (Gratis)' : originalBtnText;
+        }
         if (spinner) spinner.classList.add('hidden');
     }
 

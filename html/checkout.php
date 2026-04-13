@@ -12,13 +12,16 @@ require_once '../includes/user-auth-check.php';
     <link rel="preload" href="../assets/imagenes/LOGO-AYUNTAMIENTO-BLANCO.png" as="image">
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/checkout.css">
+    <link rel="stylesheet" href="../css/bonos.css?v=1.0.0">
     <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
     <script>
         // Config inyectada desde PHP — el JS decide qué flujo usar
         window.USE_STRIPE = <?= defined('USE_STRIPE') && USE_STRIPE ? 'true' : 'false' ?>;
+        // Bonos: cargar disponibilidad
+        window.BONOS_DISPONIBLES = 0;
     </script>
-    <script src="../js/checkout.js?v=2.3.0" defer></script>
+    <script src="../js/checkout.js?v=2.6.0" defer></script>
     <title>Reserva y Pago - Alquileres Tarancón</title>
     <style>
         /* Hint de copiar código */
@@ -84,6 +87,28 @@ require_once '../includes/user-auth-check.php';
                         <strong>Atención:</strong> El límite de cancelación de la reserva es hasta <strong>media hora
                             antes</strong> de la misma. Si se rebasa dicho límite, la reserva se bloquea y el importe no
                         será devuelto.
+                    </div>
+                </div>
+
+                <!-- WIDGET BONOS (se muestra si el usuario tiene bonos activos) -->
+                <div class="checkout-bono-widget" id="bono-widget" style="display:none;">
+                    <div class="bono-widget-header">
+                        <span class="widget-icon">🎟️</span>
+                        <h4>Tienes bonos disponibles</h4>
+                        <span class="bono-count" id="bono-count-badge">0</span>
+                    </div>
+                    <div class="bono-widget-body">
+                        <p>Usa un bono para esta reserva y no pagues nada.</p>
+                        <div class="bono-toggle-wrapper">
+                            <span class="bono-toggle-label">Usar bono</span>
+                            <label class="bono-toggle">
+                                <input type="checkbox" id="use-bono-toggle">
+                                <span class="bono-toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="bono-widget-saving" id="bono-saving-msg">
+                        ✅ Reserva cubierta por tu bono — Sin cargo adicional
                     </div>
                 </div>
 

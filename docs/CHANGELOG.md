@@ -6,6 +6,45 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.6.0] - 13-04-2026
+
+### Añadido 🚀
+- **Sistema de Bonos (Packs de Sesiones Prepagadas)**: Implementación completa de un sistema que permite a los usuarios registrados comprar packs de sesiones deportivas por adelantado y canjearlos durante el checkout para reservar pistas sin coste adicional.
+  - **Página de Bonos (`html/bonos.php`)**: Interfaz pública (requiere login) con tarjetas premium que muestran los packs disponibles, precio por sesión, características y un FAQ. Los packs se cargan dinámicamente desde la API. Compatible con pago por Stripe y pago simulado.
+  - **Página de Confirmación (`html/bono-exitoso.php`)**: Página post-pago que verifica la transacción (Stripe o simulada), crea el registro del bono en BBDD de forma idempotente, y envía email de confirmación. Muestra resumen del bono con instrucciones de uso.
+  - **Widget en Checkout (`html/checkout.php` + `js/checkout.js`)**: Toggle visual "Usar bono" que aparece automáticamente si el usuario tiene bonos activos. Al activarlo, el precio cambia a "0,00 € (Bono)", el botón cambia a "🎟️ Reservar con Bono (Gratis)" y se salta el flujo de Stripe, creando la reserva directamente.
+  - **Sección en Perfil (`html/perfil.php`)**: Nueva sección "🎟️ Mis Bonos" con tarjetas visuales que incluyen barras de progreso (verde/naranja/rojo según usos restantes), estado del bono, fecha de caducidad y precio pagado. Nueva stat card "Bonos Activos".
+  - **Enlace en Header (`includes/header.php`)**: Icono 🎟️ en la barra de navegación (solo usuarios logueados) con acceso directo a la página de bonos.
+  - **Tarjeta en Home (`html/home.php`)**: Nueva tarjeta promocional "Bonos de Sesiones" en la sección de deportes con CTA naranja que enlaza a `bonos.php`.
+- **API de Bonos (`api/bonos.php`)**: Endpoint REST con tres acciones:
+  - `get_config` — Devuelve los packs activos y sus precios/caducidad (público).
+  - `get_user_bonos` — Lista bonos activos del usuario con auto-caducidad de expirados.
+  - `use_bono` — Transacción atómica (BEGIN/COMMIT) que: verifica disponibilidad, selecciona el bono más antiguo (FIFO con `FOR UPDATE`), decrementa usos, crea la reserva con `precio_total = 0` y `bono_id`, y envía email de confirmación.
+- **API de Checkout de Bonos (`api/bonos-checkout.php`)**: Crea sesiones de Stripe Checkout específicas para la compra de bonos. En entorno sin Stripe, crea el bono directamente (pago simulado).
+- **Panel Admin — Gestión de Bonos**: Nueva pestaña "🎟️ Gestión de Bonos" en el panel de administración:
+  - **Estadísticas**: Tarjetas con total vendidos, activos, agotados e ingresos totales por bonos.
+  - **Configuración de Packs**: Edición en vivo de precio (€) y caducidad (meses) de cada pack, con opción de activar/desactivar packs.
+  - **Tabla de Bonos Vendidos**: Listado con filtros por usuario y estado, mostrando usos restantes, fecha de compra/caducidad y opción de cancelación.
+  - **API Admin (`api/admin-bonos.php`)**: Endpoints para `get_all`, `get_config`, `update_config` y `cancel_bono`.
+- **Base de Datos**:
+  - **Tabla `bonos`**: Almacena bonos comprados con campos para usuario, tipo, usos totales/restantes, precio, estado, Stripe session ID, y fechas de compra/caducidad/agotado.
+  - **Tabla `bonos_config`**: Configuración de packs (tipo, nombre, usos, precio, caducidad en meses, activo/inactivo).
+  - **Columna `bono_id` en `reservas`**: FK opcional que vincula una reserva con el bono utilizado.
+  - **Script de migración `api/setup-bonos-db.php`**: Crea tablas e inserta packs por defecto (Bono 15 y Bono 20 a 50€, caducidad 6 meses).
+- **Estilos (`css/bonos.css`)**: Hoja de estilos dedicada con diseño premium: tarjetas con gradientes, toggle switch animado, barras de progreso con indicadores de nivel, y diseño responsive.
+
+### Cambiado 🔄
+- **`js/checkout.js` reescrito (v2.6.0)**: Flujo triple de pago — Bono (nuevo), Stripe y Simulado. Carga asíncrona de bonos del usuario al entrar en checkout.
+- **`js/admin.js` actualizado (v2.6.0)**: Nuevas funciones de gestión de bonos, vistas y tabs integrados en el sistema existente.
+- Versión del proyecto bumpeada a `v2.6.0`.
+
+### Técnico 🔧
+- **Caducidad automática**: Todos los endpoints que consultan bonos ejecutan primero `UPDATE bonos SET estado = 'caducado' WHERE fecha_caducidad < CURDATE()` para mantener la coherencia sin cron jobs.
+- **Concurrencia**: El canjeo de bono usa `SELECT ... FOR UPDATE` dentro de una transacción para prevenir condiciones de carrera.
+- **FIFO**: Al canjear, se selecciona el bono activo más antiguo (por `fecha_compra ASC`), consumiendo primero los bonos que caducan antes.
+
+---
+
 ## [2.5.2] - 09-04-2026 (Mejoras Internas)
 
 ### Añadido 🚀

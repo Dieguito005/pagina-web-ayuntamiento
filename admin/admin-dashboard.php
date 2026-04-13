@@ -541,6 +541,9 @@ if (!isset($_SESSION['admin_id'])) {
                     <a href="#" id="tab-buscador">
                         <span>🔍</span> Buscador e Historial
                     </a>
+                    <a href="#" id="tab-bonos">
+                        <span>🎟️</span> Gestión de Bonos
+                    </a>
                 </div>
 
                 <hr class="nav-divider">
@@ -786,6 +789,76 @@ if (!isset($_SESSION['admin_id'])) {
                         </thead>
                         <tbody id="tabla-consultas-body">
                             <tr><td colspan="6" style="text-align:center;">Cargando consultas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW: Gestión de Bonos -->
+            <div id="view-bonos" style="display:none;">
+                <!-- Stats -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Vendidos</span>
+                        <span class="stat-value" id="bstat-total">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Activos</span>
+                        <span class="stat-value accent" id="bstat-activos">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Agotados</span>
+                        <span class="stat-value" id="bstat-agotados">--</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Ingresos</span>
+                        <span class="stat-value" id="bstat-ingresos" style="color:#2e7d32;">--</span>
+                    </div>
+                </div>
+
+                <!-- Config de Packs -->
+                <h3 style="color:#0b1c3c; border-bottom:2px solid #f0f0f0; padding-bottom:0.5rem; margin-bottom:1rem;">⚙️ Configuración de Packs</h3>
+                <div id="bonos-config-container" style="margin-bottom:2rem;">
+                    <p style="color:#888; text-align:center;">Cargando configuración...</p>
+                </div>
+
+                <!-- Filtros -->
+                <h3 style="color:#0b1c3c; border-bottom:2px solid #f0f0f0; padding-bottom:0.5rem; margin-bottom:1rem;">📋 Bonos Vendidos</h3>
+                <div class="search-filters" style="margin-bottom:1rem;">
+                    <div class="control-group">
+                        <label>Buscar usuario</label>
+                        <input type="text" id="b-buscar" placeholder="Email, nombre o DNI">
+                    </div>
+                    <div class="control-group">
+                        <label>Estado</label>
+                        <select id="b-estado">
+                            <option value="">Todos</option>
+                            <option value="activo">Activo</option>
+                            <option value="agotado">Agotado</option>
+                            <option value="caducado">Caducado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <button class="btn-search" id="btn-buscar-bonos">Buscar</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Pack</th>
+                                <th>Usos</th>
+                                <th>Pagado</th>
+                                <th>Estado</th>
+                                <th>Compra</th>
+                                <th>Caduca</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-bonos-body">
+                            <tr><td colspan="9" style="text-align:center;">Cargando bonos...</td></tr>
                         </tbody>
                     </table>
                 </div>

@@ -32,7 +32,8 @@ if (empty($session_id)) {
     ]);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    @curl_close($ch);
+    // curl_close() omitido: desde PHP 8.5 el handle se libera automáticamente
+    unset($ch);
 
     $session = json_decode($response, true);
 
