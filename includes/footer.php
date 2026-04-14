@@ -32,6 +32,6 @@
 
     <div class="footer-bottom">
         <p>&copy; <span id="current-year">2026</span> Ayuntamiento de Tarancón. Todos los derechos reservados.</p>
-        <p style="margin-top:5px; font-size: 0.85rem;"><a href="../admin/admin-login.php" style="color: rgba(255,255,255,0.5); text-decoration: none;">🔒 Acceso Empleados</a></p>
+        <p class="footer-admin-link"><a href="../admin/admin-login.php">🔒 Acceso Empleados</a></p>
     </div>
 </footer>

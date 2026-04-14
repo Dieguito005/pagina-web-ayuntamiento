@@ -571,26 +571,179 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 768px) {
+    .bonos-wrapper {
+        padding: 1.5rem 1rem;
+    }
+
+    .bonos-hero h2 {
+        font-size: 1.6rem;
+    }
+
+    .bonos-hero p {
+        font-size: 0.95rem;
+    }
+
+    /* Tarjetas de packs más compactas */
+    .bono-pack-card {
+        border-radius: 12px;
+    }
+
+    .bono-pack-header {
+        padding: 1.4rem 1.2rem;
+    }
+
+    .bono-pack-header h3 {
+        font-size: 1.25rem;
+    }
+
+    .bono-pack-header .pack-icon {
+        font-size: 2rem;
+    }
+
+    .bono-pack-body {
+        padding: 1.4rem 1.2rem;
+    }
+
+    .bono-pack-precio {
+        font-size: 2.4rem;
+    }
+}
+
 @media (max-width: 640px) {
+    .bonos-wrapper {
+        padding: 1rem 0.75rem;
+    }
+
     .bonos-packs-grid {
         grid-template-columns: 1fr;
+        gap: 1.2rem;
     }
+
+    .bonos-hero {
+        margin-bottom: 1.5rem;
+    }
+
     .bonos-hero h2 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
+
     .bono-pack-precio {
-        font-size: 2.2rem;
+        font-size: 2rem;
     }
+
+    .bono-pack-header {
+        padding: 1.2rem 1rem;
+    }
+
+    .bono-pack-header::before {
+        font-size: 3.5rem;
+    }
+
+    .bono-pack-body {
+        padding: 1.2rem 1rem;
+    }
+
+    /* Widget de bonos en checkout */
+    .checkout-bono-widget {
+        padding: 1rem;
+        border-radius: 10px;
+    }
+
+    .bono-widget-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .bono-widget-header h4 {
+        font-size: 0.95rem;
+    }
+
     .bono-widget-body {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.8rem;
     }
+
+    .bono-toggle-wrapper {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Bonos en perfil */
+    .bonos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bono-card-perfil {
+        padding: 1rem;
+    }
+
+    /* Bono exitoso */
+    .bono-exitoso-container {
+        margin: 1rem auto;
+        padding: 0 0.75rem;
+    }
+
+    .bono-exitoso-card {
+        padding: 1.5rem 1rem;
+        border-radius: 12px;
+    }
+
+    .exitoso-icon {
+        font-size: 2.5rem;
+    }
+
+    .bono-exitoso-card h2 {
+        font-size: 1.25rem;
+    }
+
+    .bono-exitoso-details {
+        padding: 1rem;
+    }
+
     .bono-exitoso-actions {
         flex-direction: column;
     }
+
     .bono-exitoso-actions .btn-primary,
     .bono-exitoso-actions .btn-secondary {
         width: 100%;
         text-align: center;
+        padding: 0.8rem;
+    }
+
+    /* Tarjeta de bonos en home */
+    .bonos-home-card {
+        min-width: auto;
+        padding: 1.5rem 1rem;
+    }
+
+    .bonos-home-card .bonos-icon {
+        font-size: 2.5rem;
+    }
+
+    .bonos-home-card h3 {
+        font-size: 1.25rem;
+    }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 380px) {
+    .bono-pack-precio {
+        font-size: 1.8rem;
+    }
+
+    .bono-pack-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .bono-pack-header .pack-usos {
+        font-size: 0.9rem;
+    }
+
+    .btn-comprar-bono {
+        font-size: 0.95rem;
+        padding: 0.8rem 1rem;
     }
 }

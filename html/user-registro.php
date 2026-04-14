@@ -181,6 +181,80 @@ $redirect = $_GET['redirect'] ?? '';
             border-radius: 4px;
             transition: width 0.3s, background 0.3s;
         }
+
+        /* Responsive mejoras */
+        @media (max-width: 768px) {
+            .register-wrapper {
+                padding: 1.5rem 1rem;
+            }
+
+            .register-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .register-wrapper {
+                padding: 1rem 0.75rem;
+                min-height: auto;
+            }
+
+            .register-card {
+                padding: 1.5rem 1rem;
+                border-radius: 12px;
+            }
+
+            .register-card h2 {
+                font-size: 1.4rem;
+            }
+
+            .register-card .subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .section-label {
+                font-size: 0.75rem;
+                margin-top: 0.25rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .form-group input {
+                padding: 0.7rem 0.9rem;
+                font-size: 16px; /* Previene zoom en iOS */
+            }
+
+            .form-group label {
+                font-size: 0.85rem;
+            }
+
+            .form-group small {
+                font-size: 0.75rem;
+            }
+
+            .btn-register {
+                padding: 0.85rem;
+                font-size: 1rem;
+            }
+
+            .register-links {
+                font-size: 0.85rem;
+            }
+
+            .alert-error {
+                font-size: 0.85rem;
+                padding: 0.7rem;
+            }
+        }
     </style>
 </head>
 <body>

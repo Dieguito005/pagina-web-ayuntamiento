@@ -140,6 +140,46 @@ $redirect = $_GET['redirect'] ?? '';
             font-weight: 400;
         }
         .login-links .back-link:hover { color: #555; }
+
+        /* Responsive mejoras */
+        @media (max-width: 480px) {
+            .login-wrapper {
+                padding: 1rem 0.75rem;
+                min-height: auto;
+            }
+
+            .login-card {
+                padding: 1.75rem 1.25rem;
+                border-radius: 12px;
+            }
+
+            .login-card .logo-mini {
+                width: 60px;
+            }
+
+            .login-card h2 {
+                font-size: 1.4rem;
+            }
+
+            .login-card .subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .form-group input {
+                padding: 0.75rem 0.9rem;
+                font-size: 16px; /* Previene zoom en iOS */
+            }
+
+            .btn-login {
+                padding: 0.85rem;
+                font-size: 1rem;
+            }
+
+            .login-links {
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
 <body>

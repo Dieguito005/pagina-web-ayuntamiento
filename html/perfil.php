@@ -356,10 +356,66 @@ $totalUsosDisponibles = array_sum(array_map(fn($b) => (int)$b['usos_restantes'],
         .modal-msg.error   { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
 
         /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .profile-wrapper { padding: 1.5rem 1rem; }
+            .profile-header-card { padding: 1.5rem 1.25rem; gap: 1.25rem; }
+            .profile-avatar { width: 65px; height: 65px; font-size: 1.6rem; }
+            .profile-info h2 { font-size: 1.3rem; }
+            .profile-info p { font-size: 0.88rem; }
+
+            /* Stats */
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+            .stat-card { padding: 1.1rem; }
+            .stat-card .num { font-size: 1.6rem; }
+            .stat-card .label { font-size: 0.75rem; }
+
+            /* Reservas grid */
+            .proximas-grid { grid-template-columns: 1fr; }
+            .proxima-card { padding: 1.1rem; }
+
+            /* Tabla */
+            .history-table th, .history-table td { padding: 0.7rem 0.8rem; font-size: 0.88rem; }
+
+            /* Modal */
+            .modal-box { margin: 1rem; }
+            .modal-header { padding: 1.2rem 1.4rem; }
+            .modal-body { padding: 1.4rem; }
+        }
+
         @media (max-width: 640px) {
-            .profile-header-card { flex-direction: column; text-align: center; }
-            .profile-actions { flex-direction: row; justify-content: center; width: 100%; }
-            .btn-edit-profile, .btn-logout-profile { flex: 1; text-align: center; }
+            .profile-wrapper { padding: 1rem 0.75rem; }
+            .profile-header-card { flex-direction: column; text-align: center; padding: 1.25rem 1rem; }
+            .profile-avatar { width: 60px; height: 60px; font-size: 1.4rem; }
+            .profile-actions { flex-direction: column; width: 100%; gap: 0.5rem; }
+            .profile-actions .btn-home-profile,
+            .profile-actions .btn-edit-profile,
+            .profile-actions .btn-logout-profile { width: 100%; }
+
+            /* Stats */
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; margin-bottom: 1.5rem; }
+            .stat-card { padding: 1rem; }
+            .stat-card .num { font-size: 1.4rem; }
+
+            /* Tabla scroll */
+            .history-table-container { margin: 0 -0.75rem 1.5rem; border-radius: 0; }
+            .history-table { min-width: 650px; }
+
+            /* Modal */
+            .modal-tabs { flex-wrap: wrap; }
+            .modal-tab { padding: 0.6rem 0.4rem; font-size: 0.85rem; }
+            .modal-box { margin: 0.75rem; border-radius: 12px; }
+            .modal-field input { font-size: 16px; /* Previene zoom iOS */ }
+        }
+
+        @media (max-width: 480px) {
+            .profile-info .tag, .profile-info .since {
+                display: block;
+                margin: 0.25rem 0;
+            }
+            .section-title { font-size: 1.05rem; }
+            .badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; }
+            .empty-state { padding: 2rem 0.75rem; }
+            .empty-state .icon { font-size: 2rem; }
         }
     </style>
 </head>

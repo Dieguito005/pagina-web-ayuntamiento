@@ -451,7 +451,7 @@ if (!isset($_SESSION['admin_id'])) {
             color: white;
             font-size: 2rem;
             cursor: pointer;
-            padding: 0 1rem;
+            padding: 0 0.5rem;
         }
         .sidebar-overlay {
             display: none;
@@ -460,6 +460,8 @@ if (!isset($_SESSION['admin_id'])) {
             background: rgba(0,0,0,0.5);
             z-index: 990;
         }
+
+        /* Tablet */
         @media (max-width: 992px) {
             .mobile-menu-btn { display: block; }
             .header-title h1 { font-size: 1.1rem; }
@@ -479,9 +481,66 @@ if (!isset($_SESSION['admin_id'])) {
             .slots-container { justify-content: center; }
             .time-slot { width: calc(50% - 0.5rem); min-width: 120px; }
             .actividad-controls { flex-direction: column; align-items: stretch; }
+            .dashboard-controls { flex-direction: column; align-items: stretch; gap: 1rem; }
+            .search-filters { grid-template-columns: 1fr; }
         }
+
+        /* Móvil */
+        @media (max-width: 640px) {
+            .admin-main { padding: 1rem 0.75rem; }
+            .admin-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .admin-header h2 { font-size: 1.5rem; }
+            .schedule-grid-admin { padding: 0.75rem; }
+            .time-slot { width: calc(50% - 0.4rem); min-width: auto; font-size: 0.9rem; padding: 0.8rem; }
+            .time-slot .time { font-size: 1rem; }
+
+            /* Tablas scroll horizontal */
+            .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .admin-table { min-width: 600px; }
+
+            /* Buscador */
+            .search-filters { padding: 1rem; gap: 0.75rem; }
+            .btn-search, .btn-export { width: 100%; }
+
+            /* Stats cards */
+            .actividad-stats { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+            .stat-card { padding: 1rem; }
+            .stat-card .stat-value { font-size: 1.6rem; }
+            .stat-card .stat-label { font-size: 0.75rem; }
+
+            /* Aviso cards */
+            .aviso-card {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            .aviso-actions {
+                flex-direction: row;
+                align-items: center;
+                min-width: auto;
+                width: 100%;
+            }
+            .btn-verificar { flex: 1; text-align: center; }
+            .codigo-acceso-display {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+            .codigo-acceso-value {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Móvil pequeño */
         @media (max-width: 480px) {
-            .time-slot { width: 100%; min-width: 100%; }
+            .time-slot { width: 100%; min-width: 100%; margin-bottom: 0.5rem; }
+            .actividad-stats { grid-template-columns: 1fr; }
+            .aviso-header { gap: 0.5rem; }
+            .aviso-body { grid-template-columns: 1fr; gap: 0.5rem; }
+            .control-group select { min-width: auto; width: 100%; }
+
+            /* Header admin */
+            .header-logo .logo-image-box { width: 45px; height: 45px; }
+            .header-title h1 { font-size: 1rem; }
         }
     </style>
 </head>
