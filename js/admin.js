@@ -28,6 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewActividad = document.getElementById('view-actividad');
     const badgeActividad = document.getElementById('badge-actividad');
 
+    // Vista Horarios (NUEVO)
+    const viewHorarios = document.getElementById('view-horarios');
+    const tabHorarios = document.getElementById('tab-horarios');
+    const perfilesGrid = document.getElementById('perfiles-grid');
+    const editorHorariosZona = document.getElementById('editor-horarios-zona');
+    const btnNuevoPerfil = document.getElementById('btn-nuevo-perfil');
+    let currentPerfilEditando = null;
+
     // Vista Estadisticas
     const tabEstadisticas = document.getElementById('tab-estadisticas');
     const viewEstadisticas = document.getElementById('view-estadisticas');
@@ -104,111 +112,148 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper: ocultar todas las vistas y desactivar todos los tabs
     function hideAllViews() {
-        viewBloqueos.style.display = 'none';
-        viewBuscador.style.display = 'none';
+        if (viewBloqueos) viewBloqueos.style.display = 'none';
+        if (viewBuscador) viewBuscador.style.display = 'none';
         if (viewConsultas) viewConsultas.style.display = 'none';
         if (viewAnuncios) viewAnuncios.style.display = 'none';
         if (viewActividad) viewActividad.style.display = 'none';
         if (viewEstadisticas) viewEstadisticas.style.display = 'none';
-        const va = document.getElementById('view-admins'); if (va) va.style.display = 'none';
-        const vb = document.getElementById('view-bonos'); if (vb) vb.style.display = 'none';
+        if (viewHorarios) viewHorarios.style.display = 'none';
+        
+        const va = document.getElementById('view-admins'); 
+        if (va) va.style.display = 'none';
+        const vb = document.getElementById('view-bonos'); 
+        if (vb) vb.style.display = 'none';
+        
         if (actionBarBloqueos) actionBarBloqueos.style.display = 'none';
     }
     function deactivateAllTabs() {
-        [tabBuscador, tabConsultas, tabAnuncios, tabBloqueos, tabPrecios, tabActividad, tabEstadisticas,
+        [tabBuscador, tabConsultas, tabAnuncios, tabBloqueos, tabPrecios, tabActividad, tabEstadisticas, tabHorarios,
          document.getElementById('tab-admins'), document.getElementById('tab-bonos')].forEach(t => t?.classList.remove('active'));
     }
 
     // ── Logica Cambio de Tabs ──
-    if (tabBloqueos && tabPrecios && tabBuscador) {
-        if (tabEstadisticas) {
-            tabEstadisticas.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log("Stats tab clicked");
-                currentMode = 'estadisticas';
-                deactivateAllTabs();
-                tabEstadisticas.classList.add('active');
-                titlePage.textContent = '📊 Resumen y Estadísticas';
-                hideAllViews();
-                if (viewEstadisticas) {
-                    viewEstadisticas.style.display = 'block';
-                    loadEstadisticas();
-                } else {
-                    console.error("viewEstadisticas element not found");
-                }
-            });
-        }
+    if (tabEstadisticas) {
+        tabEstadisticas.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("Tab Click: Estadísticas");
+            currentMode = 'estadisticas';
+            deactivateAllTabs();
+            tabEstadisticas.classList.add('active');
+            titlePage.textContent = '📊 Resumen y Estadísticas';
+            hideAllViews();
+            if (viewEstadisticas) {
+                viewEstadisticas.style.display = 'block';
+                loadEstadisticas();
+            }
+        });
+    }
 
+    if (tabBuscador) {
         tabBuscador.addEventListener('click', (e) => {
             e.preventDefault();
+            console.log("Tab Click: Buscador");
             currentMode = 'buscador';
             deactivateAllTabs();
             tabBuscador.classList.add('active');
             titlePage.textContent = '🔍 Buscador e Historial';
             hideAllViews();
-            viewBuscador.style.display = 'block';
+            if (viewBuscador) viewBuscador.style.display = 'block';
         });
+    }
 
-        if (tabConsultas) {
-            tabConsultas.addEventListener('click', (e) => {
-                e.preventDefault();
-                currentMode = 'consultas';
-                deactivateAllTabs();
-                tabConsultas.classList.add('active');
-                titlePage.textContent = '📬 Buzón de Consultas';
-                hideAllViews();
-                viewConsultas.style.display = 'block';
-                if (formConsultas) formConsultas.dispatchEvent(new Event('submit'));
-            });
-        }
+    if (tabConsultas) {
+        tabConsultas.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("Tab Click: Consultas");
+            currentMode = 'consultas';
+            deactivateAllTabs();
+            tabConsultas.classList.add('active');
+            titlePage.textContent = '📬 Buzón de Consultas';
+            hideAllViews();
+            if (viewConsultas) viewConsultas.style.display = 'block';
+            if (formConsultas) formConsultas.dispatchEvent(new Event('submit'));
+        });
+    }
 
-        if (tabAnuncios) {
-            tabAnuncios.addEventListener('click', (e) => {
-                e.preventDefault();
-                currentMode = 'anuncios';
-                deactivateAllTabs();
-                tabAnuncios.classList.add('active');
-                titlePage.textContent = '📢 Anuncios y Novedades';
-                hideAllViews();
+    if (tabAnuncios) {
+        tabAnuncios.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("Tab Click: Anuncios");
+            currentMode = 'anuncios';
+            deactivateAllTabs();
+            tabAnuncios.classList.add('active');
+            titlePage.textContent = '📢 Anuncios y Novedades';
+            hideAllViews();
+            if (viewAnuncios) {
                 viewAnuncios.style.display = 'block';
                 loadAnuncios();
-            });
-        }
+            }
+        });
+    }
 
-        if (tabActividad) {
-            tabActividad.addEventListener('click', (e) => {
-                e.preventDefault();
-                currentMode = 'actividad';
-                deactivateAllTabs();
-                tabActividad.classList.add('active');
-                titlePage.textContent = '🔔 Centro de Actividad';
-                hideAllViews();
+    if (tabActividad) {
+        tabActividad.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("Tab Click: Actividad");
+            currentMode = 'actividad';
+            deactivateAllTabs();
+            tabActividad.classList.add('active');
+            titlePage.textContent = '🔔 Centro de Actividad';
+            hideAllViews();
+            if (viewActividad) {
                 viewActividad.style.display = 'block';
                 loadActividad();
-            });
-        }
+            }
+        });
+    }
 
+    if (tabBloqueos) {
         tabBloqueos.addEventListener('click', (e) => {
             e.preventDefault();
+            console.log("Tab Click: Bloqueos");
             currentMode = 'bloqueos';
             deactivateAllTabs();
             tabBloqueos.classList.add('active');
             titlePage.textContent = '📅 Gestión de Bloqueos';
             hideAllViews();
-            viewBloqueos.style.display = 'block';
-            if (actionBarBloqueos) actionBarBloqueos.style.display = 'flex';
-            loadSchedule();
+            if (viewBloqueos) {
+                viewBloqueos.style.display = 'block';
+                if (actionBarBloqueos) actionBarBloqueos.style.display = 'flex';
+                loadSchedule();
+            }
         });
-        
+    }
+    
+    if (tabPrecios) {
         tabPrecios.addEventListener('click', (e) => {
             e.preventDefault();
+            console.log("Tab Click: Precios");
             currentMode = 'precios';
             deactivateAllTabs();
             tabPrecios.classList.add('active');
             titlePage.textContent = '💰 Edición de Precios';
             hideAllViews();
-            viewBloqueos.style.display = 'block';
-            loadSchedule();
+            if (viewBloqueos) {
+                viewBloqueos.style.display = 'block';
+                loadSchedule();
+            }
+        });
+    }
+
+    if (tabHorarios) {
+        tabHorarios.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("Tab Click: Horarios");
+            currentMode = 'horarios';
+            deactivateAllTabs();
+            tabHorarios.classList.add('active');
+            titlePage.textContent = '⏰ Gestión de Horarios';
+            hideAllViews();
+            if (viewHorarios) {
+                viewHorarios.style.display = 'block';
+                loadPerfiles();
+            }
         });
     }
 
@@ -231,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const resData = await resp.json();
             
             if (resData.status === 'success') {
-                renderSchedule(dayOfWeek, resData.ocupados || [], resData.precios || []);
+                renderSchedule(dayOfWeek, resData.ocupados || [], resData.precios || [], resData.slots || []);
             } else {
                 showToast("Error al cargar datos", "error");
             }
@@ -243,9 +288,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderSchedule(dayOfWeek, ocupadosData, preciosData) {
+    function renderSchedule(dayOfWeek, ocupadosData, preciosData, dynamicSlots = []) {
         scheduleGrid.innerHTML = '';
-        const schedule = getScheduleForDay(dayOfWeek);
+        
+        let schedule = { morning: [], afternoon: [] };
+        
+        if (dynamicSlots.length > 0) {
+            schedule.morning = dynamicSlots.filter(s => s.periodo === 'morning').map(s => ({start: s.hora_inicio, end: s.hora_fin, supplement: s.tiene_suplemento_luz}));
+            schedule.afternoon = dynamicSlots.filter(s => s.periodo === 'afternoon').map(s => ({start: s.hora_inicio, end: s.hora_fin, supplement: s.tiene_suplemento_luz}));
+        } else {
+            schedule = getScheduleForDay(dayOfWeek);
+        }
         
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -1376,7 +1429,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chartPistas) chartPistas.destroy();
 
         if (pistasData.length === 0) {
-            // No destruimos el canvas, solo ponemos texto encima si acaso
             return;
         }
 
@@ -1672,5 +1724,263 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    console.log("Admin Dashboard JS v2.6.0 Loaded");
+    // ── GESTIÓN DE HORARIOS (DINÁMICOS) ──
+    const pistaHorarioSelect = document.getElementById('pista-horario-select');
+    const diaHorarioSelect = document.getElementById('dia-horario-select');
+    const slotsEditorContainer = document.getElementById('slots-editor-container');
+    const btnCerrarEditor = document.getElementById('btn-cerrar-editor');
+    const btnSaveHorarios = document.getElementById('btn-save_horarios') || document.getElementById('btn-save-horarios');
+
+    async function loadPerfiles() {
+        if (!perfilesGrid) return;
+        perfilesGrid.innerHTML = '<p>Cargando perfiles...</p>';
+        try {
+            const resp = await fetch('../api/admin-horarios.php?action=get_perfiles');
+            const data = await resp.json();
+            if (data.success) {
+                renderPerfiles(data.data);
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (e) {
+            showToast('Error al cargar perfiles', 'error');
+        }
+    }
+
+    function renderPerfiles(perfiles) {
+        if (perfiles.length === 0) {
+            perfilesGrid.innerHTML = '<p>No hay perfiles de horario creados.</p>';
+            return;
+        }
+
+        perfilesGrid.innerHTML = perfiles.map(p => `
+            <div class="stat-card" style="border: 2px solid ${p.activo == 1 ? '#d15615' : '#eee'}; position: relative;">
+                ${p.activo == 1 ? '<span style="position:absolute; top:-10px; right:10px; background:#d15615; color:white; padding:2px 8px; border-radius:10px; font-size:0.7rem; font-weight:bold;">ACTIVO</span>' : ''}
+                <div class="stat-label">Perfil de Horario</div>
+                <div class="stat-value" style="font-size: 1.4rem; margin-bottom: 1rem;">${p.nombre}</div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn-sm btn-view" onclick="iniciarEdicionPerfil(${p.id}, '${p.nombre}')" style="background:#0b1c3c; color:white;">⚙️ Editar Horarios</button>
+                    ${p.activo == 0 ? `<button class="btn-sm" onclick="activarPerfil(${p.id})" style="background:#d15615; color:white;">⚡ Activar</button>` : ''}
+                    ${p.activo == 0 ? `<button class="btn-sm btn-cancel" onclick="eliminarPerfil(${p.id})">🗑️</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    if (btnNuevoPerfil) {
+        btnNuevoPerfil.addEventListener('click', async () => {
+            const nombre = prompt('Nombre del nuevo perfil (ej: Horario de Verano):');
+            if (!nombre) return;
+            try {
+                const resp = await fetch('../api/admin-horarios.php?action=create_perfil', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ nombre })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showToast('Perfil creado con éxito');
+                    loadPerfiles();
+                }
+            } catch (e) { showToast('Error al crear perfil'); }
+        });
+    }
+
+    window.activarPerfil = async (id) => {
+        if (!confirm('¿Seguro que deseas activar este perfil? Se aplicará a todas las pistas inmediatamente.')) return;
+        try {
+            const resp = await fetch('../api/admin-horarios.php?action=activar_perfil', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showToast('Perfil activado correctamente');
+                loadPerfiles();
+                loadSchedule(); // Refrescar vista actual de calendario
+            }
+        } catch (e) { showToast('Error de red'); }
+    }
+
+    window.eliminarPerfil = async (id) => {
+        if (!confirm('¿Borrar este perfil permanentemente?')) return;
+        try {
+            const resp = await fetch('../api/admin-horarios.php?action=delete_perfil', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showToast('Perfil eliminado');
+                loadPerfiles();
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (e) { showToast('Error de red'); }
+    }
+
+    window.iniciarEdicionPerfil = (id, nombre) => {
+        currentPerfilEditando = { id, nombre };
+        document.getElementById('editor-perfil-titulo').textContent = `Editando: ${nombre}`;
+        editorHorariosZona.style.display = 'block';
+        editorHorariosZona.scrollIntoView({ behavior: 'smooth' });
+        loadPerfilSlotsData();
+    };
+
+    if (btnCerrarEditor) {
+        btnCerrarEditor.addEventListener('click', () => {
+            editorHorariosZona.style.display = 'none';
+            currentPerfilEditando = null;
+        });
+    }
+
+    async function loadPerfilSlotsData() {
+        if (!currentPerfilEditando) return;
+        const pista = pistaHorarioSelect.value;
+        const diaGroup = diaHorarioSelect.value;
+        
+        slotsEditorContainer.innerHTML = '<p style="text-align:center;">Cargando tramos...</p>';
+        
+        try {
+            // Si el grupo es 1-5, cargamos solo los del lunes como base? 
+            // Para simplificar, si es grupo 1-5, usamos dia=1 (Lunes)
+            const diaCarga = diaGroup === '1-5' ? 1 : diaGroup;
+            const resp = await fetch(`../api/admin-horarios.php?action=get_perfil_slots&perfil_id=${currentPerfilEditando.id}&pista=${encodeURIComponent(pista)}`);
+            const data = await resp.json();
+            if (data.success) {
+                // Filtrar por el día seleccionado
+                const filteredSlots = data.data.filter(s => s.dia_semana == diaCarga);
+                renderSlotsEditor(filteredSlots);
+            }
+        } catch (e) { showToast('Error al cargar tramos'); }
+    }
+
+    function renderSlotsEditor(slots) {
+        let html = `
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align:left; border-bottom: 2px solid #ddd;">
+                        <th style="padding: 0.5rem;">Inicio</th>
+                        <th style="padding: 0.5rem;">Fin</th>
+                        <th style="padding: 0.5rem;">Periodo</th>
+                        <th style="padding: 0.5rem; text-align:center;">💡 Luz</th>
+                        <th style="padding: 0.5rem; text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="slots-tbody">
+        `;
+
+        if (slots.length === 0) {
+            html += '<tr id="no-slots-row"><td colspan="5" style="text-align:center; padding:2rem; color:#888;">No hay tramos configurados.</td></tr>';
+        } else {
+            slots.forEach((s, idx) => {
+                html += createSlotRowHtml(s);
+            });
+        }
+
+        html += `
+                </tbody>
+            </table>
+            <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                <button class="btn-sm" onclick="addNewSlotRow('morning')" style="background:#eee; color:#333;">➕ Añadir Tramo Mañana</button>
+                <button class="btn-sm" onclick="addNewSlotRow('afternoon')" style="background:#eee; color:#333;">➕ Añadir Tramo Tarde</button>
+            </div>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 1.5rem; font-style: italic;">
+                * Nota: Si editas "Lunes a Viernes", los cambios se aplicarán a los 5 días laborales simultáneamente.
+            </p>
+        `;
+        slotsEditorContainer.innerHTML = html;
+    }
+
+    function createSlotRowHtml(s = null) {
+        const hInicio = s ? s.hora_inicio.substring(0,5) : '09:00';
+        const hFin = s ? s.hora_fin.substring(0,5) : '11:00';
+        const periodo = s ? s.periodo : 'morning';
+        const luz = s && s.tiene_suplemento_luz == 1 ? 'checked' : '';
+
+        return `
+            <tr class="slot-row" data-periodo="${periodo}">
+                <td style="padding: 0.5rem;"><input type="time" class="in-inicio" value="${hInicio}" style="padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></td>
+                <td style="padding: 0.5rem;"><input type="time" class="in-fin" value="${hFin}" style="padding:0.4rem; border-radius:4px; border:1px solid #ccc;"></td>
+                <td style="padding: 0.5rem;">
+                    <select class="in-periodo" style="padding:0.4rem; border-radius:4px; border:1px solid #ccc;">
+                        <option value="morning" ${periodo === 'morning' ? 'selected' : ''}>Mañana</option>
+                        <option value="afternoon" ${periodo === 'afternoon' ? 'selected' : ''}>Tarde</option>
+                    </select>
+                </td>
+                <td style="padding: 0.5rem; text-align:center;"><input type="checkbox" class="in-luz" ${luz}></td>
+                <td style="padding: 0.5rem; text-align:center;"><button class="btn-sm btn-cancel" onclick="this.closest('tr').remove()" style="padding: 0.3rem 0.6rem;">🗑️</button></td>
+            </tr>
+        `;
+    }
+
+    window.addNewSlotRow = (periodo) => {
+        const noSlots = document.getElementById('no-slots-row');
+        if (noSlots) noSlots.remove();
+        
+        const tbody = document.getElementById('slots-tbody');
+        const hValue = periodo === 'morning' ? {s:'09:00', e:'11:00'} : {s:'16:00', e:'18:00'};
+        const row = createSlotRowHtml({ hora_inicio: hValue.s, hora_fin: hValue.e, periodo: periodo, tiene_suplemento_luz: 0 });
+        tbody.insertAdjacentHTML('beforeend', row);
+    };
+
+    if (btnSaveHorarios) {
+        btnSaveHorarios.addEventListener('click', async () => {
+            if (!currentPerfilEditando) return;
+            
+            const pista = pistaHorarioSelect.value;
+            const diaGroup = diaHorarioSelect.value;
+            const rows = document.querySelectorAll('.slot-row');
+            
+            const slots = Array.from(rows).map(row => ({
+                hora_inicio: row.querySelector('.in-inicio').value,
+                hora_fin: row.querySelector('.in-fin').value,
+                periodo: row.querySelector('.in-periodo').value,
+                tiene_suplemento_luz: row.querySelector('.in-luz').checked ? 1 : 0
+            }));
+
+            // Validar que no haya slots vacíos o con horas invertidas
+            for (let s of slots) {
+                if (s.hora_inicio >= s.hora_fin) {
+                    showToast(`Error: El tramo ${s.hora_inicio}-${s.hora_fin} tiene una hora de fin no válida.`, 'error');
+                    return;
+                }
+            }
+
+            btnSaveHorarios.disabled = true;
+            btnSaveHorarios.textContent = 'Guardando...';
+
+            try {
+                const diasAAplicar = diaGroup === '1-5' ? [1,2,3,4,5] : [parseInt(diaGroup)];
+                
+                // Hacemos el guardado para cada día del grupo
+                for (const d of diasAAplicar) {
+                    await fetch('../api/admin-horarios.php?action=save_slots', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            perfil_id: currentPerfilEditando.id,
+                            pista: pista,
+                            dia_semana: d,
+                            slots: slots
+                        })
+                    });
+                }
+                
+                showToast('Horarios guardados correctamente');
+                loadSchedule(); // Refrescar si estamos viendo esa pista
+            } catch (e) { showToast('Error al guardar horarios'); }
+            finally {
+                btnSaveHorarios.disabled = false;
+                btnSaveHorarios.textContent = '💾 Guardar Cambios';
+            }
+        });
+    }
+
+    pistaHorarioSelect.addEventListener('change', loadPerfilSlotsData);
+    diaHorarioSelect.addEventListener('change', loadPerfilSlotsData);
+
+    console.log("Admin Dashboard JS v2.7.0 Loaded — Sistema de Horarios Dinámicos");
 });

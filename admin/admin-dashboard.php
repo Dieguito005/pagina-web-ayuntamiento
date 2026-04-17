@@ -586,6 +586,9 @@ if (!isset($_SESSION['admin_id'])) {
                     <a href="#" id="tab-precios">
                         <span>💰</span> Editar Precios
                     </a>
+                    <a href="#" id="tab-horarios">
+                        <span>⏰</span> Gestión de Horarios
+                    </a>
                 </div>
 
                 <hr class="nav-divider">
@@ -693,6 +696,60 @@ if (!isset($_SESSION['admin_id'])) {
                 
                 <div class="action-bar" id="action-bar-bloqueos">
                     <button class="btn-block" id="btn-block-slot" disabled>Bloquear Horario Seleccionado</button>
+                </div>
+            </div>
+
+            <!-- VIEW: Gestión de Horarios -->
+            <div id="view-horarios" style="display:none;">
+                <div class="perfiles-container" style="margin-bottom: 2.5rem;">
+                    <h3 style="color: #0b1c3c; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.5rem;">
+                        📋 Perfiles de Horario
+                        <button class="btn-sm" id="btn-nuevo-perfil" style="background: #2e7d32; color: white; margin-left: auto; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 700; cursor: pointer;">+ Nuevo Perfil</button>
+                    </h3>
+                    <div id="perfiles-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <!-- Generado por JS -->
+                        <p>Cargando perfiles...</p>
+                    </div>
+                </div>
+
+                <div id="editor-horarios-zona" style="display: none; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 25px rgba(0,0,0,0.1); border-top: 4px solid #d15615;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+                         <h3 id="editor-perfil-titulo" style="margin:0; color: #0b1c3c; font-size: 1.4rem;">Editando Horarios</h3>
+                         <button id="btn-cerrar-editor" style="background:none; border:none; font-size:1.8rem; cursor:pointer; color:#999;">&times;</button>
+                    </div>
+
+                    <div class="dashboard-controls" style="box-shadow: none; padding: 0; margin-bottom: 1.5rem; border: none; background: transparent;">
+                        <div class="control-group">
+                            <label>1. Selecciona la Pista</label>
+                            <select id="pista-horario-select" style="min-width: 250px;">
+                                <option value="Tenis">Pista de Tenis</option>
+                                <option value="Pádel Cubierta">Pádel Cubierta</option>
+                                <option value="Pádel Descubierta">Pádel Descubierta</option>
+                                <option value="Fútbol 7">Fútbol 7</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>2. Día de la Semana</label>
+                            <select id="dia-horario-select" style="min-width: 250px;">
+                                <option value="1-5">Lunes a Viernes</option>
+                                <option value="6">Sábado</option>
+                                <option value="0">Domingo</option>
+                                <option value="1">Lunes</option>
+                                <option value="2">Martes</option>
+                                <option value="3">Miércoles</option>
+                                <option value="4">Jueves</option>
+                                <option value="5">Viernes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="slots-editor-container" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border: 1px solid #e9ecef;">
+                        <!-- Contenido dinámico -->
+                    </div>
+
+                    <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                        <button class="btn-search" id="btn-save-horarios" style="background: #d15615; height: 50px; padding: 0 2rem; font-size: 1.1rem;">💾 Guardar Cambios</button>
+                    </div>
                 </div>
             </div>
 

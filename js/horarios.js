@@ -13,14 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const DAY_NAMES_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-    const WEEKDAY = {
+    const FALLBACK_WEEKDAY = {
         morning: [{ start: '09:00', end: '11:00' }, { start: '11:00', end: '13:00' }],
         afternoon: [{ start: '16:00', end: '18:00' }, { start: '18:00', end: '20:00' }, { start: '20:00', end: '22:00', supplement: SUPLEMENTO_LUZ }]
     };
 
-    const SCHEDULE = {
+    const FALLBACK_SCHEDULE = {
         0: { morning: [{ start: '09:00', end: '11:00' }, { start: '11:00', end: '13:00' }], afternoon: [] },
-        1: WEEKDAY, 2: WEEKDAY, 3: WEEKDAY, 4: WEEKDAY, 5: WEEKDAY,
+        1: FALLBACK_WEEKDAY, 2: FALLBACK_WEEKDAY, 3: FALLBACK_WEEKDAY, 4: FALLBACK_WEEKDAY, 5: FALLBACK_WEEKDAY,
         6: { morning: [{ start: '09:00', end: '11:00' }, { start: '11:00', end: '13:00' }], afternoon: [{ start: '16:30', end: '18:30' }] }
     };
 
@@ -92,10 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function generateSlots(offset) {
-        const dayOfWeek = getDayOfWeek(offset);
-        const schedule = SCHEDULE[dayOfWeek];
-        if (!schedule) return;
-
         scheduleGrid.style.opacity = '0.5';
         scheduleGrid.innerHTML = '<p class="loading-schedule">Cargando disponibilidad...</p>';
         confirmBtn.disabled = true;
@@ -103,6 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateISO = getISODateForAPI(offset);
         let ocupadosList = [];
         let preciosList = [];
+        let dynamicSlots = [];
+        let perfilActivo = "";
 
         try {
             const resp = await fetch(`../api/get-horarios.php?fecha=${dateISO}&pista=${encodeURIComponent(sport)}`);
@@ -111,16 +109,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.status === 'success') {
                     ocupadosList = data.ocupados || [];
                     preciosList = data.precios || [];
+                    dynamicSlots = data.slots || [];
+                    perfilActivo = data.perfil_activo || '';
                 }
             }
         } catch (e) {
-            console.error("No se pudo conectar con la BBDD, asumiendo disponibilidad.");
+            console.error("No se pudo conectar con la BBDD, usando fallback local.");
         }
 
         scheduleGrid.innerHTML = '';
+        
+        // Determinar qué horario usar: Dinámico de API o Fallback local
+        let schedule = { morning: [], afternoon: [] };
+        
+        if (dynamicSlots.length > 0) {
+            schedule.morning = dynamicSlots.filter(s => s.periodo === 'morning').map(s => ({
+                start: s.hora_inicio,
+                end: s.hora_fin,
+                supplement: s.tiene_suplemento_luz ? SUPLEMENTO_LUZ : 0
+            }));
+            schedule.afternoon = dynamicSlots.filter(s => s.periodo === 'afternoon').map(s => ({
+                start: s.hora_inicio,
+                end: s.hora_fin,
+                supplement: s.tiene_suplemento_luz ? SUPLEMENTO_LUZ : 0
+            }));
+            
+            // Si hay un perfil activo, podríamos mostrarlo en algún badge opcional
+            console.log("Perfil activo aplicado:", perfilActivo);
+        } else {
+            // Fallback al horario hardcodeado original
+            const dayOfWeek = getDayOfWeek(offset);
+            schedule = FALLBACK_SCHEDULE[dayOfWeek] || { morning: [], afternoon: [] };
+        }
 
         if (schedule.morning.length > 0) scheduleGrid.appendChild(createTimeBlock('morning', 'Mañana', schedule.morning, ocupadosList, preciosList));
         if (schedule.afternoon.length > 0) scheduleGrid.appendChild(createTimeBlock('afternoon', 'Tarde', schedule.afternoon, ocupadosList, preciosList));
+        
         if (schedule.morning.length === 0 && schedule.afternoon.length === 0) {
             scheduleGrid.innerHTML = '<p class="no-schedule-msg">No hay horarios disponibles para este día.</p>';
         }
