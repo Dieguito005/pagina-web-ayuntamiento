@@ -14,10 +14,12 @@ if (!isset($_SESSION['admin_id'])) {
     exit;
 }
 
+$json_data = [];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($action)) {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $action = $data['action'] ?? '';
+    $raw_input = file_get_contents('php://input');
+    $json_data = json_decode($raw_input, true) ?? [];
+    $action = $json_data['action'] ?? '';
 }
 
 // ════════════════════════════════════════════════
@@ -93,11 +95,11 @@ if ($action === 'get_config') {
 // UPDATE CONFIG — Actualizar precio/caducidad de un pack
 // ════════════════════════════════════════════════
 if ($action === 'update_config') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $id = $data['id'] ?? 0;
-    $precio = $data['precio'] ?? null;
-    $caducidad = $data['caducidad_meses'] ?? null;
-    $activo = $data['activo'] ?? null;
+    $id = $json_data['id'] ?? 0;
+    $usos = $json_data['usos'] ?? null;
+    $precio = $json_data['precio'] ?? null;
+    $caducidad = $json_data['caducidad_meses'] ?? null;
+    $activo = $json_data['activo'] ?? null;
 
     if (empty($id)) {
         http_response_code(400);
@@ -106,9 +108,27 @@ if ($action === 'update_config') {
     }
 
     try {
+        if ($usos !== null) {
+            $check = $pdo->prepare("SELECT id FROM bonos_config WHERE usos = ? AND id != ?");
+            $check->execute([$usos, $id]);
+            if ($check->fetch()) {
+                http_response_code(400);
+                echo json_encode(["status" => "error", "message" => "Ya existe un pack con $usos sesiones."]);
+                exit;
+            }
+        }
+
         $updates = [];
         $params = [];
 
+        if ($usos !== null) {
+            $updates[] = "usos = ?";
+            $updates[] = "tipo = ?";
+            $updates[] = "nombre = ?";
+            $params[] = intval($usos);
+            $params[] = "bono_" . intval($usos);
+            $params[] = "Bono " . intval($usos) . " Sesiones";
+        }
         if ($precio !== null) {
             $updates[] = "precio = ?";
             $params[] = floatval($precio);
@@ -137,7 +157,51 @@ if ($action === 'update_config') {
     } catch (\PDOException $e) {
         error_log("admin-bonos update_config error: " . $e->getMessage());
         http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error al actualizar."]);
+        echo json_encode(["status" => "error", "message" => "Error al actualizar. Posible conflicto de datos."]);
+    }
+    exit;
+}
+
+// ════════════════════════════════════════════════
+// CREATE CONFIG — Crear un nuevo pack de bono
+// ════════════════════════════════════════════════
+if ($action === 'create_config') {
+    $usos = $json_data['usos'] ?? null;
+    $precio = $json_data['precio'] ?? null;
+    $caducidad = $json_data['caducidad_meses'] ?? null;
+
+    if ($usos === null || $precio === null || $caducidad === null) {
+        http_response_code(400);
+        echo json_encode(["status" => "error", "message" => "Faltan datos obligatorios (usos, precio o caducidad)."]);
+        exit;
+    }
+    
+    if (intval($usos) <= 0) {
+        http_response_code(400);
+        echo json_encode(["status" => "error", "message" => "La cantidad de sesiones debe ser mayor a 0."]);
+        exit;
+    }
+
+    try {
+        $check = $pdo->prepare("SELECT id FROM bonos_config WHERE usos = ?");
+        $check->execute([$usos]);
+        if ($check->fetch()) {
+            http_response_code(400);
+            echo json_encode(["status" => "error", "message" => "Ya existe un pack con $usos sesiones."]);
+            exit;
+        }
+
+        $tipo = "bono_" . intval($usos);
+        $nombre = "Bono " . intval($usos) . " Sesiones";
+
+        $stmt = $pdo->prepare("INSERT INTO bonos_config (tipo, nombre, usos, precio, caducidad_meses, activo) VALUES (?, ?, ?, ?, ?, 1)");
+        $stmt->execute([$tipo, $nombre, intval($usos), floatval($precio), intval($caducidad)]);
+
+        echo json_encode(["status" => "success", "message" => "Nuevo pack creado exitosamente."]);
+    } catch (\PDOException $e) {
+        error_log("admin-bonos create_config error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "Error al crear el pack en BD: " . $e->getMessage()]);
     }
     exit;
 }
@@ -146,8 +210,7 @@ if ($action === 'update_config') {
 // CANCEL BONO — Cancelar un bono activo
 // ════════════════════════════════════════════════
 if ($action === 'cancel_bono') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $bonoId = $data['bono_id'] ?? 0;
+    $bonoId = $json_data['bono_id'] ?? 0;
 
     if (empty($bonoId)) {
         http_response_code(400);

@@ -1551,7 +1551,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '<p style="color:#888; text-align:center;">Cargando configuración...</p>';
 
         try {
-            const resp = await fetch('../api/admin-bonos.php?action=get_config');
+            const resp = await fetch(`../api/admin-bonos.php?action=get_config&t=${Date.now()}`);
             const data = await resp.json();
 
             if (resp.ok && data.status === 'success' && data.data.length > 0) {
@@ -1563,13 +1563,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             <strong style="color:#0b1c3c; font-size:1rem;">${pack.nombre}</strong>
                             <span class="badge ${pack.activo == 1 ? 'reservada' : 'cancelada'}">${pack.activo == 1 ? 'Activo' : 'Inactivo'}</span>
                         </div>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.8rem; margin-bottom:0.8rem;">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.8rem; margin-bottom:0.8rem;">
+                            <div>
+                                <label style="font-size:0.78rem; color:#888; font-weight:600;">USOS</label>
+                                <input type="number" min="1" value="${pack.usos}" id="cfg-usos-${pack.id}" style="width:100%; padding:0.5rem; border:1px solid #ddd; border-radius:6px;">
+                            </div>
                             <div>
                                 <label style="font-size:0.78rem; color:#888; font-weight:600;">PRECIO (€)</label>
                                 <input type="number" step="0.01" min="0" value="${parseFloat(pack.precio).toFixed(2)}" id="cfg-precio-${pack.id}" style="width:100%; padding:0.5rem; border:1px solid #ddd; border-radius:6px;">
                             </div>
                             <div>
-                                <label style="font-size:0.78rem; color:#888; font-weight:600;">CADUCIDAD (MESES)</label>
+                                <label style="font-size:0.78rem; color:#888; font-weight:600;">CADUCIDAD</label>
                                 <input type="number" min="1" max="36" value="${pack.caducidad_meses}" id="cfg-caducidad-${pack.id}" style="width:100%; padding:0.5rem; border:1px solid #ddd; border-radius:6px;">
                             </div>
                         </div>
@@ -1592,6 +1596,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.guardarConfigBono = async (id) => {
+        const usos = document.getElementById(`cfg-usos-${id}`)?.value;
         const precio = document.getElementById(`cfg-precio-${id}`)?.value;
         const caducidad = document.getElementById(`cfg-caducidad-${id}`)?.value;
 
@@ -1599,7 +1604,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const resp = await fetch('../api/admin-bonos.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'update_config', id, precio: parseFloat(precio), caducidad_meses: parseInt(caducidad) })
+                body: JSON.stringify({ action: 'update_config', id, usos: parseInt(usos), precio: parseFloat(precio), caducidad_meses: parseInt(caducidad) })
             });
             const data = await resp.json();
             if (resp.ok && data.status === 'success') {
@@ -1631,6 +1636,41 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Error de red', 'error');
         }
     };
+
+    const formCrearBono = document.getElementById('form-crear-bono');
+    if (formCrearBono) {
+        formCrearBono.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const usos = document.getElementById('new-bono-usos').value;
+            const precio = document.getElementById('new-bono-precio').value;
+            const caducidad = document.getElementById('new-bono-caducidad').value;
+            const btnSubmit = document.getElementById('btn-crear-bono-submit');
+
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Creando...';
+
+            try {
+                const resp = await fetch('../api/admin-bonos.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'create_config', usos: parseInt(usos), precio: parseFloat(precio), caducidad_meses: parseInt(caducidad) })
+                });
+                const data = await resp.json();
+                if (resp.ok && data.status === 'success') {
+                    showToast(data.message, 'success');
+                    formCrearBono.reset();
+                    loadBonosConfig();
+                } else {
+                    showToast(data.message || 'Error al crear', 'error');
+                }
+            } catch (err) {
+                showToast('Error de conexión', 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = '➕ Crear Nuevo Pack';
+            }
+        });
+    }
 
     console.log("Admin Dashboard JS v2.6.0 Loaded");
 });

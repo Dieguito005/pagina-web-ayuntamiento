@@ -6,6 +6,24 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.7.0] - 15-04-2026
+
+### Añadido 🚀
+- **Nueva Instalación: Pista de Fútbol 7** — Integración completa de la pista de fútbol 7 en el sistema de reservas existente, con exactamente las mismas capacidades que Tenis y Pádel.
+  - **Página de reserva (`html/futbol7.php`)**: Usa el mismo motor de `horarios.js` con `data-sport="Fútbol 7"`. Incluye hero section con gradiente verde campo, selector de días, slots de 2h y botón de confirmación.
+  - **Tarjeta en Home (`html/home.php`)**: Nueva tarjeta "Fútbol 7" con balón de fútbol y CTA verde que enlaza directamente a `futbol7.php`. El hero banner del home también se actualizó para mencionar las tres instalaciones.
+  - **CSS (`css/tenis.css`)**: Nueva clase `.futbol7-hero` con gradiente verde oscuro (#1a5c28), color de texto suave (#b8e6c0) y responsive completo para 768px y 480px. Integrada en todos los selectores de media queries existentes.
+  - **Admin — Gestión de Bloqueos**: `#pista-select` ahora incluye "Fútbol 7" → los admins pueden bloquear/desbloquear horarios de la pista de fútbol.
+  - **Admin — Centro de Actividad**: `#act-filtro-pista` incluye "Fútbol 7" → filtrar reservas activas de la pista.
+  - **Admin — Buscador e Historial**: `#s-pista` incluye "Fútbol 7" → buscar/cancelar reservas históricas.
+
+### Técnico 🔧
+- **Sin cambios en backend**: Las APIs `get-horarios.php`, `enviar-correo.php`, `bloquear-hora.php`, `admin-reservas.php`, `admin-stats.php` y el sistema de bonos son completamente agnósticos a las pistas — soportan automáticamente cualquier valor de `pista`.
+- **Sin cambios en checkout.js ni checkout.php**: Leen el nombre del sport desde `localStorage`, soporte automático.
+- **Perfil de usuario**: Las reservas de Fútbol 7 aparecen automáticamente en "Próximas Reservas" e "Historial" del perfil.
+
+---
+
 ## [2.6.0] - 13-04-2026
 
 ### Añadido 🚀

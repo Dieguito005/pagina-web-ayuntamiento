@@ -118,7 +118,8 @@
        /* Ajuste hero */
        .tennis-hero-content h2,
        .padel-cubierta-hero h2,
-       .padel-descubierta-hero h2 {
+       .padel-descubierta-hero h2,
+       .futbol7-hero h2 {
            font-size: 1.8rem;
        }
    }
@@ -127,19 +128,22 @@
    @media (max-width: 480px) {
        .tennis-hero,
        .padel-cubierta-hero,
-       .padel-descubierta-hero {
+       .padel-descubierta-hero,
+       .futbol7-hero {
            padding: 2.5rem 1rem;
        }
 
        .tennis-hero-content h2,
        .padel-cubierta-hero h2,
-       .padel-descubierta-hero h2 {
+       .padel-descubierta-hero h2,
+       .futbol7-hero h2 {
            font-size: 1.5rem;
        }
 
        .tennis-hero-content p,
        .padel-cubierta-hero p,
-       .padel-descubierta-hero p {
+       .padel-descubierta-hero p,
+       .futbol7-hero p {
            font-size: 0.95rem;
        }
 
@@ -534,4 +538,45 @@
        .padel-descubierta-hero p {
            font-size: 1rem;
        }
+   }
+
+   /* --- HERO BANNER FÚTBOL 7 --- */
+   .futbol7-hero {
+       background: linear-gradient(rgba(20, 80, 30, 0.78), rgba(5, 40, 10, 0.82)), url('../assets/imagenes/futbol7-bg.jpg') center/cover;
+       background-color: #1a5c28; /* Verde campo de fútbol — fallback */
+       color: white;
+       text-align: center;
+       padding: 6rem 1.25rem;
+       margin-bottom: 3.75rem;
+       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+   }
+
+   .futbol7-hero .tennis-hero-content {
+       max-width: 50rem;
+       margin: 0 auto;
+   }
+
+   .futbol7-hero h2 {
+       font-size: 2.8rem;
+       font-weight: 700;
+       margin-bottom: 0.9375rem;
+       text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+   }
+
+   .futbol7-hero p {
+       font-size: 1.2rem;
+       color: #b8e6c0;
+       text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+       margin-bottom: 2rem;
+   }
+
+   .futbol7-hero .btn-back:hover {
+       background: white;
+       color: #1a5c28;
+   }
+
+   @media (max-width: 768px) {
+       .futbol7-hero { padding: 4rem 1.25rem; }
+       .futbol7-hero h2 { font-size: 2rem; }
+       .futbol7-hero p { font-size: 1rem; }
    }

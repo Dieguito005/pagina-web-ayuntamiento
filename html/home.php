@@ -23,7 +23,7 @@
         <!-- SECCIÓN BANNER HERO -->
         <section class="hero-banner">
             <div class="hero-content scroll-animate" data-animation="fade-in-up">
-                <h2>Alquila ya tu pista de Tenis o Pádel en Tarancón</h2>
+                <h2>Alquila ya tu pista de Tenis, Pádel o Fútbol 7 en Tarancón</h2>
                 <p>Nuevas instalaciones deportivas municipales a tu disposición. ¡Reserva hoy mismo!</p>
             </div>
         </section>
@@ -74,6 +74,18 @@
                     <p>Ahorra comprando packs de sesiones. Usa tu bono en cualquier pista sin pagar la reserva individual.</p>
                     <a href="bonos.php" class="btn-primary" style="background: linear-gradient(135deg, #d15615, #a44310); box-shadow: 0 4px 10px rgba(209, 86, 21, 0.3);">Comprar Bonos</a>
                 </div>
+
+                <!-- Tarjeta Fútbol 7 -->
+                <article class="sport-card scroll-animate" data-animation="fade-in-up">
+                    <div class="card-image-box">
+                        <img src="../assets/imagenes/balon-futbol.png" alt="Fútbol 7" class="sport-icon" loading="lazy" decoding="async">
+                    </div>
+                    <div class="card-info">
+                        <h3>Fútbol 7</h3>
+                        <p class="court-context">Pista de césped artificial para partidos de 7 jugadores.</p>
+                        <a href="futbol7.php" class="btn-primary" style="background: linear-gradient(135deg, #1a7a35, #0f5225);">Ver pista disponible</a>
+                    </div>
+                </article>
 
             </div>
         </section>

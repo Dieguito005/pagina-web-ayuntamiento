@@ -675,6 +675,7 @@ if (!isset($_SESSION['admin_id'])) {
                             <option value="Tenis">Pista de Tenis</option>
                             <option value="Pádel Cubierta">Pádel Cubierta</option>
                             <option value="Pádel Descubierta">Pádel Descubierta</option>
+                            <option value="Fútbol 7">Fútbol 7</option>
                         </select>
                     </div>
                     
@@ -714,6 +715,7 @@ if (!isset($_SESSION['admin_id'])) {
                             <option value="Tenis">Pista de Tenis</option>
                             <option value="Pádel Cubierta">Pádel Cubierta</option>
                             <option value="Pádel Descubierta">Pádel Descubierta</option>
+                            <option value="Fútbol 7">Fútbol 7</option>
                         </select>
                     </div>
                     <button class="btn-search" id="btn-recargar-actividad" style="margin-top:1.4rem;">🔄 Actualizar</button>
@@ -763,6 +765,7 @@ if (!isset($_SESSION['admin_id'])) {
                             <option value="Tenis">Pista de Tenis</option>
                             <option value="Pádel Cubierta">Pádel Cubierta</option>
                             <option value="Pádel Descubierta">Pádel Descubierta</option>
+                            <option value="Fútbol 7">Fútbol 7</option>
                         </select>
                     </div>
                     <div class="control-group">
@@ -876,7 +879,32 @@ if (!isset($_SESSION['admin_id'])) {
                 </div>
 
                 <!-- Config de Packs -->
-                <h3 style="color:#0b1c3c; border-bottom:2px solid #f0f0f0; padding-bottom:0.5rem; margin-bottom:1rem;">⚙️ Configuración de Packs</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f0f0f0; padding-bottom:0.5rem; margin-bottom:1rem;">
+                    <h3 style="color:#0b1c3c; margin:0;">⚙️ Configuración de Packs</h3>
+                </div>
+
+                <!-- Formulario Añadir Bono -->
+                <div style="background:white; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.06); padding:1.5rem; margin-bottom:2rem; border-left:4px solid #2e7d32;">
+                    <h4 style="margin-top:0; color:#0b1c3c; margin-bottom:1rem;">Añadir Nuevo Pack de Bonos</h4>
+                    <form id="form-crear-bono" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; align-items:end;">
+                        <div>
+                            <label style="font-size:0.8rem; color:#888; font-weight:600; display:block; margin-bottom:0.3rem;">SESIONES (USOS)</label>
+                            <input type="number" id="new-bono-usos" min="1" required style="width:100%; padding:0.6rem; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#888; font-weight:600; display:block; margin-bottom:0.3rem;">PRECIO BASE (€)</label>
+                            <input type="number" step="0.01" min="0" id="new-bono-precio" required style="width:100%; padding:0.6rem; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem; color:#888; font-weight:600; display:block; margin-bottom:0.3rem;">CADUCIDAD (MESES)</label>
+                            <input type="number" id="new-bono-caducidad" min="1" max="36" value="6" required style="width:100%; padding:0.6rem; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <button type="submit" class="btn-search" id="btn-crear-bono-submit" style="width:100%; background-color:#2e7d32; height:42px;">➕ Crear Nuevo Pack</button>
+                        </div>
+                    </form>
+                </div>
+
                 <div id="bonos-config-container" style="margin-bottom:2rem;">
                     <p style="color:#888; text-align:center;">Cargando configuración...</p>
                 </div>
@@ -1101,7 +1129,7 @@ if (!isset($_SESSION['admin_id'])) {
         const defaultBasePrice = 4.00;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="../js/admin.js?v=2.5.1"></script>
+    <script src="../js/admin.js?v=2.6.0"></script>
 </body>
 </html>
 
