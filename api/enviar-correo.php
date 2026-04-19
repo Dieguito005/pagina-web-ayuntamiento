@@ -5,6 +5,12 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'conexion.php';
 header("Content-Type: application/json; charset=UTF-8");
 
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(["status" => "error", "message" => "Debes iniciar sesión para realizar una reserva."]);
+    exit;
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $to = $_POST['email'] ?? '';
     $nombre = $_POST['nombre'] ?? 'Ciudadano/a';
@@ -39,8 +45,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
 
-            // Generar Código Alfanumérico
-            $codigo_acceso = 'TRC-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
+            // Generar Código Alfanumérico criptográficamente seguro
+            $codigo_acceso = 'TRC-' . strtoupper(bin2hex(random_bytes(3)));
 
             // Detectar qué columnas existen en la tabla reservas para máxima compatibilidad
             $columnsResult = $pdo->query("SHOW COLUMNS FROM reservas");

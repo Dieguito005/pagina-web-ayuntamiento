@@ -9,8 +9,8 @@ DirectoryIndex index.html index.php
 # ──────────────────────────────────────────
 # PROTEGER ARCHIVOS SENSIBLES
 # ──────────────────────────────────────────
-# Bloquear acceso directo a config, scripts de setup, migraciones y dotfiles
-<FilesMatch "^(config\.php|setup_db.*\.php|migrate_.*\.php|update_reservas_table\.php|check\.php|check2\.php|refactor\.ps1|\.gitattributes|\.gitignore|\.env)$">
+# Bloquear acceso directo a config, scripts de setup, migraciones, deploy y dotfiles
+<FilesMatch "^(config\.php|env\.php|deploy_.*\.php|setup_db.*\.php|migrate_.*\.php|update_reservas_table\.php|check\.php|check2\.php|refactor\.ps1|\.gitattributes|\.gitignore|\.env)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

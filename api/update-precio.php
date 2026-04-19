@@ -1,6 +1,13 @@
 <?php
+session_start();
 require_once 'conexion.php';
 header('Content-Type: application/json');
+
+if (!isset($_SESSION['admin_id'])) {
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'message' => 'Acceso no autorizado.']);
+    exit;
+}
 
 // Permitir solo peticiones POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

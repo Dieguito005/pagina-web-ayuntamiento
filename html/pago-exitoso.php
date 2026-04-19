@@ -75,7 +75,7 @@ if (empty($session_id)) {
             // Crear la reserva
             try {
                 date_default_timezone_set('Europe/Madrid');
-                $codigo_acceso = 'TRC-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
+                $codigo_acceso = 'TRC-' . strtoupper(bin2hex(random_bytes(3)));
 
                 // Detectar columnas disponibles
                 $columnsResult = $pdo->query("SHOW COLUMNS FROM reservas");

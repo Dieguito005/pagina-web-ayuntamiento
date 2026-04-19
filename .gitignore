@@ -7,6 +7,15 @@
 .env.*
 *.env
 
+# Credenciales y entorno — NUNCA en git
+env.php
+
+# Scripts de deploy con credenciales FTP
+deploy_ftp.php
+deploy_diag.php
+deploy_bonos.php
+deploy_futbol7.php
+
 # Ficheros de debug/test
 check.php
 check2.php

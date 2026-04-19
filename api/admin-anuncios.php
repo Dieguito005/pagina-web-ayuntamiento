@@ -65,6 +65,7 @@ try {
 
     echo json_encode(['success' => false, 'message' => 'Acción no válida.']);
 } catch (\PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Error DB: ' . $e->getMessage()]);
+    error_log("admin-anuncios error: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Error de base de datos.']);
 }
 ?>

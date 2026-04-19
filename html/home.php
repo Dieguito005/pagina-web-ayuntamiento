@@ -102,6 +102,12 @@
             document.getElementById('padel-options').style.display = 'block';
         }
 
+        function escHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = String(s);
+            return d.innerHTML;
+        }
+
         // Sistema dinámico de anuncios
         async function fetchAnuncios() {
             const container = document.getElementById('anuncios-container');
@@ -120,12 +126,12 @@
                         if(a.tipo === 'exito') icon = '✅';
 
                         html += `
-                        <div class="anuncio-banner anuncio-${a.tipo}" id="anuncio-${a.id}">
+                        <div class="anuncio-banner anuncio-${escHtml(a.tipo)}" id="anuncio-${parseInt(a.id)}">
                             <div>
-                                <h4>${icon} ${a.titulo}</h4>
-                                <p>${a.mensaje}</p>
+                                <h4>${escHtml(icon + ' ' + a.titulo)}</h4>
+                                <p>${escHtml(a.mensaje)}</p>
                             </div>
-                            <button class="btn-close-anuncio" onclick="closeAnuncio(${a.id})" title="Ocultar">&times;</button>
+                            <button class="btn-close-anuncio" onclick="closeAnuncio(${parseInt(a.id)})" title="Ocultar">&times;</button>
                         </div>`;
                     });
                     container.innerHTML = html;

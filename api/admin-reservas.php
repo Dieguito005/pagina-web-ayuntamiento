@@ -59,7 +59,8 @@ if ($method === 'GET') {
         echo json_encode(["status" => "success", "data" => $reservas]);
     } catch (\PDOException $e) {
         http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error al buscar reservas", "error" => $e->getMessage()]);
+        error_log("admin-reservas GET error: " . $e->getMessage());
+        echo json_encode(["status" => "error", "message" => "Error al buscar reservas"]);
     }
 } elseif ($method === 'POST') {
     // Para cancelar u otras acciones

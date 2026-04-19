@@ -66,8 +66,7 @@ define('DB_CHARSET', 'utf8mb4');
 // 5. MODO MANTENIMIENTO / BETA INTERNA
 // ──────────────────────────────────────────
 // Cuando MAINTENANCE_MODE = true, solo pueden acceder quienes tengan la cookie de beta.
-// Para entrar al modo beta: visitar cualquier página con ?beta_key=TaranconTest2026
-// Eso crea una cookie que permite navegar normalmente.
+// La beta key se configura en env.php mediante ENV_BETA_KEY.
 // En local (XAMPP) el modo mantenimiento está DESACTIVADO siempre.
 define('MAINTENANCE_MODE', IS_PRODUCTION ? true : false);
 define('MAINTENANCE_BETA_KEY', get_env_var('BETA_KEY', 'TaranconTest2026'));
@@ -107,6 +106,7 @@ function send_security_headers()
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com;");
     if (IS_PRODUCTION) {
         header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
     }
