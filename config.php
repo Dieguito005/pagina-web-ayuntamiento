@@ -16,14 +16,10 @@ function get_env_var($key, $default = '') {
 // ──────────────────────────────────────────
 // 1. DETECCIÓN DE ENTORNO
 // ──────────────────────────────────────────
-$_APP_ENV = get_env_var('APP_ENV', 'local');
-
-if ($_APP_ENV === 'local' && isset($_SERVER['HTTP_HOST'])) {
-    $host = $_SERVER['HTTP_HOST'];
-    if (strpos($host, 'localhost') === false && strpos($host, '127.0.0.1') === false) {
-        $_APP_ENV = 'production';
-    }
-}
+// Usar APP_ENV=local en tu entorno de desarrollo (XAMPP, etc.)
+// El valor por defecto es 'production' para evitar exponer errores si no se configura
+$_APP_ENV = get_env_var('APP_ENV', 'production');
+// NUNCA usar HTTP_HOST para detectar entorno: es una cabecera falsificable por el atacante
 
 define('APP_ENV', $_APP_ENV);
 define('IS_PRODUCTION', APP_ENV === 'production');

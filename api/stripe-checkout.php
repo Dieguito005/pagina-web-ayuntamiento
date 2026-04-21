@@ -65,12 +65,9 @@ if ($precioRow) {
     $precioLuz  = $precioRow['precio_luz']  !== null ? (float)$precioRow['precio_luz']  : 0.00;
     $precio = $precioBase + $precioLuz;
 } else {
-    // Sin personalización: usar precio enviado por cliente pero validar que sea > 0
-    if ($precio <= 0) {
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "Precio inválido."]);
-        exit;
-    }
+    // Sin precio personalizado en BD: tarifa base estándar del servidor
+    // NUNCA usar el valor enviado por el cliente como precio de cobro
+    $precio = 4.00;
 }
 
 // Stripe trabaja en céntimos

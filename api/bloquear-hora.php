@@ -10,6 +10,13 @@ if (!isset($_SESSION['admin_id'])) {
     exit;
 }
 
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+$csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !SecurityHandler::validateCSRFToken($csrfToken)) {
+    http_response_code(403);
+    die(json_encode(['status' => 'error', 'message' => 'Token de seguridad inválido.']));
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $json = file_get_contents('php://input');
     $data = json_decode($json, true);

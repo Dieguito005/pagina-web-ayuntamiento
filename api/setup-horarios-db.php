@@ -2,6 +2,13 @@
 // api/setup-horarios-db.php
 require_once 'conexion.php';
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['admin_id'])) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    die(json_encode(['success' => false, 'message' => 'Acceso denegado.']));
+}
+
 try {
     // 1. Crear tabla de perfiles
     $pdo->exec("CREATE TABLE IF NOT EXISTS horarios_perfiles (

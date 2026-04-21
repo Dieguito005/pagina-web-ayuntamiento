@@ -3,6 +3,9 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
 
+    const esc = s => s == null ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
     const pistaSelect = document.getElementById('pista-select');
     const fechaSelect = document.getElementById('fecha-select');
     const scheduleGrid = document.getElementById('admin-schedule-grid');
@@ -459,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const resp = await fetch('../api/update-precio.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                     body: JSON.stringify({
                         pista: currentPriceSlot.pista,
                         fecha: currentPriceSlot.fecha,
@@ -513,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const resp = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                     body: JSON.stringify({
                         pista: pista,
                         fecha: fecha,
@@ -614,9 +617,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return `
             <tr>
                 <td><strong>${r.fecha.split('-').reverse().join('/')}</strong><br><span style="color:#666;font-size:0.85rem;">${r.hora_inicio.substring(0,5)} - ${r.hora_fin.substring(0,5)}</span></td>
-                <td>${r.pista}</td>
-                <td>${r.usuario_nombre || 'Admin P.'}</td>
-                <td>${r.dni || '---'}</td>
+                <td>${esc(r.pista)}</td>
+                <td>${esc(r.usuario_nombre) || 'Admin P.'}</td>
+                <td>${esc(r.dni) || '---'}</td>
                 <td><span class="badge ${getBadgeClass(r.estado)}">${r.estado === 'bloqueada_admin' ? 'Bloqueo Admin' : (r.estado.charAt(0).toUpperCase() + r.estado.slice(1))}</span></td>
                 <td><strong>${r.precio_total ? r.precio_total + '€' : '---'}</strong></td>
                 <td>
@@ -641,15 +644,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <hr style="border:0; border-top:1px solid #eee; margin:1rem 0;">
             <p style="margin-bottom:0.5rem; color:#d15615; font-weight:bold;">Datos del Cliente</p>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div><strong>Nombre:</strong> ${r.usuario_nombre || '---'}</div>
-                <div><strong>DNI:</strong> ${r.dni || '---'}</div>
-                <div><strong>Email:</strong> ${r.usuario_email || '---'}</div>
-                <div><strong>Teléfono:</strong> ${r.telefono || '---'}</div>
+                <div><strong>Nombre:</strong> ${esc(r.usuario_nombre) || '---'}</div>
+                <div><strong>DNI:</strong> ${esc(r.dni) || '---'}</div>
+                <div><strong>Email:</strong> ${esc(r.usuario_email) || '---'}</div>
+                <div><strong>Teléfono:</strong> ${esc(r.telefono) || '---'}</div>
             </div>
             <hr style="border:0; border-top:1px solid #eee; margin:1rem 0;">
             <p style="margin-bottom:0.5rem; color:#d15615; font-weight:bold;">Datos de la Pista</p>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div><strong>Instalación:</strong> ${r.pista}</div>
+                <div><strong>Instalación:</strong> ${esc(r.pista)}</div>
                 <div><strong>Precio Total:</strong> ${r.precio_total ? r.precio_total + ' €' : '---'}</div>
                 <div><strong>Día:</strong> ${r.fecha.split('-').reverse().join('/')}</div>
                 <div><strong>Hora:</strong> ${r.hora_inicio.substring(0,5)} a ${r.hora_fin.substring(0,5)}</div>
@@ -667,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const resp = await fetch('../api/admin-reservas.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                 body: JSON.stringify({ action: 'cancelar', id: id })
             });
             const data = await resp.json();
@@ -757,9 +760,9 @@ document.addEventListener('DOMContentLoaded', () => {
         tablaConsultasBody.innerHTML = data.map(c => `
             <tr>
                 <td><strong>${c.fecha_creacion.substring(0,10).split('-').reverse().join('/')}</strong></td>
-                <td>${c.nombre} ${c.apellidos}</td>
-                <td><small>${c.email}<br>${c.dni} - TEL: ${c.telefono}</small></td>
-                <td><span class="badge" style="background-color:#e3f2fd; color:#1565c0;">${c.tipo_consulta.toUpperCase()}</span></td>
+                <td>${esc(c.nombre)} ${esc(c.apellidos)}</td>
+                <td><small>${esc(c.email)}<br>${esc(c.dni)} - TEL: ${esc(c.telefono)}</small></td>
+                <td><span class="badge" style="background-color:#e3f2fd; color:#1565c0;">${esc(c.tipo_consulta).toUpperCase()}</span></td>
                 <td>
                     <span class="badge ${c.estado === 'resuelta' ? 'reservada' : 'cancelada'}">${c.estado.toUpperCase()}</span>
                 </td>
@@ -778,16 +781,16 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div><strong>ID Consulta:</strong> #${c.id}</div>
                 <div><strong>Fecha:</strong> ${c.fecha_creacion}</div>
-                <div><strong>Remitente:</strong> ${c.nombre} ${c.apellidos}</div>
-                <div><strong>DNI:</strong> ${c.dni}</div>
-                <div><strong>Email:</strong> ${c.email}</div>
-                <div><strong>Teléfono:</strong> ${c.telefono}</div>
-                <div><strong>Tema:</strong> ${c.tipo_consulta}</div>
-                <div><strong>Estado:</strong> <span class="badge ${c.estado === 'resuelta' ? 'reservada' : 'cancelada'}">${c.estado.toUpperCase()}</span></div>
+                <div><strong>Remitente:</strong> ${esc(c.nombre)} ${esc(c.apellidos)}</div>
+                <div><strong>DNI:</strong> ${esc(c.dni)}</div>
+                <div><strong>Email:</strong> ${esc(c.email)}</div>
+                <div><strong>Teléfono:</strong> ${esc(c.telefono)}</div>
+                <div><strong>Tema:</strong> ${esc(c.tipo_consulta)}</div>
+                <div><strong>Estado:</strong> <span class="badge ${c.estado === 'resuelta' ? 'reservada' : 'cancelada'}">${esc(c.estado).toUpperCase()}</span></div>
             </div>
             <hr style="border:0; border-top:1px solid #eee; margin:1rem 0;">
             <p style="margin-bottom:0.5rem; color:#d15615; font-weight:bold;">Mensaje Original:</p>
-            <div style="background-color: #f9f9f9; padding: 1rem; border-radius: 4px; white-space: pre-wrap;">${c.descripcion}</div>
+            <div style="background-color: #f9f9f9; padding: 1rem; border-radius: 4px; white-space: pre-wrap;">${esc(c.descripcion)}</div>
         `;
 
         const modalActions = document.getElementById('details-modal-actions');
@@ -825,6 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const resp = await fetch('../api/admin-consultas.php?action=resolve', {
                 method: 'POST',
+                headers: { 'X-CSRF-Token': csrfToken },
                 body: fd
             });
             const data = await resp.json();
@@ -868,9 +872,9 @@ document.addEventListener('DOMContentLoaded', () => {
         tablaAnunciosBody.innerHTML = anunciosActuales.map(a => `
             <tr>
                 <td><strong>${a.fecha_creacion.split(' ')[0].split('-').reverse().join('/')}</strong></td>
-                <td>${a.titulo}</td>
+                <td>${esc(a.titulo)}</td>
                 <td>
-                    <span class="badge" style="background-color:#eee; color:#333;">${a.tipo.toUpperCase()}</span>
+                    <span class="badge" style="background-color:#eee; color:#333;">${esc(a.tipo).toUpperCase()}</span>
                 </td>
                 <td>
                     <span class="badge ${a.activo == 1 ? 'reservada' : 'cancelada'}">${a.activo == 1 ? 'Activo' : 'Oculto'}</span>
@@ -897,7 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fd.append('tipo', document.getElementById('a-tipo').value);
                 fd.append('mensaje', document.getElementById('a-mensaje').value);
 
-                const resp = await fetch('../api/admin-anuncios.php', { method: 'POST', body: fd });
+                const resp = await fetch('../api/admin-anuncios.php', { method: 'POST', headers: { 'X-CSRF-Token': csrfToken }, body: fd });
                 const data = await resp.json();
 
                 if (resp.ok && data.success) {
@@ -924,7 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fd.append('id', id);
             fd.append('activo', newState);
 
-            const resp = await fetch('../api/admin-anuncios.php', { method: 'POST', body: fd });
+            const resp = await fetch('../api/admin-anuncios.php', { method: 'POST', headers: { 'X-CSRF-Token': csrfToken }, body: fd });
             const data = await resp.json();
             if (resp.ok && data.success) {
                 loadAnuncios();
@@ -943,7 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fd.append('action', 'delete');
             fd.append('id', id);
 
-            const resp = await fetch('../api/admin-anuncios.php', { method: 'POST', body: fd });
+            const resp = await fetch('../api/admin-anuncios.php', { method: 'POST', headers: { 'X-CSRF-Token': csrfToken }, body: fd });
             const data = await resp.json();
             if (resp.ok && data.success) {
                 loadAnuncios();
@@ -1076,7 +1080,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const resp = await fetch('../api/admin-users.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                     body: JSON.stringify({
                         action: 'create',
                         nuevo_usuario: nuevoUser,
@@ -1127,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const resp = await fetch('../api/admin-users.php', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                         body: JSON.stringify({
                             action: 'reset',
                             target_id: id,
@@ -1170,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const resp = await fetch('../api/admin-users.php', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                         body: JSON.stringify({
                             action: 'delete',
                             target_id: id,
@@ -1377,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const resp = await fetch('../api/admin-actividad.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                 body: JSON.stringify({ action: accion, id: id })
             });
             const data = await resp.json();
@@ -1582,7 +1586,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const resp = await fetch('../api/admin-bonos.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                 body: JSON.stringify({ action: 'cancel_bono', bono_id: id })
             });
             const data = await resp.json();
@@ -1655,7 +1659,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const resp = await fetch('../api/admin-bonos.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                 body: JSON.stringify({ action: 'update_config', id, usos: parseInt(usos), precio: parseFloat(precio), caducidad_meses: parseInt(caducidad) })
             });
             const data = await resp.json();
@@ -1674,7 +1678,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const resp = await fetch('../api/admin-bonos.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                 body: JSON.stringify({ action: 'update_config', id, activo: currentState == 1 ? 0 : 1 })
             });
             const data = await resp.json();
@@ -1704,7 +1708,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const resp = await fetch('../api/admin-bonos.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                     body: JSON.stringify({ action: 'create_config', usos: parseInt(usos), precio: parseFloat(precio), caducidad_meses: parseInt(caducidad) })
                 });
                 const data = await resp.json();
@@ -1774,7 +1778,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const resp = await fetch('../api/admin-horarios.php?action=create_perfil', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
                     body: JSON.stringify({ nombre })
                 });
                 const data = await resp.json();
@@ -1791,7 +1795,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const resp = await fetch('../api/admin-horarios.php?action=activar_perfil', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
                 body: JSON.stringify({ id })
             });
             const data = await resp.json();
@@ -1808,7 +1812,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const resp = await fetch('../api/admin-horarios.php?action=delete_perfil', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
                 body: JSON.stringify({ id })
             });
             const data = await resp.json();
@@ -1959,7 +1963,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (const d of diasAAplicar) {
                     await fetch('../api/admin-horarios.php?action=save_slots', {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
                         body: JSON.stringify({
                             perfil_id: currentPerfilEditando.id,
                             pista: pista,

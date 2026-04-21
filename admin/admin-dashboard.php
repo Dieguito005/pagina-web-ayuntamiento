@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/SecurityHandler.php';
 session_start();
 send_security_headers();
 if (!isset($_SESSION['admin_id'])) {
@@ -12,6 +13,7 @@ if (!isset($_SESSION['admin_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= htmlspecialchars(SecurityHandler::generateCSRFToken(), ENT_QUOTES) ?>">
     <title>Panel de Administración - Alquileres Tarancón</title>
     <link rel="stylesheet" href="../css/home.css?v=2.0.0">
     <style>
