@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    const csrfToken = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+
     // ── Hidratar resumen con datos de la reserva ──
     const storedBooking = localStorage.getItem('bookingData');
 
@@ -175,9 +177,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 hora: bookingInfo.time || '',
             };
 
+            payload.csrf_token = csrfToken;
             const response = await fetch('../api/bonos.php?action=use_bono', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                credentials: 'same-origin',
                 body: JSON.stringify(payload)
             });
 
@@ -223,9 +227,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 precio_total: (basePrice + supplement).toFixed(2)
             };
 
+            payload.csrf_token = csrfToken;
             const response = await fetch('../api/stripe-checkout.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                credentials: 'same-origin',
                 body: JSON.stringify(payload)
             });
 
@@ -262,8 +268,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const basePrice = bookingInfo.basePrice ? parseFloat(bookingInfo.basePrice) : 4.00;
                 const supplement = bookingInfo.supplement ? parseFloat(bookingInfo.supplement) : 0;
                 formData.append('precio_total', (basePrice + supplement).toFixed(2));
+                formData.append('csrf_token', csrfToken);
 
-                const response = await fetch('../api/enviar-correo.php', { method: 'POST', body: formData });
+                const response = await fetch('../api/enviar-correo.php', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': csrfToken },
+                    credentials: 'same-origin',
+                    body: formData
+                });
                 const result = await response.json();
 
                 if (result.status === 'success' && result.codigo) {

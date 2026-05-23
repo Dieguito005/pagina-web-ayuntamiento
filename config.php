@@ -3,10 +3,11 @@
 if (file_exists(__DIR__ . '/env.php')) {
     require_once __DIR__ . '/env.php';
 }
-// Este archivo detecta el entorno (local vs producción) y carga las variables adecuadas.
-// NUNCA subir credenciales de producción a Git.
+// Detecta entorno y carga variables.
+// NUNCA subir credenciales de producción a Git (env.php está en .gitignore).
 
-function get_env_var($key, $default = '') {
+function get_env_var($key, $default = '')
+{
     $constant = 'ENV_' . $key;
     if (defined($constant)) return constant($constant);
     $val = getenv($key);
@@ -16,11 +17,9 @@ function get_env_var($key, $default = '') {
 // ──────────────────────────────────────────
 // 1. DETECCIÓN DE ENTORNO
 // ──────────────────────────────────────────
-// Usar APP_ENV=local en tu entorno de desarrollo (XAMPP, etc.)
-// El valor por defecto es 'production' para evitar exponer errores si no se configura
+// APP_ENV=local en desarrollo (XAMPP). Default 'production' por seguridad.
+// NUNCA usar HTTP_HOST para detectar entorno (cabecera falsificable).
 $_APP_ENV = get_env_var('APP_ENV', 'production');
-// NUNCA usar HTTP_HOST para detectar entorno: es una cabecera falsificable por el atacante
-
 define('APP_ENV', $_APP_ENV);
 define('IS_PRODUCTION', APP_ENV === 'production');
 
@@ -44,6 +43,7 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_samesite', 'Lax');
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
+    ini_set('session.gc_maxlifetime', '1800'); // 30 min
     if (IS_PRODUCTION) {
         ini_set('session.cookie_secure', '1');
     }
@@ -61,87 +61,128 @@ define('DB_CHARSET', 'utf8mb4');
 // ──────────────────────────────────────────
 // 5. MODO MANTENIMIENTO / BETA INTERNA
 // ──────────────────────────────────────────
-// Cuando MAINTENANCE_MODE = true, solo pueden acceder quienes tengan la cookie de beta.
+// Cuando MAINTENANCE_MODE = true, sólo pasan quienes tengan la cookie de beta.
 // La beta key se configura en env.php mediante ENV_BETA_KEY.
 // En local (XAMPP) el modo mantenimiento está DESACTIVADO siempre.
 define('MAINTENANCE_MODE', IS_PRODUCTION ? true : false);
-define('MAINTENANCE_BETA_KEY', get_env_var('BETA_KEY', 'TaranconTest2026'));
+define('MAINTENANCE_BETA_KEY', get_env_var('BETA_KEY', ''));
+// Salt para el hash del cookie beta — debe configurarse en env.php
+define('MAINTENANCE_BETA_SALT', get_env_var('BETA_SALT', ''));
 
 // ──────────────────────────────────────────
-// 6. BREVO (ex-Sendinblue) — Servicio SMTP
+// 6. EMAIL — Resend (sustituye a Brevo)
 // ──────────────────────────────────────────
-// Registro gratuito en https://app.brevo.com → 300 emails/día gratis
-// Obtener API Key en: Configuración → Claves API → Generar nueva clave
-define('BREVO_API_KEY', get_env_var('BREVO_API_KEY', ''));
+// Registro gratuito en https://resend.com — 3000 emails/mes, jurisdicción UE disponible.
+// Obtener API key en https://resend.com/api-keys
+define('RESEND_API_KEY', get_env_var('RESEND_API_KEY', ''));
 define('MAIL_FROM_EMAIL', get_env_var('MAIL_FROM_EMAIL', 'reservas@tarancon.es'));
 define('MAIL_FROM_NAME', get_env_var('MAIL_FROM_NAME', 'Ayuntamiento de Tarancón - Reservas'));
-// Si la API key está vacía, se usa mail() como fallback (solo funciona en local)
-define('USE_BREVO', !empty(BREVO_API_KEY));
+// Override de destinatario durante desarrollo: TODOS los emails se envían aquí.
+// Dejar vacío en producción real.
+define('MAIL_OVERRIDE_TO', get_env_var('MAIL_OVERRIDE_TO', ''));
+define('USE_RESEND', !empty(RESEND_API_KEY));
 
 // ──────────────────────────────────────────
 // 7. STRIPE — Pasarela de Pagos
 // ──────────────────────────────────────────
-// Registro en https://dashboard.stripe.com → Modo Test activado por defecto
-// Las claves de TEST empiezan por sk_test_ y pk_test_
-// Las claves de PRODUCCIÓN empiezan por sk_live_ y pk_live_
+// Test: sk_test_*, pk_test_*  | Producción: sk_live_*, pk_live_*
 define('STRIPE_SECRET_KEY', get_env_var('STRIPE_SECRET_KEY', ''));
 define('STRIPE_PUBLISHABLE_KEY', get_env_var('STRIPE_PUBLISHABLE_KEY', ''));
-// Si las claves están vacías, se usa el flujo de pago simulado original
+define('STRIPE_WEBHOOK_SECRET', get_env_var('STRIPE_WEBHOOK_SECRET', ''));
 define('USE_STRIPE', !empty(STRIPE_SECRET_KEY) && !empty(STRIPE_PUBLISHABLE_KEY));
 
+// Guarda contra usar claves de TEST en producción
+if (IS_PRODUCTION && USE_STRIPE && str_starts_with(STRIPE_SECRET_KEY, 'sk_test_')) {
+    error_log('AVISO: STRIPE_SECRET_KEY de TEST configurada en entorno de PRODUCCIÓN — los pagos no son reales.');
+}
+
 // ──────────────────────────────────────────
-// 8. CABECERAS DE SEGURIDAD HTTP
+// 8. SETUP / DEPLOY KEYS
+// ──────────────────────────────────────────
+// Clave para ejecutar api/setup-*.php sin estar logueado como admin.
+// Configurar en env.php. Si está vacío, sólo admins pueden ejecutar setup.
+define('SETUP_DB_KEY', get_env_var('SETUP_DB_KEY', ''));
+
+// ──────────────────────────────────────────
+// 9. POLÍTICAS LEGALES — VERSIONADO
+// ──────────────────────────────────────────
+// Si cambias texto importante de la política, sube la versión para forzar
+// renovación de consentimientos cuando convenga.
+define('POLICY_VERSION', '2026-05-23');
+
+// URL canónica del sitio (evita usar HTTP_HOST en redirects sensibles)
+define('SITE_URL', get_env_var('SITE_URL', ''));
+
+// ──────────────────────────────────────────
+// 10. CABECERAS DE SEGURIDAD HTTP
 // ──────────────────────────────────────────
 function send_security_headers()
 {
-    if (headers_sent())
-        return;
+    if (headers_sent()) return;
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: SAMEORIGIN');
-    header('X-XSS-Protection: 1; mode=block');
     header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(self "https://js.stripe.com"), interest-cohort=()');
+    header('Cross-Origin-Opener-Policy: same-origin');
+    header('Cross-Origin-Resource-Policy: same-origin');
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com;");
+    header(
+        "Content-Security-Policy: " .
+        "default-src 'self'; " .
+        "script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net; " .
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
+        "font-src 'self' https://fonts.gstatic.com; " .
+        "img-src 'self' data: https://quickchart.io; " .
+        "connect-src 'self' https://api.stripe.com; " .
+        "frame-src https://js.stripe.com; " .
+        "frame-ancestors 'self'; " .
+        "form-action 'self'; " .
+        "base-uri 'self'; " .
+        "object-src 'none'; " .
+        "upgrade-insecure-requests"
+    );
     if (IS_PRODUCTION) {
-        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
     }
 }
 
 // ──────────────────────────────────────────
-// 9. MIDDLEWARE DE MANTENIMIENTO
+// 11. MIDDLEWARE DE MANTENIMIENTO
 // ──────────────────────────────────────────
-// Llamar a check_maintenance() en las páginas públicas (header.php ya lo hace).
-// Las APIs y el admin panel NO pasan por esto.
 function check_maintenance()
 {
-    if (!MAINTENANCE_MODE)
-        return; // Desactivado
+    if (!MAINTENANCE_MODE) return;
 
-    // Permitir acceso a admin panel siempre
     $uri = $_SERVER['REQUEST_URI'] ?? '';
-    if (strpos($uri, '/admin/') !== false)
-        return;
-    if (strpos($uri, '/api/') !== false)
-        return;
+    if (strpos($uri, '/admin/') !== false) return;
+    if (strpos($uri, '/api/') !== false) return;
 
-    // Comprobar si el usuario está entrando con la beta key
-    if (isset($_GET['beta_key']) && $_GET['beta_key'] === MAINTENANCE_BETA_KEY) {
-        setcookie('beta_access', hash('sha256', MAINTENANCE_BETA_KEY . 'salt_tarancon'), time() + 86400 * 30, '/');
-        $_COOKIE['beta_access'] = hash('sha256', MAINTENANCE_BETA_KEY . 'salt_tarancon');
-        return; // Dejar pasar
+    $expectedHash = MAINTENANCE_BETA_KEY === '' || MAINTENANCE_BETA_SALT === ''
+        ? null
+        : hash('sha256', MAINTENANCE_BETA_KEY . '|' . MAINTENANCE_BETA_SALT);
+
+    // Permitir entrada con la beta key
+    if ($expectedHash !== null && isset($_GET['beta_key']) && hash_equals(MAINTENANCE_BETA_KEY, (string) $_GET['beta_key'])) {
+        // Cookie con flags seguros y duración 30 días
+        $cookieParams = [
+            'expires'  => time() + 86400 * 30,
+            'path'     => '/',
+            'secure'   => IS_PRODUCTION,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        setcookie('beta_access', $expectedHash, $cookieParams);
+        $_COOKIE['beta_access'] = $expectedHash;
+        return;
     }
 
-    // Comprobar si tiene la cookie de beta
-    $expectedHash = hash('sha256', MAINTENANCE_BETA_KEY . 'salt_tarancon');
-    if (isset($_COOKIE['beta_access']) && $_COOKIE['beta_access'] === $expectedHash) {
-        return; // Tiene acceso beta
+    if ($expectedHash !== null && isset($_COOKIE['beta_access']) && hash_equals($expectedHash, (string) $_COOKIE['beta_access'])) {
+        return;
     }
 
-    // Mostrar página de mantenimiento
     http_response_code(503);
     header('Retry-After: 3600');
-    // Intentar cargar la página de mantenimiento personalizada
     $maintenancePage = __DIR__ . '/html/mantenimiento.html';
     if (file_exists($maintenancePage)) {
         readfile($maintenancePage);
@@ -151,7 +192,7 @@ function check_maintenance()
         echo '<style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f0f4f8;color:#334155}';
         echo '.card{text-align:center;padding:3rem;max-width:500px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08)}';
         echo 'h1{color:#1e3a5f;font-size:1.5rem}p{color:#64748b}a{color:#d15615}</style></head>';
-        echo '<body><div class="card"><h1>🔧 Sitio en mantenimiento</h1>';
+        echo '<body><div class="card"><h1>Sitio en mantenimiento</h1>';
         echo '<p>Estamos realizando pruebas internas. El servicio estará disponible próximamente.</p>';
         echo '<p style="font-size:0.85rem;margin-top:2rem">Ayuntamiento de Tarancón</p></div></body></html>';
     }

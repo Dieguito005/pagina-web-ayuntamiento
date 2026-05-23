@@ -1,45 +1,76 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
-    // 1. Inyectar HTML del Banner y del Modal de Cookies
+/**
+ * cookies.js — Banner y configuración de consentimiento de cookies.
+ *
+ * Conforme a:
+ *  - Art. 22.2 LSSI-CE (consentimiento previo para cookies no técnicas)
+ *  - Guía AEPD sobre el uso de cookies, julio 2023
+ *
+ * Características:
+ *  - Botones "Aceptar todas", "Rechazar todas" y "Configurar" con la MISMA jerarquía visual.
+ *  - Granularidad: técnicas (siempre) y analíticas (opt-in).
+ *  - La decisión se envía al servidor (api/cookie-consent.php) que la firma en cookie HTTP
+ *    y la registra en consent_log para acreditar el consentimiento (RGPD art. 5.2).
+ *  - Renovación cada 24 meses (la cookie firmada expira y vuelve a aparecer el banner).
+ *  - No se carga NINGÚN script analítico sin consentimiento expreso.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    function readCookie(name) {
+        const match = document.cookie.match(new RegExp('(^|; )' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=([^;]*)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+
+    function parseConsentCookie() {
+        const raw = readCookie('cookie_consent');
+        if (!raw) return null;
+        const [decision, analytics, version] = raw.split('|');
+        return {
+            decision: decision || '',
+            analytics: analytics === '1',
+            version: version || '',
+        };
+    }
+
     const cookieHTML = `
-        <!-- Banner inferior de Cookies -->
-        <div id="cookie-banner" class="cookie-banner hidden">
+        <div id="cookie-banner" class="cookie-banner hidden" role="dialog" aria-labelledby="cookie-banner-title" aria-describedby="cookie-banner-desc">
             <div class="cookie-banner-content">
-                <p>Utilizamos cookies propias y de terceros para mejorar nuestros servicios y mostrarle publicidad relacionada con sus preferencias mediante el análisis de sus hábitos de navegación. Puede obtener más información, o bien conocer cómo cambiar la configuración, en nuestra <a href="politica-cookies.html">Política de Cookies</a>.</p>
+                <p id="cookie-banner-title" class="sr-only">Aviso de cookies</p>
+                <p id="cookie-banner-desc">Este portal utiliza cookies propias estrictamente necesarias para su funcionamiento. Puede consultar el detalle en la <a href="politica-cookies.php">Política de Cookies</a>. Actualmente no se utilizan cookies de análisis ni publicidad. Si más adelante se incorporan, se solicitará su consentimiento.</p>
                 <div class="cookie-banner-actions">
-                    <button id="btn-accept-cookies" class="btn-cookie btn-cookie-primary">Aceptar todas</button>
-                    <button id="btn-reject-cookies" class="btn-cookie btn-cookie-secondary">Rechazar</button>
+                    <button id="btn-accept-cookies" class="btn-cookie btn-cookie-primary">Aceptar</button>
+                    <button id="btn-reject-cookies" class="btn-cookie btn-cookie-primary">Rechazar</button>
                     <button id="btn-config-cookies" class="btn-cookie btn-cookie-outline">Configurar</button>
                 </div>
             </div>
         </div>
 
-        <!-- Modal de Configuración de Cookies -->
-        <div id="cookie-modal-overlay" class="cookie-modal-overlay hidden">
+        <div id="cookie-modal-overlay" class="cookie-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="cookie-modal-title">
             <div class="cookie-modal">
                 <div class="cookie-modal-header">
-                    <h3>Configuración de Cookies</h3>
+                    <h3 id="cookie-modal-title">Configuración de Cookies</h3>
                     <button id="btn-close-cookie-modal" class="btn-close-modal" aria-label="Cerrar">&times;</button>
                 </div>
                 <div class="cookie-modal-body">
-                    <p>Seleccione las cookies que desea aceptar. Las cookies técnicas son estrictamente necesarias para el funcionamiento del portal y no pueden desactivarse.</p>
+                    <p>Seleccione las categorías de cookies que desea aceptar. Las cookies técnicas son estrictamente necesarias y no pueden desactivarse.</p>
                     <div class="cookie-option">
                         <div class="cookie-option-info">
-                            <h4>Cookies Técnicas (Estrictamente necesarias)</h4>
-                            <p>Permiten al usuario la navegación a través de la web y el uso de las diferentes opciones como el sistema de reservas y pagos.</p>
+                            <h4>Cookies Técnicas (estrictamente necesarias)</h4>
+                            <p>Sesión, preferencias y consentimiento. Sin ellas el portal no funciona.</p>
                         </div>
                         <div class="cookie-option-switch">
-                            <input type="checkbox" id="cookie-tech" checked disabled>
-                            <label for="cookie-tech" class="switch-label"></label>
+                            <input type="checkbox" id="cookie-tech" checked disabled aria-checked="true">
+                            <label for="cookie-tech" class="switch-label" aria-hidden="true"></label>
                         </div>
                     </div>
                     <div class="cookie-option">
                         <div class="cookie-option-info">
-                            <h4>Cookies de Análisis o Medición</h4>
-                            <p>Nos permiten medir la audiencia y realizar el análisis del comportamiento de los usuarios para introducir mejoras.</p>
+                            <h4>Cookies de Análisis (no instaladas actualmente)</h4>
+                            <p>Permitirían medir el uso del portal de forma agregada. <strong>Actualmente NO se instalan</strong>; este interruptor reserva su preferencia por si se incorporan en el futuro.</p>
                         </div>
                         <div class="cookie-option-switch">
                             <input type="checkbox" id="cookie-analytics">
-                            <label for="cookie-analytics" class="switch-label"></label>
+                            <label for="cookie-analytics" class="switch-label" aria-hidden="true"></label>
                         </div>
                     </div>
                 </div>
@@ -50,117 +81,100 @@
         </div>
     `;
 
-    // Añadir al body si no existen
     if (!document.getElementById('cookie-banner')) {
         document.body.insertAdjacentHTML('beforeend', cookieHTML);
     }
 
-    // 2. Referencias a Elementos del DOM
     const cookieBanner = document.getElementById('cookie-banner');
     const cookieModalOverlay = document.getElementById('cookie-modal-overlay');
-    
     const btnAccept = document.getElementById('btn-accept-cookies');
     const btnReject = document.getElementById('btn-reject-cookies');
     const btnConfig = document.getElementById('btn-config-cookies');
-    
     const btnCloseModal = document.getElementById('btn-close-cookie-modal');
     const btnSaveConfig = document.getElementById('btn-save-cookie-config');
-
     const cbAnalytics = document.getElementById('cookie-analytics');
-
-    // Botones con clase .btn-cookies en el resto de la web para abrir la config (ej. en Política de Cookies)
     const btnCookiesLinks = document.querySelectorAll('.btn-cookies');
 
-    // 3. Lógica para mostrar Banner inicial
-    const cookieConsent = localStorage.getItem('cookieConsent');
-    
-    if (!cookieConsent) {
-        // Si no hay consentimiento, mostrar banner (con un pequeño retardo para que actúe la transición CSS)
+    const existingConsent = parseConsentCookie();
+    if (!existingConsent) {
         cookieBanner.classList.remove('hidden');
-        setTimeout(() => {
-            cookieBanner.classList.add('show');
-        }, 100);
+        setTimeout(() => cookieBanner.classList.add('show'), 100);
     }
 
-    // --- Funciones de Mostrar Ocultar ---
     function hideBanner() {
         cookieBanner.classList.remove('show');
-        setTimeout(() => {
-            cookieBanner.classList.add('hidden');
-        }, 500); // Esperar que termine la transición
+        setTimeout(() => cookieBanner.classList.add('hidden'), 500);
     }
 
     function showModal(e) {
         if (e) e.preventDefault();
-        
-        // Cargar preferencias guardadas en los switches
-        const consent = localStorage.getItem('cookieConsent');
-        if (consent === 'custom' || consent === 'all') {
-            const preferences = JSON.parse(localStorage.getItem('cookiePreferences') || '{}');
-            cbAnalytics.checked = preferences.analytics === true;
-        } else if (consent === 'rejected') {
-            cbAnalytics.checked = false;
-        } else {
-            // Predeterminado si no han elegido: desactivado
-            cbAnalytics.checked = false;
-        }
-
-        // Mostrar Modal
+        const consent = parseConsentCookie();
+        cbAnalytics.checked = consent ? consent.analytics : false;
         cookieModalOverlay.classList.remove('hidden');
-        // Forzar reflow para aplicar transición
         void cookieModalOverlay.offsetWidth;
         cookieModalOverlay.classList.add('show');
     }
 
     function hideModal() {
         cookieModalOverlay.classList.remove('show');
-        setTimeout(() => {
-            cookieModalOverlay.classList.add('hidden');
-        }, 300);
+        setTimeout(() => cookieModalOverlay.classList.add('hidden'), 300);
     }
 
-    // 4. Event Listeners
+    async function postConsent(decision, analytics) {
+        try {
+            await fetch('../api/cookie-consent.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken,
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ decision, analytics, csrf_token: csrfToken }),
+            });
+        } catch (err) {
+            console.warn('No se pudo registrar el consentimiento en el servidor', err);
+        }
+        // Fallback: si la API falla (404, CORS, etc.) guardamos la decisión solo en LS.
+        try {
+            localStorage.setItem('cookieConsent', decision);
+            localStorage.setItem('cookiePreferences', JSON.stringify({ analytics }));
+        } catch (_) { /* ignore */ }
+    }
+
     btnAccept.addEventListener('click', () => {
-        localStorage.setItem('cookieConsent', 'all');
-        localStorage.setItem('cookiePreferences', JSON.stringify({ analytics: true }));
+        postConsent('all', true);
         hideBanner();
     });
 
     btnReject.addEventListener('click', () => {
-        localStorage.setItem('cookieConsent', 'rejected');
-        localStorage.setItem('cookiePreferences', JSON.stringify({ analytics: false }));
+        postConsent('rejected', false);
         hideBanner();
     });
 
     btnConfig.addEventListener('click', showModal);
-    
     btnCloseModal.addEventListener('click', hideModal);
-    
+
     btnSaveConfig.addEventListener('click', () => {
-        localStorage.setItem('cookieConsent', 'custom');
-        localStorage.setItem('cookiePreferences', JSON.stringify({
-            analytics: cbAnalytics.checked
-        }));
+        postConsent('custom', !!cbAnalytics.checked);
         hideModal();
         hideBanner();
     });
 
-    // Cerrar modal al hacer click fuera
     cookieModalOverlay.addEventListener('click', (e) => {
-        if (e.target === cookieModalOverlay) {
-            hideModal();
-        }
+        if (e.target === cookieModalOverlay) hideModal();
     });
-
     cookieModalOverlay.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && cookieModalOverlay.classList.contains('show')) {
-            hideModal();
-        }
+        if (e.key === 'Escape' && cookieModalOverlay.classList.contains('show')) hideModal();
     });
 
-    // Asignar apertura de modal a botones existentes en la web (ej. Política de Cookies)
-    btnCookiesLinks.forEach(btn => {
-        btn.addEventListener('click', showModal);
-    });
+    btnCookiesLinks.forEach(btn => btn.addEventListener('click', showModal));
+
+    // Expone API para que otros scripts comprueben si pueden activar analytics
+    window.cookieConsent = {
+        get: parseConsentCookie,
+        analyticsAllowed: () => {
+            const c = parseConsentCookie();
+            return !!(c && c.analytics);
+        },
+    };
 });
-

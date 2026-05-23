@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/helpers.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 // Si ya está logueado, redirigir a home
 if (isset($_SESSION['user_id'])) {
@@ -12,6 +14,8 @@ if (isset($_GET['error'])) {
         case 'empty': $error_msg = "Por favor, completa todos los campos."; break;
         case 'invalid': $error_msg = "Email o contraseña incorrectos."; break;
         case 'db': $error_msg = "Error al conectar con la base de datos. Inténtalo más tarde."; break;
+        case 'csrf': $error_msg = "Sesión caducada. Recarga la página e inténtalo de nuevo."; break;
+        case 'ratelimit': $error_msg = "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo."; break;
         default: $error_msg = "Ha ocurrido un error. Inténtalo de nuevo.";
     }
 }
@@ -210,6 +214,7 @@ $redirect = $_GET['redirect'] ?? '';
             <?php endif; ?>
 
             <form action="../api/user-auth.php" method="POST">
+                <?= csrf_input() ?>
                 <input type="hidden" name="redirect" value="<?= htmlspecialchars($redirect) ?>">
 
                 <div class="form-group">
@@ -224,6 +229,7 @@ $redirect = $_GET['redirect'] ?? '';
             </form>
 
             <div class="login-links">
+                <p><a href="forgot-password.php">¿Olvidaste tu contraseña?</a></p>
                 <p>¿No tienes cuenta? <a href="user-registro.php<?= $redirect ? '?redirect=' . urlencode($redirect) : '' ?>">Regístrate aquí</a></p>
                 <span class="divider">— o —</span>
                 <a href="home.php" class="back-link">← Volver al inicio sin cuenta</a>

@@ -1,195 +1,134 @@
 <?php
-// api/admin-users.php — CRUD de usuarios administradores
+// api/admin-users.php — CRUD de administradores
+// - admin obligatorio + CSRF
+// - reconfirmar con contraseña actual en cada acción de escritura
+// - audit log
+
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/audit.php';
+require_once __DIR__ . '/../includes/helpers.php';
 session_start();
 require_once 'conexion.php';
-header("Content-Type: application/json; charset=UTF-8");
+header('Content-Type: application/json; charset=UTF-8');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
 
-// Verificar sesión de admin
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(403);
-    echo json_encode(["status" => "error", "message" => "Acceso no autorizado"]);
-    exit;
-}
+$currentAdminId = SecurityHandler::requireAdmin();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-/**
- * Verifica la contraseña del admin que está logueado actualmente.
- * Todas las acciones de escritura la requieren como capa de seguridad.
- */
-function verifyCurrentAdminPassword($pdo, $adminId, $authPassword) {
+function verifyCurrentAdminPassword(\PDO $pdo, int $adminId, string $authPassword): bool
+{
     $stmt = $pdo->prepare("SELECT password_hash FROM usuarios_admin WHERE id = ? LIMIT 1");
     $stmt->execute([$adminId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$row) return false;
-    return password_verify($authPassword, $row['password_hash']);
+    return $row && password_verify($authPassword, $row['password_hash']);
 }
 
-// ── GET: Listar administradores ──
 if ($method === 'GET' && $action === 'get') {
     try {
         $stmt = $pdo->query("SELECT id, usuario, rol, ultimo_acceso FROM usuarios_admin ORDER BY id ASC");
-        $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode(["status" => "success", "data" => $admins]);
+        SecurityHandler::jsonOk(['data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     } catch (\PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error al obtener administradores"]);
+        error_log('admin_users_get: ' . $e->getMessage());
+        SecurityHandler::jsonError(500, 'Error al obtener administradores.');
     }
-    exit;
 }
 
-// ── POST: Acciones de escritura ──
-if ($method === 'POST') {
-    // Aceptar tanto FormData como JSON
-    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-    if (strpos($contentType, 'application/json') !== false) {
-        $data = json_decode(file_get_contents('php://input'), true) ?? [];
-    } else {
-        $data = $_POST;
-    }
-
-    $action = $data['action'] ?? '';
-    $authPassword = $data['auth_password'] ?? '';
-
-    // Todas las acciones POST requieren auth_password
-    if (empty($authPassword)) {
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "Debes introducir tu contraseña actual para confirmar esta acción."]);
-        exit;
-    }
-
-    // Verificar contraseña del admin actual
-    if (!verifyCurrentAdminPassword($pdo, $_SESSION['admin_id'], $authPassword)) {
-        http_response_code(403);
-        echo json_encode(["status" => "error", "message" => "Tu contraseña de confirmación es incorrecta."]);
-        exit;
-    }
-
-    // ── Crear nuevo administrador ──
-    if ($action === 'create') {
-        $nuevoUsuario = trim($data['nuevo_usuario'] ?? '');
-        $nuevaPassword = $data['nueva_password'] ?? '';
-        $nuevoRol = 'admin';
-
-        if (empty($nuevoUsuario) || empty($nuevaPassword)) {
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "El nombre de usuario y la contraseña son obligatorios."]);
-            exit;
-        }
-
-        if (strlen($nuevaPassword) < 8) {
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "La contraseña debe tener al menos 8 caracteres."]);
-            exit;
-        }
-
-        try {
-            // Comprobar si el usuario ya existe
-            $check = $pdo->prepare("SELECT id FROM usuarios_admin WHERE usuario = ? LIMIT 1");
-            $check->execute([$nuevoUsuario]);
-            if ($check->fetch()) {
-                http_response_code(409);
-                echo json_encode(["status" => "error", "message" => "Ya existe un administrador con ese nombre de usuario."]);
-                exit;
-            }
-
-            $hash = password_hash($nuevaPassword, PASSWORD_DEFAULT);
-            $insert = $pdo->prepare("INSERT INTO usuarios_admin (usuario, password_hash, rol) VALUES (?, ?, ?)");
-            $insert->execute([$nuevoUsuario, $hash, $nuevoRol]);
-
-            echo json_encode(["status" => "success", "message" => "Administrador '{$nuevoUsuario}' creado correctamente."]);
-        } catch (\PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Error de base de datos al crear el usuario."]);
-        }
-        exit;
-    }
-
-    // ── Resetear contraseña de un admin ──
-    if ($action === 'reset') {
-        $targetId = intval($data['target_id'] ?? 0);
-        $nuevaPassword = $data['nueva_password'] ?? '';
-
-        if ($targetId <= 0) {
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "ID de administrador no válido."]);
-            exit;
-        }
-
-        if (strlen($nuevaPassword) < 8) {
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "La nueva contraseña debe tener al menos 8 caracteres."]);
-            exit;
-        }
-
-        try {
-            $hash = password_hash($nuevaPassword, PASSWORD_DEFAULT);
-            $update = $pdo->prepare("UPDATE usuarios_admin SET password_hash = ? WHERE id = ?");
-            $update->execute([$hash, $targetId]);
-
-            if ($update->rowCount() > 0) {
-                echo json_encode(["status" => "success", "message" => "Contraseña actualizada correctamente."]);
-            } else {
-                http_response_code(404);
-                echo json_encode(["status" => "error", "message" => "No se encontró el administrador indicado."]);
-            }
-        } catch (\PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Error de base de datos al resetear la contraseña."]);
-        }
-        exit;
-    }
-
-    // ── Eliminar un administrador ──
-    if ($action === 'delete') {
-        $targetId = intval($data['target_id'] ?? 0);
-
-        if ($targetId <= 0) {
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "ID de administrador no válido."]);
-            exit;
-        }
-
-        // Prohibir borrarse a sí mismo
-        if ($targetId == $_SESSION['admin_id']) {
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "No puedes eliminar tu propia cuenta de administrador."]);
-            exit;
-        }
-
-        try {
-            // Comprobar que no es el último admin
-            $countStmt = $pdo->query("SELECT COUNT(*) as total FROM usuarios_admin");
-            $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
-            if ($total <= 1) {
-                http_response_code(400);
-                echo json_encode(["status" => "error", "message" => "No se puede eliminar. Debe existir al menos un administrador."]);
-                exit;
-            }
-
-            $delete = $pdo->prepare("DELETE FROM usuarios_admin WHERE id = ?");
-            $delete->execute([$targetId]);
-
-            if ($delete->rowCount() > 0) {
-                echo json_encode(["status" => "success", "message" => "Administrador eliminado correctamente."]);
-            } else {
-                http_response_code(404);
-                echo json_encode(["status" => "error", "message" => "No se encontró el administrador indicado."]);
-            }
-        } catch (\PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Error de base de datos al eliminar."]);
-        }
-        exit;
-    }
-
-    // Acción desconocida
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Acción no reconocida."]);
-    exit;
+if ($method !== 'POST') {
+    SecurityHandler::jsonError(405, 'Método no permitido.');
 }
 
-// Método no permitido
-http_response_code(405);
-echo json_encode(["status" => "error", "message" => "Método no permitido."]);
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+$data = strpos($contentType, 'application/json') !== false ? read_json_body() : $_POST;
+SecurityHandler::requireCSRF($data);
+
+$action = $data['action'] ?? '';
+$authPassword = clamp_password((string) ($data['auth_password'] ?? ''));
+
+if ($authPassword === '') {
+    SecurityHandler::jsonError(400, 'Debes introducir tu contraseña actual para confirmar esta acción.');
+}
+if (!verifyCurrentAdminPassword($pdo, $currentAdminId, $authPassword)) {
+    audit_log($pdo, 'admin_users_auth_fail', 'admin', $currentAdminId, ['action' => $action]);
+    SecurityHandler::jsonError(403, 'Tu contraseña de confirmación es incorrecta.');
+}
+
+if ($action === 'create') {
+    $nuevoUsuario = trim($data['nuevo_usuario'] ?? '');
+    $nuevaPassword = clamp_password((string) ($data['nueva_password'] ?? ''));
+
+    if ($nuevoUsuario === '' || $nuevaPassword === '') {
+        SecurityHandler::jsonError(400, 'El nombre de usuario y la contraseña son obligatorios.');
+    }
+    if (!preg_match('/^[A-Za-z0-9_.\-]{3,40}$/', $nuevoUsuario)) {
+        SecurityHandler::jsonError(400, 'Usuario inválido (3-40 caracteres alfanuméricos).');
+    }
+    if (strlen($nuevaPassword) < 12 || !preg_match('/[A-Z]/', $nuevaPassword) || !preg_match('/[a-z]/', $nuevaPassword) || !preg_match('/[0-9]/', $nuevaPassword)) {
+        SecurityHandler::jsonError(400, 'La contraseña debe tener al menos 12 caracteres con mayúsculas, minúsculas y números.');
+    }
+
+    try {
+        $check = $pdo->prepare("SELECT id FROM usuarios_admin WHERE usuario = ? LIMIT 1");
+        $check->execute([$nuevoUsuario]);
+        if ($check->fetch()) {
+            SecurityHandler::jsonError(409, 'Ya existe un administrador con ese nombre de usuario.');
+        }
+        $hash = password_hash($nuevaPassword, PASSWORD_DEFAULT);
+        $insert = $pdo->prepare("INSERT INTO usuarios_admin (usuario, password_hash, rol) VALUES (?, ?, 'admin')");
+        $insert->execute([$nuevoUsuario, $hash]);
+        audit_log($pdo, 'admin_create', 'admin', $pdo->lastInsertId(), ['usuario' => $nuevoUsuario]);
+        SecurityHandler::jsonOk(['message' => "Administrador '{$nuevoUsuario}' creado correctamente."]);
+    } catch (\PDOException $e) {
+        error_log('admin_users_create: ' . $e->getMessage());
+        SecurityHandler::jsonError(500, 'Error al crear el administrador.');
+    }
+}
+
+if ($action === 'reset') {
+    $targetId = (int) ($data['target_id'] ?? 0);
+    $nuevaPassword = clamp_password((string) ($data['nueva_password'] ?? ''));
+    if ($targetId <= 0) SecurityHandler::jsonError(400, 'ID de administrador no válido.');
+    if (strlen($nuevaPassword) < 12 || !preg_match('/[A-Z]/', $nuevaPassword) || !preg_match('/[a-z]/', $nuevaPassword) || !preg_match('/[0-9]/', $nuevaPassword)) {
+        SecurityHandler::jsonError(400, 'La nueva contraseña debe tener al menos 12 caracteres con mayúsculas, minúsculas y números.');
+    }
+    try {
+        $hash = password_hash($nuevaPassword, PASSWORD_DEFAULT);
+        $update = $pdo->prepare("UPDATE usuarios_admin SET password_hash = ? WHERE id = ?");
+        $update->execute([$hash, $targetId]);
+        if ($update->rowCount() > 0) {
+            audit_log($pdo, 'admin_reset_password', 'admin', $targetId);
+            SecurityHandler::jsonOk(['message' => 'Contraseña actualizada correctamente.']);
+        }
+        SecurityHandler::jsonError(404, 'No se encontró el administrador indicado.');
+    } catch (\PDOException $e) {
+        error_log('admin_users_reset: ' . $e->getMessage());
+        SecurityHandler::jsonError(500, 'Error al resetear la contraseña.');
+    }
+}
+
+if ($action === 'delete') {
+    $targetId = (int) ($data['target_id'] ?? 0);
+    if ($targetId <= 0) SecurityHandler::jsonError(400, 'ID de administrador no válido.');
+    if ($targetId === $currentAdminId) SecurityHandler::jsonError(400, 'No puedes eliminar tu propia cuenta de administrador.');
+    try {
+        $countStmt = $pdo->query("SELECT COUNT(*) AS total FROM usuarios_admin");
+        $total = (int) ($countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+        if ($total <= 1) {
+            SecurityHandler::jsonError(400, 'Debe existir al menos un administrador.');
+        }
+        $delete = $pdo->prepare("DELETE FROM usuarios_admin WHERE id = ?");
+        $delete->execute([$targetId]);
+        if ($delete->rowCount() > 0) {
+            audit_log($pdo, 'admin_delete', 'admin', $targetId);
+            SecurityHandler::jsonOk(['message' => 'Administrador eliminado correctamente.']);
+        }
+        SecurityHandler::jsonError(404, 'No se encontró el administrador indicado.');
+    } catch (\PDOException $e) {
+        error_log('admin_users_delete: ' . $e->getMessage());
+        SecurityHandler::jsonError(500, 'Error al eliminar.');
+    }
+}
+
+SecurityHandler::jsonError(400, 'Acción no reconocida.');

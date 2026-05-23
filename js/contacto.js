@@ -28,23 +28,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // Skip honeypot
         if (input.id === 'honeypot') return true;
 
-        // Validaciones específicas
-        if (input.value.trim() === '') {
+        const value = input.value.trim();
+        const isRequired = input.hasAttribute('required');
+
+        // Campos opcionales en blanco: válido
+        if (!isRequired && value === '') {
+            showError(input, false);
+            return true;
+        }
+
+        if (isRequired && value === '') {
             isError = true;
         } else if (input.type === 'email') {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(input.value)) isError = true;
+            if (!emailRegex.test(value)) isError = true;
         } else if (input.type === 'tel') {
-            const telRegex = /^[0-9+\s-]{9,}$/; // Al menos 9 caracteres, permitiendo '+', espacios y '-'
-            if (!telRegex.test(input.value)) isError = true;
+            const telRegex = /^[0-9+\s-]{9,}$/;
+            if (!telRegex.test(value)) isError = true;
         } else if (input.name === 'dni') {
-            // Validación muy básica de DNI (solo comprueba que haya algo de formato, la validación real backend)
             const dniRegex = /^[0-9]{8}[A-Z]$/i;
             const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/i;
-            if (!dniRegex.test(input.value) && !nieRegex.test(input.value)) isError = true;
+            if (!dniRegex.test(value) && !nieRegex.test(value)) isError = true;
         }
 
         showError(input, isError);
+        input.setAttribute('aria-invalid', isError ? 'true' : 'false');
         return !isError;
     };
 
@@ -104,9 +112,13 @@ document.addEventListener('DOMContentLoaded', () => {
             btnSubmit.disabled = true;
             
             try {
+                const csrfToken = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
                 const formData = new FormData(contactForm);
+                if (!formData.has('csrf_token')) formData.append('csrf_token', csrfToken);
                 const response = await fetch('../api/guardar-consulta.php', {
                     method: 'POST',
+                    headers: { 'X-CSRF-Token': csrfToken },
+                    credentials: 'same-origin',
                     body: formData
                 });
                 

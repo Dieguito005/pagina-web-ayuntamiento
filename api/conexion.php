@@ -1,6 +1,6 @@
 <?php
 // api/conexion.php
-// Archivo de conexión a la base de datos — Versión producción-ready
+// Conexion a la base de datos via PDO. NUNCA expone detalles de error al cliente.
 
 require_once __DIR__ . '/../config.php';
 
@@ -14,12 +14,8 @@ $options = [
 try {
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
 } catch (\PDOException $e) {
-    // En producción: NUNCA mostrar detalles del error al usuario
-    if (IS_PRODUCTION) {
-        error_log("DB Connection Error: " . $e->getMessage());
-        http_response_code(503);
-        die("Servicio temporalmente no disponible. Inténtelo más tarde.");
-    } else {
-        die("Error de conexión a la base de datos. Asegúrate de haber ejecutado setup_db.php. Detalles: " . $e->getMessage());
-    }
+    error_log('DB Connection Error: ' . $e->getMessage());
+    http_response_code(503);
+    // Mensaje genérico siempre — independiente del entorno.
+    die('Servicio temporalmente no disponible. Inténtelo más tarde.');
 }

@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/helpers.php';
 session_start();
 send_security_headers();
 if (isset($_SESSION['admin_id'])) {
@@ -17,7 +19,14 @@ if (isset($_GET['error'])) {
         $error_msg = "Error al conectar con la base de datos.";
     else if ($_GET['error'] === 'ratelimit')
         $error_msg = "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo.";
+    else if ($_GET['error'] === 'csrf')
+        $error_msg = "Sesión caducada. Recarga la página e inténtalo de nuevo.";
+    else if ($_GET['error'] === 'totp')
+        $error_msg = "Código de verificación incorrecto.";
 }
+
+// ¿Estamos en el paso 2 (2FA)?
+$step2fa = isset($_GET['step']) && $_GET['step'] === 'totp' && !empty($_SESSION['_2fa_pending']);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -155,17 +164,34 @@ if (isset($_GET['error'])) {
                 <div class="alert-error"><?= htmlspecialchars($error_msg) ?></div>
             <?php endif; ?>
 
-            <form action="admin-auth.php" method="POST">
-                <div class="form-group">
-                    <label for="usuario">Usuario</label>
-                    <input type="text" id="usuario" name="usuario" required autofocus>
+            <?php if ($step2fa): ?>
+                <form action="admin-auth.php" method="POST">
+                    <?= csrf_input() ?>
+                    <input type="hidden" name="mode" value="totp">
+                    <p style="font-size:0.92rem;color:#555;margin-bottom:1rem;">Introduce el código de 6 dígitos de tu aplicación de autenticación (o uno de tus códigos de respaldo de 8 caracteres).</p>
+                    <div class="form-group">
+                        <label for="totp_code">Código de verificación</label>
+                        <input type="text" id="totp_code" name="totp_code" required autofocus autocomplete="one-time-code" inputmode="numeric" pattern="[0-9A-Za-z]{6,8}" maxlength="8" style="font-size:1.4rem;letter-spacing:0.3rem;text-align:center;">
+                    </div>
+                    <button type="submit" class="btn-submit">Verificar</button>
+                </form>
+                <div style="margin-top:16px;text-align:center;">
+                    <a href="admin-login.php" style="color:#666;font-size:0.9rem;">← Cancelar y empezar de nuevo</a>
                 </div>
-                <div class="form-group">
-                    <label for="password">Contraseña</label>
-                    <input type="password" id="password" name="password" required placeholder="••••••••">
-                </div>
-                <button type="submit" class="btn-submit">Entrar al Panel</button>
-            </form>
+            <?php else: ?>
+                <form action="admin-auth.php" method="POST">
+                    <?= csrf_input() ?>
+                    <div class="form-group">
+                        <label for="usuario">Usuario</label>
+                        <input type="text" id="usuario" name="usuario" required autofocus autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn-submit">Entrar al Panel</button>
+                </form>
+            <?php endif; ?>
             <div style="margin-top: 20px;">
                 <a href="../html/home.php" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Volver al
                     inicio</a>

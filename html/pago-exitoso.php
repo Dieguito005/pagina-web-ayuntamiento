@@ -1,14 +1,19 @@
 <?php
-// html/pago-exitoso.php — Página de confirmación tras pago con Stripe
-// 1. Verifica que la sesión de Stripe fue pagada
-// 2. Crea la reserva en BBDD
-// 3. Envía el email de confirmación
-// 4. Muestra el código de acceso
+// html/pago-exitoso.php — Pagina mostrada al usuario tras volver de Stripe Checkout.
+//
+// IMPORTANTE: la creacion de reserva es responsabilidad del webhook
+// api/stripe-webhook.php. Esta pagina solo MUESTRA estado. Como fallback (entornos
+// sin webhook configurado todavia), si la reserva no existe aun y los datos
+// metadata son consistentes con el usuario logueado, se intenta crearla aqui.
 
-require_once '../includes/user-auth-check.php';
+// NOTA: no exigimos sesion activa: si el pago tarda mas que el timeout (1800s) la sesion
+// puede haber expirado. La autorizacion del pago se valida via metadata.user_id Stripe.
 require_once '../config.php';
 require_once '../api/conexion.php';
 require_once '../api/mailer.php';
+require_once '../includes/SecurityHandler.php';
+require_once '../includes/audit.php';
+require_once '../includes/helpers.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 send_security_headers();
@@ -16,116 +21,121 @@ send_security_headers();
 $error = null;
 $codigo_acceso = null;
 $reservaData = null;
+$session_id = trim($_GET['session_id'] ?? '');
 
-$session_id = $_GET['session_id'] ?? '';
-
-if (empty($session_id)) {
-    $error = "Sesión de pago no encontrada.";
+if ($session_id === '' || !preg_match('/^cs_[A-Za-z0-9_]{10,}$/', $session_id)) {
+    $error = 'Sesion de pago no encontrada.';
 } else {
-    // Verificar la sesión con Stripe
-    $ch = curl_init("https://api.stripe.com/v1/checkout/sessions/$session_id");
+    // 1) Comprobar si el webhook ya creo la reserva (por session_id si guardamos algo, o por slot)
+    //    Aqui nos apoyamos en $_SESSION['stripe_reserva'] para localizar el slot esperado.
+    $expected = $_SESSION['stripe_reserva'] ?? null;
+
+    // Pedir la sesion a Stripe para verificar pago
+    $ch = curl_init('https://api.stripe.com/v1/checkout/sessions/' . urlencode($session_id));
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_USERPWD        => STRIPE_SECRET_KEY . ':',
-        CURLOPT_TIMEOUT        => 15,
+        CURLOPT_USERPWD => STRIPE_SECRET_KEY . ':',
+        CURLOPT_TIMEOUT => 15,
         CURLOPT_SSL_VERIFYPEER => true,
     ]);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    // curl_close() omitido: desde PHP 8.5 el handle se libera automáticamente
     unset($ch);
 
     $session = json_decode($response, true);
 
     if ($httpCode !== 200 || !$session) {
-        $error = "No se pudo verificar el pago.";
-    } elseif ($session['payment_status'] !== 'paid') {
-        $error = "El pago no se ha completado.";
+        $error = 'No se pudo verificar el pago.';
+    } elseif (($session['payment_status'] ?? '') !== 'paid') {
+        $error = 'El pago no se ha completado.';
     } else {
-        // Pago verificado — recuperar datos de la sesión PHP
-        $reservaData = $_SESSION['stripe_reserva'] ?? null;
+        // Validar que el user_id en metadata coincide con la sesion actual (anti-IDOR)
+        $metaUserId = isset($session['metadata']['user_id']) ? (int) $session['metadata']['user_id'] : 0;
+        $sessionUserId = (int) ($_SESSION['user_id'] ?? 0);
 
-        if (!$reservaData) {
-            // Fallback: intentar usar metadata de Stripe
-            $meta = $session['metadata'] ?? [];
-            $reservaData = [
-                'email'       => $session['customer_email'] ?? '',
-                'nombre'      => $meta['nombre'] ?? 'Cliente',
-                'pista'       => $meta['pista'] ?? '',
-                'fecha'       => $meta['fecha'] ?? '',
-                'hora'        => $meta['hora'] ?? '',
-                'dni'         => $meta['dni'] ?? '',
-                'telefono'    => '',
-                'precio_total'=> ($session['amount_total'] ?? 0) / 100,
-            ];
-        }
-
-        // Verificar que no se haya procesado ya (idempotencia)
-        $checkStmt = $pdo->prepare("SELECT codigo_acceso FROM reservas WHERE pista = ? AND fecha = ? AND hora_inicio = ? AND estado != 'cancelada'");
-        $partes = explode(' - ', $reservaData['hora']);
-        $hora_inicio = $partes[0] ?? '';
-        $hora_fin = $partes[1] ?? '';
-        $checkStmt->execute([$reservaData['pista'], $reservaData['fecha'], $hora_inicio]);
-        $existing = $checkStmt->fetch();
-
-        if ($existing) {
-            // Ya existe → usar el código existente (doble-click o recarga)
-            $codigo_acceso = $existing['codigo_acceso'];
+        if ($metaUserId <= 0) {
+            audit_log($pdo, 'stripe_success_no_user_in_metadata', 'reserva', null, ['session_id' => $session_id]);
+            $error = 'No se ha podido identificar el pago.';
+        } elseif ($sessionUserId > 0 && $metaUserId !== $sessionUserId) {
+            audit_log($pdo, 'stripe_success_user_mismatch', 'reserva', null, ['session_user' => $sessionUserId, 'meta_user' => $metaUserId, 'session_id' => $session_id]);
+            $error = 'Esta confirmacion de pago no corresponde a tu cuenta.';
         } else {
-            // Crear la reserva
-            try {
-                date_default_timezone_set('Europe/Madrid');
-                $codigo_acceso = 'TRC-' . strtoupper(bin2hex(random_bytes(3)));
+            // $sessionUserId puede ser 0 (sesion expirada durante Stripe Checkout). Confiamos
+            // en metadata.user_id (lo escribimos al crear la sesion) y mostramos el codigo.
+            $meta = $session['metadata'] ?? [];
+            $pista = $meta['pista'] ?? '';
+            $fecha = $meta['fecha'] ?? '';
+            $hora = $meta['hora'] ?? '';
+            $horaInicio = $meta['hora_inicio'] ?? '';
+            $horaParts = explode(' - ', $hora);
+            $horaFin = $horaParts[1] ?? '';
 
-                // Detectar columnas disponibles
-                $columnsResult = $pdo->query("SHOW COLUMNS FROM reservas");
-                $existingColumns = [];
-                while ($col = $columnsResult->fetch()) {
-                    $existingColumns[] = $col['Field'];
+            // Recargar datos canonicos del usuario
+            $uStmt = $pdo->prepare("SELECT nombre, email, dni, telefono FROM usuarios WHERE id = ?");
+            $uStmt->execute([$metaUserId]);
+            $user = $uStmt->fetch() ?: [];
+
+            // Comprobar si la reserva ya existe (webhook adelantado o doble click)
+            $checkStmt = $pdo->prepare("SELECT codigo_acceso, usuario_id FROM reservas WHERE pista = ? AND fecha = ? AND hora_inicio = ? AND estado != 'cancelada' LIMIT 1");
+            $checkStmt->execute([$pista, $fecha, $horaInicio]);
+            $existing = $checkStmt->fetch();
+
+            if ($existing) {
+                if ((int) $existing['usuario_id'] !== $metaUserId) {
+                    $error = 'Esta reserva pertenece a otra cuenta.';
+                } else {
+                    $codigo_acceso = $existing['codigo_acceso'];
+                    $reservaData = ['email' => $user['email'] ?? '', 'nombre' => $user['nombre'] ?? ''];
                 }
+            } else {
+                // FALLBACK: el webhook no ha procesado aun. Creamos la reserva aqui.
+                try {
+                    date_default_timezone_set('Europe/Madrid');
+                    $codigo_acceso = 'TRC-' . strtoupper(bin2hex(random_bytes(3)));
+                    $precio = (float) ($session['amount_total'] ?? 0) / 100;
 
-                $insertCols = ['pista', 'fecha', 'hora_inicio', 'hora_fin', 'estado', 'usuario_nombre', 'usuario_email', 'codigo_acceso'];
-                $insertVals = [$reservaData['pista'], $reservaData['fecha'], $hora_inicio, $hora_fin, 'reservada', $reservaData['nombre'], $reservaData['email'], $codigo_acceso];
+                    $insert = $pdo->prepare(
+                        "INSERT INTO reservas (pista, fecha, hora_inicio, hora_fin, estado, usuario_nombre, usuario_email, dni, telefono, precio_total, codigo_acceso, usuario_id, fecha_registro)
+                         VALUES (?, ?, ?, ?, 'reservada', ?, ?, ?, ?, ?, ?, ?, NOW())"
+                    );
+                    $insert->execute([
+                        $pista, $fecha, $horaInicio, $horaFin,
+                        $user['nombre'] ?? '', $user['email'] ?? '',
+                        $user['dni'] ?? null, $user['telefono'] ?? null,
+                        $precio, $codigo_acceso, $metaUserId,
+                    ]);
 
-                if (in_array('dni', $existingColumns)) { $insertCols[] = 'dni'; $insertVals[] = $reservaData['dni']; }
-                if (in_array('telefono', $existingColumns)) { $insertCols[] = 'telefono'; $insertVals[] = $reservaData['telefono']; }
-                if (in_array('precio_total', $existingColumns)) { $insertCols[] = 'precio_total'; $insertVals[] = $reservaData['precio_total']; }
-                if (in_array('usuario_id', $existingColumns)) { $insertCols[] = 'usuario_id'; $insertVals[] = $_SESSION['user_id'] ?? null; }
-                if (in_array('fecha_registro', $existingColumns)) { $insertCols[] = 'fecha_registro'; $insertVals[] = date('Y-m-d H:i:s'); }
+                    $reservaId = $pdo->lastInsertId();
+                    audit_log($pdo, 'stripe_success_reserva_fallback', 'reserva', $reservaId, ['session_id' => $session_id]);
 
-                $placeholders = implode(', ', array_fill(0, count($insertCols), '?'));
-                $colsStr = implode(', ', $insertCols);
-                $insertStmt = $pdo->prepare("INSERT INTO reservas ($colsStr) VALUES ($placeholders)");
-                $insertStmt->execute($insertVals);
+                    // Email
+                    $nH = esc_html($user['nombre'] ?? '');
+                    $pH = esc_html($pista);
+                    $fH = esc_html($fecha);
+                    $hH = esc_html($hora);
+                    $cH = esc_html($codigo_acceso);
+                    $emailHtml = "<html><body style='font-family: Arial, sans-serif; color:#333; line-height:1.6;'>
+                        <h2 style='color:#914f26;'>Hola $nH, tu reserva esta confirmada.</h2>
+                        <table width='100%' cellpadding='10' style='background:#f4f6f8; border-radius:8px; margin:20px 0; border:1px solid #ddd;'>
+                            <tr><td><strong>Instalacion:</strong></td><td>$pH</td></tr>
+                            <tr><td><strong>Fecha:</strong></td><td>$fH</td></tr>
+                            <tr><td><strong>Hora:</strong></td><td>$hH</td></tr>
+                            <tr><td><strong>Titular:</strong></td><td>$nH</td></tr>
+                        </table>
+                        <div style='background:#fff4e5; border:2px dashed #c36a33; padding:20px; text-align:center; border-radius:8px;'>
+                            <p style='margin:0; color:#914f26; font-size:14px;'><strong>TU CODIGO DE ACCESO</strong></p>
+                            <h1 style='margin:10px 0; font-size:42px; letter-spacing:5px; color:#522d16;'>$cH</h1>
+                        </div>
+                        <p style='color:#d32f2f; font-size:0.9em;'><em>Cancelacion hasta 30 minutos antes. Despues no se devuelve el importe.</em></p>
+                    </body></html>";
+                    send_email($user['email'] ?? '', $user['nombre'] ?? '', 'Confirmacion de Reserva - Ayuntamiento de Tarancon', $emailHtml);
 
-                // Enviar email de confirmación
-                $emailHtml = "
-                <html><head><title>Confirmación de Reserva</title></head>
-                <body style='font-family: Arial, sans-serif; color: #333; line-height: 1.6;'>
-                    <h2 style='color: #914f26;'>¡Hola {$reservaData['nombre']}! Tu reserva está confirmada.</h2>
-                    <p>Gracias por alquilar las instalaciones deportivas del Ayuntamiento de Tarancón.</p>
-                    <table width='100%' cellpadding='10' style='background-color: #f4f6f8; border-radius: 8px; margin: 20px 0; border: 1px solid #ddd;'>
-                        <tr><td><strong>Instalación:</strong></td><td>{$reservaData['pista']}</td></tr>
-                        <tr><td><strong>Fecha:</strong></td><td>{$reservaData['fecha']}</td></tr>
-                        <tr><td><strong>Hora:</strong></td><td>{$reservaData['hora']}</td></tr>
-                        <tr><td><strong>Titular:</strong></td><td>{$reservaData['nombre']}</td></tr>
-                        " . (!empty($reservaData['dni']) ? "<tr><td><strong>DNI/NIE:</strong></td><td>{$reservaData['dni']}</td></tr>" : "") . "
-                    </table>
-                    <div style='background-color: #fff4e5; border: 2px dashed #c36a33; padding: 20px; text-align: center; border-radius: 8px;'>
-                        <p style='margin: 0; color: #914f26; font-size: 14px;'><strong>TU CÓDIGO DE ACCESO (MUESTRA ESTO AL CONSERJE)</strong></p>
-                        <h1 style='margin: 10px 0; font-size: 42px; letter-spacing: 5px; color: #522d16;'>$codigo_acceso</h1>
-                    </div>
-                    <p style='color: #d32f2f; font-size: 0.9em; margin-top:20px;'><em>⚠️ Cancelación hasta 30 minutos antes de la reserva. Después no se devuelve el importe.</em></p>
-                </body></html>";
-
-                send_email($reservaData['email'], $reservaData['nombre'], 'Confirmación de Reserva - Ayuntamiento de Tarancón', $emailHtml);
-
-                // Limpiar datos de sesión de Stripe
-                unset($_SESSION['stripe_reserva']);
-
-            } catch (\PDOException $e) {
-                error_log("Stripe success page DB error: " . $e->getMessage());
-                $error = "Error al registrar la reserva. Contacta con el Ayuntamiento.";
+                    unset($_SESSION['stripe_reserva']);
+                    $reservaData = ['email' => $user['email'] ?? '', 'nombre' => $user['nombre'] ?? ''];
+                } catch (\PDOException $e) {
+                    error_log('pago_exitoso_fallback: ' . $e->getMessage());
+                    $error = 'Error al registrar la reserva. Contacta con el Ayuntamiento.';
+                }
             }
         }
     }
@@ -136,7 +146,7 @@ if (empty($session_id)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pago Completado - Alquileres Tarancón</title>
+    <title>Pago Completado - Alquileres Tarancon</title>
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/checkout.css">
     <link rel="stylesheet" href="../css/cookies.css">
@@ -158,30 +168,30 @@ if (empty($session_id)) {
         <section class="checkout-layout">
             <?php if ($error): ?>
                 <div class="error-container">
-                    <h2>⚠️ Error</h2>
-                    <p><?= htmlspecialchars($error) ?></p>
+                    <h2>Error</h2>
+                    <p><?= esc_html($error) ?></p>
                     <a href="home.php" class="btn-primary" style="display:inline-block;margin-top:1rem;">Volver al Inicio</a>
                 </div>
             <?php elseif ($codigo_acceso): ?>
                 <div class="checkout-success-container">
                     <div class="success-card">
-                        <div class="success-icon-wrap"><div class="success-icon">✓</div></div>
-                        <h2>¡Pago Confirmado y Reserva Creada!</h2>
+                        <div class="success-icon-wrap"><div class="success-icon">&check;</div></div>
+                        <h2>Pago Confirmado y Reserva Creada</h2>
                         <p>El pago se ha procesado correctamente con Stripe.</p>
-                        <p>Hemos enviado los detalles a <strong><?= htmlspecialchars($reservaData['email'] ?? '') ?></strong>.</p>
+                        <p>Hemos enviado los detalles a <strong><?= esc_html($reservaData['email'] ?? '') ?></strong>.</p>
 
                         <div class="code-box" id="code-box-copy" title="Haz clic para copiar">
-                            <p class="code-label">Código de Acceso</p>
-                            <p class="access-code" id="display-code"><?= htmlspecialchars($codigo_acceso) ?></p>
-                            <p class="code-copy-hint"><span id="copy-icon">📋</span> <span id="copy-text">Haz clic para copiar</span></p>
+                            <p class="code-label">Codigo de Acceso</p>
+                            <p class="access-code" id="display-code"><?= esc_html($codigo_acceso) ?></p>
+                            <p class="code-copy-hint"><span id="copy-icon">&#128203;</span> <span id="copy-text">Haz clic para copiar</span></p>
                         </div>
 
                         <div class="success-instructions">
-                            <p><strong>¿Qué debo hacer ahora?</strong></p>
+                            <p><strong>Que debo hacer ahora?</strong></p>
                             <ul>
-                                <li>Guarde este código alfanumérico.</li>
+                                <li>Guarde este codigo alfanumerico.</li>
                                 <li>Acuda a las instalaciones unos minutos antes.</li>
-                                <li>Enseñe o dicte este código al conserje.</li>
+                                <li>Enseñe o dicte este codigo al conserje.</li>
                             </ul>
                         </div>
                         <a href="home.php" class="btn-primary btn-back-home">Volver al Inicio</a>
@@ -194,7 +204,6 @@ if (empty($session_id)) {
     <?php include '../includes/footer.php'; ?>
 
     <script>
-        // Copiar código al portapapeles
         const codeBox = document.getElementById('code-box-copy');
         if (codeBox) {
             codeBox.addEventListener('click', () => {
@@ -202,9 +211,9 @@ if (empty($session_id)) {
                 if (code) {
                     navigator.clipboard.writeText(code).then(() => {
                         document.getElementById('copy-icon').textContent = '✅';
-                        document.getElementById('copy-text').textContent = '¡Copiado!';
+                        document.getElementById('copy-text').textContent = 'Copiado';
                         setTimeout(() => {
-                            document.getElementById('copy-icon').textContent = '📋';
+                            document.getElementById('copy-icon').textContent = '\u{1F4CB}';
                             document.getElementById('copy-text').textContent = 'Haz clic para copiar';
                         }, 2000);
                     });

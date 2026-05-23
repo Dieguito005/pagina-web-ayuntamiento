@@ -1,6 +1,8 @@
 <?php
 require_once '../config.php';
 require_once '../includes/user-auth-check.php';
+require_once '../includes/SecurityHandler.php';
+require_once '../includes/helpers.php';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -14,6 +16,7 @@ require_once '../includes/user-auth-check.php';
     <link rel="stylesheet" href="../css/checkout.css">
     <link rel="stylesheet" href="../css/bonos.css?v=1.0.0">
     <link rel="stylesheet" href="../css/cookies.css">
+    <?= csrf_meta_tag() ?>
     <script src="../js/cookies.js" defer></script>
     <script>
         // Config inyectada desde PHP — el JS decide qué flujo usar
@@ -21,7 +24,7 @@ require_once '../includes/user-auth-check.php';
         // Bonos: cargar disponibilidad
         window.BONOS_DISPONIBLES = 0;
     </script>
-    <script src="../js/checkout.js?v=2.6.0" defer></script>
+    <script src="../js/checkout.js?v=2.7.0" defer></script>
     <title>Reserva y Pago - Alquileres Tarancón</title>
     <style>
         /* Hint de copiar código */
@@ -66,7 +69,7 @@ require_once '../includes/user-auth-check.php';
 
     <?php include '../includes/header.php'; ?>
 
-    <main class="main-content checkout-content">
+    <main id="contenido-principal" class="main-content checkout-content">
         <section class="checkout-layout">
 
             <!-- CONTENIDO PRINCIPAL: FORMULARIO Y PAGO -->

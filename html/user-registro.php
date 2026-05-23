@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/helpers.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (isset($_SESSION['user_id'])) {
     header("Location: home.php");
@@ -18,6 +21,9 @@ if (isset($_GET['error'])) {
             case 'password_mismatch': $mensajes[] = "Las contraseñas no coinciden."; break;
             case 'dni': $mensajes[] = "El formato del DNI/NIE no es válido."; break;
             case 'telefono': $mensajes[] = "El teléfono debe tener 9 dígitos."; break;
+            case 'policy': $mensajes[] = "Debes aceptar la política de privacidad para continuar."; break;
+            case 'csrf': $mensajes[] = "Sesión caducada. Recarga la página e inténtalo de nuevo."; break;
+            case 'ratelimit': $mensajes[] = "Demasiados registros desde tu IP. Espera 15 minutos."; break;
             case 'db': $mensajes[] = "Error de conexión. Inténtalo más tarde."; break;
         }
     }
@@ -25,6 +31,7 @@ if (isset($_GET['error'])) {
 }
 
 $redirect = $_GET['redirect'] ?? '';
+$policyVersion = defined('POLICY_VERSION') ? POLICY_VERSION : '';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -285,7 +292,9 @@ $redirect = $_GET['redirect'] ?? '';
             <?php endif; ?>
 
             <form action="../api/user-register.php" method="POST" id="register-form">
+                <?= csrf_input() ?>
                 <input type="hidden" name="redirect" value="<?= htmlspecialchars($redirect) ?>">
+                <input type="hidden" name="policy_version" value="<?= htmlspecialchars($policyVersion) ?>">
 
                 <p class="section-label">Datos Personales</p>
 
@@ -329,6 +338,17 @@ $redirect = $_GET['redirect'] ?? '';
                 <div class="form-group">
                     <label for="password2">Repetir Contraseña *</label>
                     <input type="password" id="password2" name="password2" required placeholder="Repite la contraseña" minlength="8">
+                </div>
+
+                <div class="form-group" style="margin-top:1.2rem; display:flex; gap:0.6rem; align-items:flex-start;">
+                    <input type="checkbox" id="accept_policy" name="accept_policy" value="1" required style="margin-top:0.25rem; width:auto;">
+                    <label for="accept_policy" style="font-weight:400; font-size:0.85rem; line-height:1.4;">
+                        He leído y acepto la
+                        <a href="politica-privacidad.php" target="_blank" rel="noopener" style="color:#d15615; font-weight:600;">Política de Privacidad</a>
+                        y el
+                        <a href="aviso-legal.php" target="_blank" rel="noopener" style="color:#d15615; font-weight:600;">Aviso Legal</a>
+                        del Ayuntamiento de Tarancón. *
+                    </label>
                 </div>
 
                 <button type="submit" class="btn-register">Crear Mi Cuenta</button>

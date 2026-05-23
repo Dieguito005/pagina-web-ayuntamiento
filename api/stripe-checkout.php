@@ -1,153 +1,137 @@
 <?php
-// api/stripe-checkout.php — Crea una sesión de Stripe Checkout
-// Recibe los datos de la reserva y redirige al usuario a la pasarela de Stripe.
-// No necesita librería: usa cURL directamente contra la API REST de Stripe.
+// api/stripe-checkout.php — Crea sesion Stripe Checkout para una reserva de pista.
+// - CSRF + auth usuario
+// - Precio recalculado SIEMPRE en servidor (BD)
+// - metadata.user_id incluido para validar el dueno al confirmar
 
-ob_start();
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/audit.php';
+require_once __DIR__ . '/../includes/helpers.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
-require_once __DIR__ . '/../config.php';
 require_once 'conexion.php';
-header("Content-Type: application/json; charset=UTF-8");
+header('Content-Type: application/json; charset=UTF-8');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
 
-// Requiere login de usuario
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(["status" => "error", "message" => "Debes iniciar sesión para realizar una reserva."]);
-    exit;
-}
+$userId = SecurityHandler::requireUser();
 
-// Verificar que Stripe está configurado
 if (!USE_STRIPE) {
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Stripe no está configurado."]);
-    exit;
+    SecurityHandler::jsonError(400, 'Stripe no esta configurado.');
 }
-
-// Solo POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(["status" => "error", "message" => "Método no permitido."]);
-    exit;
+    SecurityHandler::jsonError(405, 'Metodo no permitido.');
 }
 
-// Recibir datos
-$data = json_decode(file_get_contents('php://input'), true);
-if (!$data) $data = $_POST;
+$data = read_json_body();
+if (empty($data)) $data = $_POST;
+SecurityHandler::requireCSRF($data);
 
-$email       = $data['email'] ?? '';
-$nombre      = $data['nombre'] ?? '';
-$pista       = $data['pista'] ?? '';
-$fecha       = $data['fecha'] ?? '';
-$hora        = $data['hora'] ?? '';
-$precio      = floatval($data['precio_total'] ?? 0);
-$dni         = $data['dni'] ?? '';
-$telefono    = $data['telefono'] ?? '';
+$email = trim($_SESSION['user_email'] ?? '');
+$nombre = trim($_SESSION['user_nombre'] ?? '');
+$dni = trim($_SESSION['user_dni'] ?? '');
+$telefono = trim($_SESSION['user_telefono'] ?? '');
 
-if (empty($email) || empty($pista) || empty($fecha) || empty($hora)) {
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Datos incompletos."]);
-    exit;
+$pista = trim($data['pista'] ?? '');
+$fecha = trim($data['fecha'] ?? '');
+$hora = trim($data['hora'] ?? '');
+
+if ($email === '' || $pista === '' || $fecha === '' || $hora === '') {
+    SecurityHandler::jsonError(400, 'Datos de la reserva incompletos.');
 }
 
-// Obtener precio real desde la BD (evita manipulación desde el cliente)
 $horaParts = explode(' - ', $hora);
 $horaInicio = $horaParts[0] ?? '';
-$precioRow = null;
-if (!empty($horaInicio)) {
-    $stmtPrecio = $pdo->prepare("SELECT precio_base, precio_luz FROM precios_personalizados WHERE pista = ? AND fecha = ? AND hora_inicio = ? LIMIT 1");
-    $stmtPrecio->execute([$pista, $fecha, $horaInicio]);
-    $precioRow = $stmtPrecio->fetch();
+
+$precio = 4.00;
+if ($horaInicio !== '') {
+    try {
+        $stmtPrecio = $pdo->prepare("SELECT precio_base, precio_luz FROM precios_personalizados WHERE pista = ? AND fecha = ? AND hora_inicio = ? LIMIT 1");
+        $stmtPrecio->execute([$pista, $fecha, $horaInicio]);
+        $row = $stmtPrecio->fetch();
+        if ($row) {
+            $precio = ((float) ($row['precio_base'] ?? 4.00)) + ((float) ($row['precio_luz'] ?? 0));
+        }
+    } catch (\PDOException $e) {
+        // fallback tarifa base
+    }
 }
 
-// Precio base del servidor; fallback al enviado por cliente solo si no hay fila en BD
-if ($precioRow) {
-    $precioBase = $precioRow['precio_base'] !== null ? (float)$precioRow['precio_base'] : 4.00;
-    $precioLuz  = $precioRow['precio_luz']  !== null ? (float)$precioRow['precio_luz']  : 0.00;
-    $precio = $precioBase + $precioLuz;
-} else {
-    // Sin precio personalizado en BD: tarifa base estándar del servidor
-    // NUNCA usar el valor enviado por el cliente como precio de cobro
-    $precio = 4.00;
-}
-
-// Stripe trabaja en céntimos
-$priceInCents = intval(round($precio * 100));
+$priceInCents = (int) round($precio * 100);
 if ($priceInCents <= 0) {
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Precio inválido."]);
-    exit;
+    SecurityHandler::jsonError(400, 'Precio invalido.');
 }
 
-// Construir la URL base del sitio
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$baseUrl = $protocol . '://' . $_SERVER['HTTP_HOST'] . dirname(dirname($_SERVER['PHP_SELF']));
-$baseUrl = rtrim($baseUrl, '/');
+if (defined('SITE_URL') && SITE_URL !== '') {
+    $baseUrl = rtrim(SITE_URL, '/');
+} else {
+    if (defined('IS_PRODUCTION') && IS_PRODUCTION) {
+        error_log('stripe_checkout: SITE_URL no configurada en produccion');
+        SecurityHandler::jsonError(500, 'Configuracion del servidor incompleta.');
+    }
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $baseUrl = $protocol . '://' . $_SERVER['HTTP_HOST'] . dirname(dirname($_SERVER['PHP_SELF']));
+    $baseUrl = rtrim($baseUrl, '/');
+}
 
-// Guardar los datos en sesión para recuperarlos tras el pago (más seguro que query params)
 $_SESSION['stripe_reserva'] = [
-    'email'       => $email,
-    'nombre'      => $nombre,
-    'pista'       => $pista,
-    'fecha'       => $fecha,
-    'hora'        => $hora,
-    'precio_total'=> $precio,
-    'dni'         => $dni,
-    'telefono'    => $telefono,
+    'user_id' => $userId,
+    'email' => $email,
+    'nombre' => $nombre,
+    'pista' => $pista,
+    'fecha' => $fecha,
+    'hora' => $hora,
+    'precio_total' => $precio,
+    'dni' => $dni,
+    'telefono' => $telefono,
 ];
 
-// Crear Checkout Session via API REST de Stripe
 $stripeData = http_build_query([
     'payment_method_types[]' => 'card',
-    'mode'                   => 'payment',
-    'customer_email'         => $email,
-    'line_items[0][price_data][currency]'     => 'eur',
-    'line_items[0][price_data][unit_amount]'  => $priceInCents,
-    'line_items[0][price_data][product_data][name]'        => "Reserva $pista",
+    'mode' => 'payment',
+    'customer_email' => $email,
+    'line_items[0][price_data][currency]' => 'eur',
+    'line_items[0][price_data][unit_amount]' => $priceInCents,
+    'line_items[0][price_data][product_data][name]' => "Reserva $pista",
     'line_items[0][price_data][product_data][description]' => "Fecha: $fecha | Hora: $hora",
     'line_items[0][quantity]' => 1,
     'success_url' => "$baseUrl/html/pago-exitoso.php?session_id={CHECKOUT_SESSION_ID}",
-    'cancel_url'  => "$baseUrl/html/checkout.php?pago=cancelado",
-    'metadata[pista]'  => $pista,
-    'metadata[fecha]'  => $fecha,
-    'metadata[hora]'   => $hora,
-    'metadata[nombre]' => $nombre,
-    'metadata[dni]'    => $dni,
+    'cancel_url' => "$baseUrl/html/checkout.php?pago=cancelado",
+    'metadata[user_id]' => $userId,
+    'metadata[pista]' => $pista,
+    'metadata[fecha]' => $fecha,
+    'metadata[hora]' => $hora,
+    'metadata[hora_inicio]' => $horaInicio,
+    'metadata[tipo]' => 'reserva',
 ]);
 
 $ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
 curl_setopt_array($ch, [
-    CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => $stripeData,
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => $stripeData,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_USERPWD        => STRIPE_SECRET_KEY . ':',
-    CURLOPT_TIMEOUT        => 30,
+    CURLOPT_USERPWD => STRIPE_SECRET_KEY . ':',
+    CURLOPT_TIMEOUT => 30,
     CURLOPT_SSL_VERIFYPEER => true,
 ]);
-
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
-// curl_close() omitido: desde PHP 8.5 el handle se libera automáticamente
 unset($ch);
 
 if ($curlError) {
-    error_log("Stripe cURL error: $curlError");
-    http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "Error de conexión con la pasarela de pago."]);
-    exit;
+    error_log('stripe_checkout_curl: ' . $curlError);
+    SecurityHandler::jsonError(500, 'Error de conexion con la pasarela de pago.');
 }
 
 $session = json_decode($response, true);
-
 if ($httpCode >= 200 && $httpCode < 300 && isset($session['url'])) {
-    echo json_encode([
-        "status"       => "success",
-        "checkout_url" => $session['url'],
-        "session_id"   => $session['id']
+    audit_log($pdo, 'stripe_checkout_create', 'reserva', null, ['pista' => $pista, 'fecha' => $fecha, 'hora' => $hora, 'session_id' => $session['id'] ?? null]);
+    SecurityHandler::jsonOk([
+        'checkout_url' => $session['url'],
+        'session_id' => $session['id'] ?? null,
     ]);
-} else {
-    $errorMsg = $session['error']['message'] ?? "Error HTTP $httpCode";
-    error_log("Stripe error: $errorMsg");
-    http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "Error al crear sesión de pago: $errorMsg"]);
 }
+
+$errorMsg = $session['error']['message'] ?? "Error HTTP $httpCode";
+error_log('stripe_checkout_error: ' . $errorMsg);
+SecurityHandler::jsonError(500, 'Error al crear sesion de pago.');

@@ -1,6 +1,8 @@
-# api/.htaccess — Seguridad adicional para la carpeta API
+# api/.htaccess — Seguridad de la carpeta API
+# - Bloquear acceso directo a archivos internos (conexion, mailer, logs)
+# - Bloquear scripts setup-*.php (deben restringirse a admin + SETUP_DB_KEY)
+# - Permitir explicitamente el webhook publico de Stripe
 
-# Bloquear acceso directo al archivo de conexión
 <Files "conexion.php">
     <IfModule mod_authz_core.c>
         Require all denied
@@ -21,8 +23,8 @@
     </IfModule>
 </Files>
 
-# Bloquear acceso a archivos de setup/migración dentro de api
-<FilesMatch "^(setup-precios-db\.php)$">
+# Bloquear acceso directo a scripts de setup, migracion, logs y dumps
+<FilesMatch "^(setup-.*\.php|setup_.*\.php|migrate_.*\.php|.*\.log|.*\.bak|.*\.sql|brevo_log\.txt|resend_log\.txt)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -31,3 +33,12 @@
         Deny from all
     </IfModule>
 </FilesMatch>
+
+# Permitir explicitamente el webhook publico de Stripe (firma verificada en PHP)
+<Files "stripe-webhook.php">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+</Files>
+
+Options -Indexes

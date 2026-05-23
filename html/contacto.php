@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/helpers.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -9,8 +12,7 @@ $formEmail = $isUserLoggedIn ? htmlspecialchars($_SESSION['user_email'] ?? '') :
 $formTelefono = $isUserLoggedIn ? htmlspecialchars($_SESSION['user_telefono'] ?? '') : '';
 $formDni = $isUserLoggedIn ? htmlspecialchars($_SESSION['user_dni'] ?? '') : '';
 
-// Optional readonly attribute if we want to lock it
-$readonlyAttr = ''; // $isUserLoggedIn ? 'readonly style="background-color: #f5f5f5;"' : '';
+$readonlyAttr = '';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -22,6 +24,7 @@ $readonlyAttr = ''; // $isUserLoggedIn ? 'readonly style="background-color: #f5f
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/contacto.css">
     <title>Contacto | Alquileres Tarancón</title>
+    <?= csrf_meta_tag() ?>
     <script src="../js/contacto.js?v=1.9.0" defer></script>
     <link rel="stylesheet" href="../css/cookies.css">
     <script src="../js/cookies.js" defer></script>
@@ -30,7 +33,7 @@ $readonlyAttr = ''; // $isUserLoggedIn ? 'readonly style="background-color: #f5f
 
     <?php include '../includes/header.php'; ?>
 
-    <main class="main-content contact-page-wrapper">
+    <main id="contenido-principal" class="main-content contact-page-wrapper">
         <section class="contact-section scroll-animate" data-animation="fade-in-up">
             <div class="contact-page-container">
                 <h2 class="contact-modal-title">Contactar Soporte</h2>
@@ -39,7 +42,9 @@ $readonlyAttr = ''; // $isUserLoggedIn ? 'readonly style="background-color: #f5f
                     ¿Prefieres usar tu correo? <a href="mailto:deportes@tarancon.es" style="color: var(--color-primario, #914f26); text-decoration: underline; font-weight: bold;">Escríbenos directamente</a>.
                 </p>
                 
-                <form id="contactForm" class="contact-form" novalidate>
+                <form id="contactForm" class="contact-form" novalidate aria-describedby="form-required-hint">
+                    <p id="form-required-hint" style="font-size:0.85rem; color:#666;">Los campos marcados con * son obligatorios.</p>
+                    <?= csrf_input() ?>
                     <div class="form-group" style="display:none;" aria-hidden="true">
                         <label for="honeypot">No rellenar si eres humano</label>
                         <input type="text" id="honeypot" name="honeypot" tabindex="-1" autocomplete="off">
@@ -58,9 +63,10 @@ $readonlyAttr = ''; // $isUserLoggedIn ? 'readonly style="background-color: #f5f
                     </div>
                     
                     <div class="form-group">
-                        <label for="contactDni">DNI / NIE *</label>
-                        <input type="text" id="contactDni" name="dni" placeholder="Ej. 12345678Z" value="<?= $formDni ?>" <?= $readonlyAttr ?> required>
-                        <span class="error-msg" id="errorDni">El DNI es obligatorio y debe tener formato válido.</span>
+                        <label for="contactDni">DNI / NIE <span style="color:#666;font-weight:400;">(opcional)</span></label>
+                        <input type="text" id="contactDni" name="dni" placeholder="Ej. 12345678Z" value="<?= $formDni ?>" <?= $readonlyAttr ?> aria-describedby="contactDniHelp errorDni">
+                        <small id="contactDniHelp" style="color:#666;">Solo necesario si la consulta requiere identificación oficial.</small>
+                        <span class="error-msg" id="errorDni" role="alert" aria-live="polite">Formato de DNI/NIE no válido.</span>
                     </div>
                     
                     <div class="form-group">

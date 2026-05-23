@@ -97,92 +97,140 @@ $totalUsosDisponibles = array_sum(array_column($misBonos, 'usos_restantes'));
 
     <script>
     document.addEventListener('DOMContentLoaded', async () => {
-        // Alerta de pago cancelado
+        const csrfToken = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+
         const params = new URLSearchParams(window.location.search);
         if (params.get('pago') === 'cancelado') {
             document.getElementById('bonos-cancel-alert').style.display = 'block';
         }
 
-        // Cargar packs desde la API
+        const buttonLabel = () => window.USE_STRIPE ? '💳 Comprar con Stripe' : '🛒 Comprar Bono';
         const container = document.getElementById('bonos-packs-container');
+
+        function renderEmpty(msg, color) {
+            while (container.firstChild) container.removeChild(container.firstChild);
+            const div = document.createElement('div');
+            div.style.cssText = 'text-align:center;padding:2rem;color:' + color + ';';
+            div.textContent = msg;
+            container.appendChild(div);
+        }
+
+        function renderPack(pack, isPopular) {
+            const card = document.createElement('div');
+            card.className = 'bono-pack-card' + (isPopular ? ' popular' : '');
+
+            if (isPopular) {
+                const badge = document.createElement('span');
+                badge.className = 'bono-popular-badge';
+                badge.textContent = '⭐ Más Popular';
+                card.appendChild(badge);
+            }
+
+            const header = document.createElement('div');
+            header.className = 'bono-pack-header';
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'pack-icon';
+            iconDiv.textContent = '🎟️';
+            const h3 = document.createElement('h3');
+            h3.textContent = pack.nombre;
+            const usosDiv = document.createElement('div');
+            usosDiv.className = 'pack-usos';
+            usosDiv.textContent = pack.usos + ' sesiones deportivas';
+            header.append(iconDiv, h3, usosDiv);
+            card.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'bono-pack-body';
+
+            const precioDiv = document.createElement('div');
+            precioDiv.className = 'bono-pack-precio';
+            precioDiv.textContent = parseFloat(pack.precio).toFixed(2).replace('.', ',') + ' ';
+            const eur = document.createElement('small');
+            eur.textContent = '€';
+            precioDiv.appendChild(eur);
+            body.appendChild(precioDiv);
+
+            const perSesion = (pack.precio / pack.usos).toFixed(2).replace('.', ',');
+            const perDiv = document.createElement('div');
+            perDiv.className = 'bono-pack-per-sesion';
+            perDiv.textContent = perSesion + ' € por sesión';
+            body.appendChild(perDiv);
+
+            const featuresUl = document.createElement('ul');
+            featuresUl.className = 'bono-pack-features';
+            ['Válido para cualquier pista', 'Incluye suplemento de luz', 'Canjeable en el checkout', 'Válido ' + pack.caducidad_meses + ' meses desde la compra']
+                .forEach(t => { const li = document.createElement('li'); li.textContent = t; featuresUl.appendChild(li); });
+            body.appendChild(featuresUl);
+
+            const cadP = document.createElement('p');
+            cadP.className = 'bono-pack-caducidad';
+            cadP.textContent = '📅 Caduca a los ' + pack.caducidad_meses + ' meses';
+            body.appendChild(cadP);
+
+            const btn = document.createElement('button');
+            btn.className = 'btn-comprar-bono';
+            btn.type = 'button';
+            btn.dataset.tipo = pack.tipo;
+            btn.textContent = buttonLabel();
+            body.appendChild(btn);
+
+            card.appendChild(body);
+            return card;
+        }
+
         try {
-            const resp = await fetch('../api/bonos.php?action=get_config');
+            const resp = await fetch('../api/bonos.php?action=get_config', { credentials: 'same-origin' });
             const result = await resp.json();
 
             if (result.status === 'success' && result.data.length > 0) {
-                let html = '';
+                while (container.firstChild) container.removeChild(container.firstChild);
                 result.data.forEach((pack, i) => {
-                    const perSesion = (pack.precio / pack.usos).toFixed(2).replace('.', ',');
-                    const isPopular = i === result.data.length - 1; // El último es "popular"
-
-                    html += `
-                    <div class="bono-pack-card ${isPopular ? 'popular' : ''}">
-                        ${isPopular ? '<span class="bono-popular-badge">⭐ Más Popular</span>' : ''}
-                        <div class="bono-pack-header">
-                            <div class="pack-icon">🎟️</div>
-                            <h3>${pack.nombre}</h3>
-                            <div class="pack-usos">${pack.usos} sesiones deportivas</div>
-                        </div>
-                        <div class="bono-pack-body">
-                            <div class="bono-pack-precio">
-                                ${parseFloat(pack.precio).toFixed(2).replace('.', ',')} <small>€</small>
-                            </div>
-                            <div class="bono-pack-per-sesion">${perSesion} € por sesión</div>
-                            <ul class="bono-pack-features">
-                                <li>Válido para cualquier pista</li>
-                                <li>Incluye suplemento de luz</li>
-                                <li>Canjeable en el checkout</li>
-                                <li>Válido ${pack.caducidad_meses} meses desde la compra</li>
-                            </ul>
-                            <p class="bono-pack-caducidad">📅 Caduca a los ${pack.caducidad_meses} meses</p>
-                            <button class="btn-comprar-bono" onclick="comprarBono('${pack.tipo}', this)">
-                                ${window.USE_STRIPE ? '💳 Comprar con Stripe' : '🛒 Comprar Bono'}
-                            </button>
-                        </div>
-                    </div>`;
+                    container.appendChild(renderPack(pack, i === result.data.length - 1));
                 });
-                container.innerHTML = html;
             } else {
-                container.innerHTML = '<div style="text-align:center;padding:2rem;color:#888;">No hay packs disponibles en este momento.</div>';
+                renderEmpty('No hay packs disponibles en este momento.', '#888');
             }
         } catch (err) {
             console.error('Error cargando packs:', err);
-            container.innerHTML = '<div style="text-align:center;padding:2rem;color:#c62828;">Error al cargar los packs. Recarga la página.</div>';
+            renderEmpty('Error al cargar los packs. Recarga la página.', '#c62828');
         }
-    });
 
-    async function comprarBono(tipo, btn) {
-        btn.disabled = true;
-        btn.textContent = 'Procesando...';
+        // Event delegation sobre el contenedor (sustituye al onclick inline)
+        container.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.btn-comprar-bono');
+            if (!btn) return;
+            const tipo = btn.dataset.tipo;
+            if (!tipo) return;
 
-        try {
-            const resp = await fetch('../api/bonos-checkout.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tipo })
-            });
-            const result = await resp.json();
-
-            if (result.status === 'success') {
-                if (result.checkout_url) {
-                    // Stripe: redirigir a pasarela
-                    window.location.href = result.checkout_url;
-                } else if (result.redirect) {
-                    // Simulado: ir a página de éxito
-                    window.location.href = result.redirect;
+            btn.disabled = true;
+            btn.textContent = 'Procesando...';
+            try {
+                const resp = await fetch('../api/bonos-checkout.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ tipo, csrf_token: csrfToken })
+                });
+                const result = await resp.json();
+                if (result.status === 'success') {
+                    if (result.checkout_url) {
+                        window.location.href = result.checkout_url;
+                    } else if (result.redirect) {
+                        window.location.href = result.redirect;
+                    }
+                } else {
+                    alert('Error: ' + (result.message || 'No se pudo procesar la compra.'));
+                    btn.disabled = false;
+                    btn.textContent = buttonLabel();
                 }
-            } else {
-                alert('Error: ' + (result.message || 'No se pudo procesar la compra.'));
+            } catch (err) {
+                console.error('Error comprando bono:', err);
+                alert('Error de conexión. Inténtalo de nuevo.');
                 btn.disabled = false;
-                btn.textContent = window.USE_STRIPE ? '💳 Comprar con Stripe' : '🛒 Comprar Bono';
+                btn.textContent = buttonLabel();
             }
-        } catch (err) {
-            console.error('Error comprando bono:', err);
-            alert('Error de conexión. Inténtalo de nuevo.');
-            btn.disabled = false;
-            btn.textContent = window.USE_STRIPE ? '💳 Comprar con Stripe' : '🛒 Comprar Bono';
-        }
-    }
+        });
+    });
     </script>
 </body>
 </html>

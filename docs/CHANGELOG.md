@@ -6,6 +6,135 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [3.1.0] - 24-05-2026
+
+> **Segunda ola de endurecimiento tras auditoría de validación de v3.0.0.**
+> Cierra los hallazgos de la auditoría y añade verificación de email, recuperación de contraseña y 2FA TOTP para administradores.
+
+### Añadido 🚀
+- **Verificación de email al registro** (flujo completo):
+  - `includes/tokens.php` — generación y validación de tokens de un solo uso (SHA-256 en BD, plano en URL).
+  - Email de verificación enviado vía Resend tras `user-register.php` (token 24h).
+  - `html/verify-email.php` consume el token y marca `usuarios.email_verificado = 1`.
+- **Recuperación de contraseña** (flujo completo, anti-enumeración):
+  - `api/forgot-password.php` (POST, CSRF, rate limit 5/15min) — responde igual exista el email o no.
+  - `html/forgot-password.php` (formulario público).
+  - `api/reset-password.php` (POST, CSRF, exige password fuerte, token un solo uso, invalida sesión activa).
+  - `html/reset-password.php` (formulario con validación del token al cargar).
+  - Enlace "¿Olvidaste tu contraseña?" en `html/user-login.php`.
+- **2FA TOTP para administradores** (RFC 6238, sin dependencias externas):
+  - `includes/totp.php` — implementación completa Base32 + HMAC-SHA1 + provisioning URI + QR (via quickchart.io).
+  - `api/admin-2fa.php` — acciones `init` / `enable` / `disable` / `regen_recovery` (CSRF, audit).
+  - `admin/admin-2fa-setup.php` — UI para activar/desactivar con QR y código de verificación.
+  - `admin/admin-auth.php` reescrito como **flujo de dos pasos**: tras `password_verify`, si `totp_enabled = 1`, redirige al paso 2 (input de código TOTP o de respaldo).
+  - **Códigos de respaldo**: 8 códigos hexadecimales de 8 caracteres, hash bcrypt en BD, consumibles una sola vez.
+  - Tabla `usuarios_admin` + columnas `totp_secret`, `totp_enabled`, `totp_recovery_codes`.
+- **`.well-known/security.txt`** (RFC 9116) con contacto del DPD, expiración y enlace a `SECURITY.md`.
+- **`docs/SECURITY-CHECKLIST.md`** — lista exhaustiva de pruebas manuales de QA de seguridad para validar antes de release (~50 puntos cubriendo auth, CSRF, IDOR, Stripe, XSS, cookies, headers, HTTPS, info disclosure).
+
+### Cambiado 🔄
+- **`enviar-correo.php` bloqueado en producción siempre** (antes: `IS_PRODUCTION && USE_STRIPE`). Cierra regresión grave: si Stripe se caía, el endpoint creaba reservas sin pago.
+- **`conexion.php` ya no expone `$e->getMessage()` al cliente**, ni siquiera en NO-producción.
+- **Setup scripts uniformados**:
+  - `api/setup-bonos-db.php` y `api/setup-horarios-db.php` reescritos con doble guarda (admin OR `SETUP_DB_KEY`), idempotentes, sin filtrar `getMessage` al cliente.
+  - Texto plano (no HTML), eliminación de `SHOW COLUMNS` para detección de bono_id.
+- **Webhook Stripe valida coherencia de entorno**: rechaza eventos con `livemode` distinto al de las claves configuradas (evita procesar eventos TEST en PROD o viceversa).
+- **`stripe-checkout.php` y `bonos-checkout.php`**: si `SITE_URL` está vacía en producción → 500 con log (antes: fallback inseguro a `HTTP_HOST`).
+- **`admin-stats.php`** reescrito usando `SecurityHandler::requireAdmin/jsonOk/jsonError` + headers `nosniff` y `no-store`.
+- **`admin-actividad.php`**: `LIMIT` ahora parametrizado con `bindValue(..., PDO::PARAM_INT)`.
+- **LIKE wildcards escapados** (`like_escape`) en `admin-reservas.php`, `admin-consultas.php`, `admin-bonos.php` — evita DoS por patrones tipo `%%%%`.
+- **`pago-exitoso.php` y `bono-exitoso.php`**: ya no exigen sesión activa (solo validan `metadata.user_id` vs sesión SI hay sesión). Resuelve UX: usuarios que tardan >30min en Stripe pierden la sesión local pero deberían poder ver el código tras pagar.
+- **`read_json_body()` con tope de 64 KB** (anti-DoS por payloads gigantes en cookie-consent, etc.).
+- **`clamp_password()` aplicado en todos los flujos de password** (max 256 bytes, anti-DoS de CPU contra bcrypt). Aplicado en `user-auth`, `user-register`, `user-update`, `admin-auth`, `admin-users`, `reset-password`.
+- **Refactor `onclick=` inline → `addEventListener` + delegación de eventos** en `html/home.php` (anuncios) y `html/bonos.php` (botón comprar). Cero `onclick=` HTML quedan en el proyecto. CSP queda preparado para retirar `'unsafe-inline'` cuando se muevan los `<script>` inline restantes a archivos externos (v3.2.x).
+- **`html/home.php`** ya no usa `innerHTML` con datos de la API: anuncios construidos con `createElement` + `textContent`.
+- **`html/bonos.php`** mismo refactor: cards construidas con DOM API, fetch añade `X-CSRF-Token` y `csrf_token` (faltaba).
+- **CSP `img-src`**: incluye `https://quickchart.io` (necesario para QR de 2FA).
+- **`POLICY_VERSION = '2026-05-24'`** (versión política).
+
+### Eliminado ❌
+- Antiguo `comprarBono()` en scope global (sustituido por delegación dentro de DOMContentLoaded).
+- `showPadelOptions()` y `closeAnuncio()` globales (mismo motivo).
+
+### Seguridad 🛡️
+- Cerrados todos los hallazgos críticos/altos de la auditoría de validación post-v3.0.0:
+  - **CRÍTICA**: `enviar-correo.php` accesible si Stripe falla → corregido (bloqueado en prod siempre).
+  - **ALTA**: `conexion.php` filtraba PDO en no-prod → corregido (genérico siempre).
+  - **ALTA**: `setup-*` filtraban `getMessage` → corregido.
+  - **ALTA**: webhook Stripe sin validar `livemode` → corregido.
+  - **MEDIA**: `SITE_URL` fallback HTTP_HOST en prod → corregido (aborta en prod).
+  - **MEDIA**: LIMIT no parametrizado → corregido.
+  - **MEDIA**: LIKE wildcards sin escapar → corregido.
+  - **BAJA**: `admin-stats.php` sin headers seguros → corregido.
+  - **UX**: sesión caducada durante Stripe rompía pago-exitoso → corregido (fallback a metadata.user_id).
+
+### Notas operativas 📋
+- **Ejecutar de nuevo `api/setup-security-db.php?key=<SETUP_DB_KEY>`** para crear las columnas `totp_secret`, `totp_enabled`, `totp_recovery_codes` en `usuarios_admin`.
+- El servicio público de QR (quickchart.io) sólo se usa durante el aprovisionamiento de 2FA. Si quieres autohospedarlo (privacidad), instalar `endroid/qr-code` vía Composer y servir desde `/api/qr.php` (P2 en `PLAN.md`).
+
+---
+
+## [3.0.0] - 23-05-2026
+
+> **Pase de endurecimiento de seguridad, cumplimiento RGPD/LOPDGDD/ENS y migración de proveedor de email.** Versión mayor por cambio de proveedor de email (Brevo → Resend) y reestructuración de cumplimiento legal (textos legales reescritos con base jurídica correcta y nuevas tablas en BD).
+
+### Añadido 🚀
+- **Infraestructura de seguridad**:
+  - `includes/SecurityHandler.php` reescrito como middleware unificado: `requireCSRF()`, `requireUser()`, `requireAdmin()`, `regenerateSession()`, `enforceSessionTimeout()`, `sanitizeRedirect()` (whitelist), `isRateLimited()`/`recordAttempt()`/`clearAttempts()`, `jsonError()`/`jsonOk()`, `clientIpAnonymized()`.
+  - `includes/audit.php` — log estructurado de acciones sensibles (`audit_log` con actor, IP anonimizada, datos JSON con blacklist de campos sensibles).
+  - `includes/helpers.php` — `esc_html()`, `csrf_meta_tag()`, `csrf_input()`, `read_json_body()`.
+- **Nuevas tablas en BD** (vía `api/setup-security-db.php`): `audit_log`, `login_attempts`, `password_resets`, `email_verifications`, `consent_log` (RGPD art. 5.2 accountability), `webhook_events` (idempotencia Stripe). Nuevas columnas: `usuarios.email_verificado`, `usuarios.consent_id`, `usuarios.politica_aceptada_version`, `reservas.cancelado_por_admin_id`, `reservas.fecha_cancelacion`.
+- **Webhook Stripe** (`api/stripe-webhook.php`): verificación de firma HMAC, idempotencia por `event_id`, fuente canónica para creación de reservas y bonos. `pago-exitoso.php` y `bono-exitoso.php` quedan reducidos a página de estado con fallback.
+- **Banner de cookies conforme Guía AEPD 2023** (`js/cookies.js` + `api/cookie-consent.php`): tres botones con igual jerarquía visual, enforcement server-side, cookie firmada, log de consentimientos en BD, expiración 24 meses.
+- **Migración email Brevo → Resend** (`api/mailer.php`): integración con Resend API. Override `MAIL_OVERRIDE_TO` para desarrollo: todos los emails se redirigen al correo configurado con banner indicando destinatario real.
+- **Textos legales completos** conformes RGPD/LOPDGDD/LSSI-CE/RD 1112/2018:
+  - `html/politica-privacidad.php` — base jurídica correcta (art. 6.1.e RGPD + Ley 7/1985 LBRL art. 25.2.l), DPD identificado (`dpd@tarancon.es`), plazos concretos por tratamiento, transferencias internacionales (Stripe/Resend), derecho a reclamar ante AEPD.
+  - `html/politica-cookies.php` — tabla detallada de cookies (PHPSESSID, cookie_consent, beta_access, cookies de Stripe), base jurídica art. 22.2 LSSI-CE, renovación 24 meses.
+  - `html/aviso-legal.php` — completo conforme art. 10 LSSI, canal presencial alternativo (Ley 39/2015 art. 14.1).
+  - `html/accesibilidad.php` — RD 1112/2018 art. 15: fecha declaración, método evaluación, criterios WCAG concretos, mecanismo comunicación (`accesibilidad@tarancon.es`), reclamación al OAW.
+- **`env.example.php`** plantilla documentada con todos los slots (Resend, Stripe webhook secret, SETUP_DB_KEY, BETA_SALT, SITE_URL, MAIL_OVERRIDE_TO).
+- **Mejoras de accesibilidad WCAG**: skip link (`includes/header.php`), `@media (prefers-reduced-motion)` (`css/home.css`), ARIA roles y labels, `<main id="contenido-principal">`, foco visible reforzado, DNI opcional en contacto.
+- **CSRF en formularios públicos**: `csrf_input()` en login, registro, admin-login, contacto, checkout. Meta `csrf-token` en `<head>`.
+
+### Cambiado 🔄
+- **CSRF obligatorio en TODOS los endpoints de mutación** (~14 archivos que antes no validaban): user-auth, user-register, user-update, stripe-checkout, bonos-checkout, bonos (use_bono), enviar-correo, guardar-consulta, desbloquear-hora, admin-users, admin-bonos, admin-actividad. Los que ya validaban se han homogeneizado.
+- **`session_regenerate_id(true)` tras login de usuario** (antes solo admin) — mitiga session fixation.
+- **Rate limit por IP en login** de usuarios y admins (5 intentos / 15 min, persistente en BD — no eludible borrando cookies).
+- **Sanitización de redirect post-login** con whitelist explícita.
+- **Validación de `metadata.user_id` Stripe** en `pago-exitoso.php` y `bono-exitoso.php` — corrige IDOR.
+- **Precio Stripe siempre recalculado en servidor**; el valor enviado por el cliente nunca se usa para cobrar.
+- **HTML de plantillas de email** sanitizado con `esc_html()` en todas las interpolaciones.
+- **Política de contraseñas reforzada** para admin y `update_password`: mínimo 12 caracteres con mayúsculas, minúsculas y números.
+- **Trazabilidad de cancelaciones**: `cancelado_por_admin_id` + `fecha_cancelacion` en `reservas`.
+- **`admin-anuncios.php`** sanitiza título y mensaje con `strip_tags()` (anti stored-XSS).
+- **`guardar-consulta.php`** ignora datos identificativos del POST si el usuario tiene sesión (usa los de sesión) — anti-spoof.
+- **DNI opcional en contacto** (antes obligatorio — desproporcionado según Guía AEPD).
+- **Endpoints API devuelven sólo mensajes genéricos**, nunca `$e->getMessage()`.
+- **`.htaccess` raíz endurecido**: redirect 301 HTTPS forzado, Permissions-Policy, Cross-Origin-Opener-Policy, bloqueo de setup-*, logs, dumps, markdown, swap.
+- **`api/.htaccess`** bloquea `setup-*`, logs y dumps; permite sólo `stripe-webhook.php`.
+- **CSP** añade `cdn.jsdelivr.net`, `upgrade-insecure-requests`, `frame-ancestors`, `form-action`, `base-uri`, `object-src 'none'`.
+- **`includes/header.php`** reemplaza `<h1>` del título por `<p>` para que solo haya un `<h1>` por página (WCAG 1.3.1).
+- **`POLICY_VERSION = '2026-05-23'`** — los registros de consentimiento referencian esta versión.
+
+### Eliminado ❌
+- **Brevo** como proveedor de email (sustituido por Resend). Código residual eliminado.
+- **`SecurityHandler::safeRedirect()`** — usaba `HTTP_HOST` (cabecera falsificable). Sustituido por `sanitizeRedirect()`.
+- **`SHOW COLUMNS` en runtime** dentro de `enviar-correo.php`. Reemplazado por lista fija de columnas.
+
+### Seguridad 🛡️
+- Vulnerabilidades CRÍTICAS y ALTAS corregidas: CSRF ausente en 14 endpoints, IDOR Stripe bonos, open redirect post-login, session fixation user, rate-limit eludible admin, XSS en plantillas email, stored XSS potencial en anuncios.
+- Auditoría OWASP + RGPD + compliance institucional + hosting realizada con 4 subagentes paralelos. Reportes consolidados.
+- **Pendiente bloqueante para producción**: rotar credenciales BD/Resend, migrar hosting fuera de InfinityFree (incompatible con ENS y los ToS de InfinityFree prohíben Stripe), firmar DPA con encargados, designar DPD del Ayuntamiento, solicitar subdominio `reservas.tarancon.es`.
+
+### Conformidad legal 📋
+- **RGPD** (UE 2016/679) y **LOPDGDD** (LO 3/2018) — base jurídica corregida a interés público (art. 6.1.e) + obligación legal (art. 6.1.c).
+- **LSSI-CE** (Ley 34/2002) — aviso legal art. 10 y consentimiento de cookies art. 22.2.
+- **RD 1112/2018** + WCAG 2.1 AA + UNE-EN 301 549 v3.2.1 — declaración de accesibilidad conforme.
+- **Guía AEPD Cookies julio 2023** — botones equipolentes, granularidad, server-side enforcement, renovación 24m.
+- **ENS** (RD 311/2022) — código preparado para certificación categoría MEDIA (log auditoría, rate limit, sesiones, HTTPS, headers). Falta certificación de hosting.
+
+---
+
 ## [2.7.0] - 15-04-2026
 
 ### Añadido 🚀

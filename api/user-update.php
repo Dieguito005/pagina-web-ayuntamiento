@@ -1,132 +1,104 @@
 <?php
-// api/user-update.php — Actualiza credenciales del usuario público
+// api/user-update.php — Actualiza datos del usuario público (teléfono, email, contraseña)
+// Requiere CSRF + sesión de usuario.
+
 ob_start();
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/audit.php';
+require_once __DIR__ . '/../includes/helpers.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'conexion.php';
-header("Content-Type: application/json; charset=UTF-8");
+header('Content-Type: application/json; charset=UTF-8');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
 
-// Solo usuarios logueados
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(["status" => "error", "message" => "No autenticado."]);
-    exit;
-}
+$userId = SecurityHandler::requireUser();
+$data = read_json_body();
+SecurityHandler::requireCSRF($data);
 
-$data = json_decode(file_get_contents('php://input'), true);
 $action = $data['action'] ?? '';
-$userId = $_SESSION['user_id'];
 
-// ── ACTUALIZAR TELÉFONO (sin cierre de sesión) ──────────────────────────────
 if ($action === 'update_phone') {
     $telefono = trim($data['telefono'] ?? '');
-
-    if (!empty($telefono) && !preg_match('/^[0-9]{9}$/', $telefono)) {
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "Teléfono inválido. Debe tener 9 dígitos."]);
-        exit;
+    if ($telefono !== '' && !preg_match('/^[0-9]{9}$/', $telefono)) {
+        SecurityHandler::jsonError(400, 'Teléfono inválido. Debe tener 9 dígitos.');
     }
-
     try {
         $stmt = $pdo->prepare("UPDATE usuarios SET telefono = ? WHERE id = ?");
         $stmt->execute([$telefono ?: null, $userId]);
         $_SESSION['user_telefono'] = $telefono ?: null;
-        echo json_encode(["status" => "success", "message" => "Teléfono actualizado correctamente."]);
+        audit_log($pdo, 'update_phone', 'usuario', $userId);
+        SecurityHandler::jsonOk(['message' => 'Teléfono actualizado correctamente.']);
     } catch (\PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error al actualizar el teléfono."]);
+        error_log('user_update_phone: ' . $e->getMessage());
+        SecurityHandler::jsonError(500, 'Error al actualizar el teléfono.');
     }
+}
 
-// ── ACTUALIZAR EMAIL (cierra sesión) ────────────────────────────────────────
-} elseif ($action === 'update_email') {
-    $newEmail = trim(strtolower($data['email'] ?? ''));
-
+if ($action === 'update_email') {
+    $newEmail = strtolower(trim($data['email'] ?? ''));
     if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "El email introducido no es válido."]);
-        exit;
+        SecurityHandler::jsonError(400, 'El email introducido no es válido.');
     }
-
-    if ($newEmail === strtolower($_SESSION['user_email'])) {
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "El nuevo email es igual al actual."]);
-        exit;
+    if ($newEmail === strtolower($_SESSION['user_email'] ?? '')) {
+        SecurityHandler::jsonError(400, 'El nuevo email es igual al actual.');
     }
-
     try {
-        // Comprobar que el email no esté en uso
         $check = $pdo->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
         $check->execute([$newEmail, $userId]);
         if ($check->fetch()) {
-            http_response_code(409);
-            echo json_encode(["status" => "error", "message" => "Este email ya está registrado por otra cuenta."]);
-            exit;
+            SecurityHandler::jsonError(409, 'Este email ya está registrado por otra cuenta.');
         }
-
-        $stmt = $pdo->prepare("UPDATE usuarios SET email = ? WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE usuarios SET email = ?, email_verificado = 0 WHERE id = ?");
         $stmt->execute([$newEmail, $userId]);
 
-        // Destruir sesión — el usuario deberá re-loguearse con el nuevo email
+        audit_log($pdo, 'update_email', 'usuario', $userId);
+
         session_unset();
         session_destroy();
-
-        echo json_encode(["status" => "success", "message" => "Email actualizado. Por seguridad, inicia sesión de nuevo con tu nuevo email.", "logout" => true]);
+        SecurityHandler::jsonOk(['message' => 'Email actualizado. Por seguridad, inicia sesión de nuevo con tu nuevo email.', 'logout' => true]);
     } catch (\PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error al actualizar el email."]);
+        error_log('user_update_email: ' . $e->getMessage());
+        SecurityHandler::jsonError(500, 'Error al actualizar el email.');
     }
+}
 
-// ── ACTUALIZAR CONTRASEÑA (cierra sesión) ───────────────────────────────────
-} elseif ($action === 'update_password') {
-    $currentPass  = $data['current_password'] ?? '';
-    $newPass      = $data['new_password']     ?? '';
-    $confirmPass  = $data['confirm_password'] ?? '';
+if ($action === 'update_password') {
+    $currentPass = clamp_password((string) ($data['current_password'] ?? ''));
+    $newPass = clamp_password((string) ($data['new_password'] ?? ''));
+    $confirmPass = clamp_password((string) ($data['confirm_password'] ?? ''));
 
-    if (empty($currentPass) || empty($newPass) || empty($confirmPass)) {
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "Completa todos los campos de contraseña."]);
-        exit;
+    if ($currentPass === '' || $newPass === '' || $confirmPass === '') {
+        SecurityHandler::jsonError(400, 'Completa todos los campos de contraseña.');
     }
-
     if ($newPass !== $confirmPass) {
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "La nueva contraseña y su confirmación no coinciden."]);
-        exit;
+        SecurityHandler::jsonError(400, 'La nueva contraseña y su confirmación no coinciden.');
     }
-
-    if (strlen($newPass) < 8) {
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "La contraseña debe tener al menos 8 caracteres."]);
-        exit;
+    if (strlen($newPass) < 12) {
+        SecurityHandler::jsonError(400, 'La contraseña debe tener al menos 12 caracteres.');
     }
-
+    if (!preg_match('/[A-Z]/', $newPass) || !preg_match('/[a-z]/', $newPass) || !preg_match('/[0-9]/', $newPass)) {
+        SecurityHandler::jsonError(400, 'La contraseña debe incluir mayúsculas, minúsculas y números.');
+    }
     try {
-        // Verificar contraseña actual
         $stmt = $pdo->prepare("SELECT password_hash FROM usuarios WHERE id = ?");
         $stmt->execute([$userId]);
         $row = $stmt->fetch();
-
         if (!$row || !password_verify($currentPass, $row['password_hash'])) {
-            http_response_code(403);
-            echo json_encode(["status" => "error", "message" => "La contraseña actual no es correcta."]);
-            exit;
+            SecurityHandler::jsonError(403, 'La contraseña actual no es correcta.');
         }
-
-        // Actualizar con nuevo hash
         $newHash = password_hash($newPass, PASSWORD_DEFAULT);
         $upd = $pdo->prepare("UPDATE usuarios SET password_hash = ? WHERE id = ?");
         $upd->execute([$newHash, $userId]);
+        audit_log($pdo, 'update_password', 'usuario', $userId);
 
-        // Destruir sesión
         session_unset();
         session_destroy();
-
-        echo json_encode(["status" => "success", "message" => "Contraseña actualizada. Por seguridad, inicia sesión de nuevo.", "logout" => true]);
+        SecurityHandler::jsonOk(['message' => 'Contraseña actualizada. Por seguridad, inicia sesión de nuevo.', 'logout' => true]);
     } catch (\PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error al actualizar la contraseña."]);
+        error_log('user_update_password: ' . $e->getMessage());
+        SecurityHandler::jsonError(500, 'Error al actualizar la contraseña.');
     }
-
-} else {
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Acción no válida."]);
 }
+
+SecurityHandler::jsonError(400, 'Acción no válida.');

@@ -1,16 +1,24 @@
 # ==========================================
-# .htaccess — Raíz del proyecto
-# Seguridad y configuración Apache
+# .htaccess — Raiz del proyecto
+# Seguridad y configuracion Apache
 # ==========================================
 
-# Redirigir la raíz a la página principal
 DirectoryIndex index.html index.php
+
+# ──────────────────────────────────────────
+# FORZAR HTTPS (redirect 301 todo trafico HTTP)
+# ──────────────────────────────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+</IfModule>
 
 # ──────────────────────────────────────────
 # PROTEGER ARCHIVOS SENSIBLES
 # ──────────────────────────────────────────
-# Bloquear acceso directo a config, scripts de setup, migraciones, deploy y dotfiles
-<FilesMatch "^(config\.php|env\.php|deploy_.*\.php|setup_db.*\.php|migrate_.*\.php|update_reservas_table\.php|check\.php|check2\.php|refactor\.ps1|\.gitattributes|\.gitignore|\.env)$">
+<FilesMatch "^(config\.php|env\.php|env\.example\.php|deploy_.*\.php|setup_db.*\.php|setup-.*\.php|migrate_.*\.php|update_reservas_table\.php|check\.php|check2\.php|refactor\.ps1|\.gitattributes|\.gitignore|\.env|composer\.json|composer\.lock|package\.json|package-lock\.json)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -22,12 +30,11 @@ DirectoryIndex index.html index.php
 
 # Bloquear acceso a directorios ocultos (.git, etc.)
 <IfModule mod_rewrite.c>
-    RewriteEngine On
     RewriteRule (^|/)\.(?!well-known) - [F,L]
 </IfModule>
 
-# Bloquear acceso a README, CHANGELOG, docs
-<FilesMatch "\.(md|txt|log|bak|sql|sh)$">
+# Bloquear acceso a documentacion, logs, backups, dumps SQL, etc.
+<FilesMatch "\.(md|txt|log|bak|sql|sh|swp|tmp|orig)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -38,22 +45,24 @@ DirectoryIndex index.html index.php
 </FilesMatch>
 
 # ──────────────────────────────────────────
-# CABECERAS DE SEGURIDAD (para archivos estáticos)
+# CABECERAS DE SEGURIDAD GLOBALES
 # ──────────────────────────────────────────
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(self \"https://js.stripe.com\"), interest-cohort=()"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" "expr=%{HTTPS} == 'on'"
 </IfModule>
 
 # ──────────────────────────────────────────
 # DESACTIVAR LISTADO DE DIRECTORIOS
 # ──────────────────────────────────────────
-Options -Indexes
+Options -Indexes -ExecCGI
 
 # ──────────────────────────────────────────
-# CACHÉ DE ASSETS ESTÁTICOS
+# CACHE DE ASSETS ESTATICOS
 # ──────────────────────────────────────────
 <IfModule mod_expires.c>
     ExpiresActive On
@@ -66,7 +75,7 @@ Options -Indexes
 </IfModule>
 
 # ──────────────────────────────────────────
-# COMPRESIÓN GZIP
+# COMPRESION GZIP
 # ──────────────────────────────────────────
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json text/plain

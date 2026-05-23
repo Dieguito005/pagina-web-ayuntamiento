@@ -19,7 +19,7 @@
     <?php include '../includes/header.php'; ?>
     <div id="anuncios-container"></div>
 
-    <main class="main-content">
+    <main id="contenido-principal" class="main-content">
         <!-- SECCIÓN BANNER HERO -->
         <section class="hero-banner">
             <div class="hero-content scroll-animate" data-animation="fade-in-up">
@@ -40,7 +40,7 @@
                     <div class="card-info">
                         <h3>Pádel</h3>
                         <p class="court-context">Pistas descubiertas y cubiertas de cristal a tu disposición.</p>
-                        <a href="#" class="btn-primary" id="btn-padel-main" onclick="showPadelOptions(event)">Ver pistas
+                        <a href="#" class="btn-primary" id="btn-padel-main">Ver pistas
                             disponibles</a>
                         <div id="padel-options"
                             style="display: none; margin-top: 15px; animation: fadeInUp 0.4s ease-out;">
@@ -96,54 +96,52 @@
 
     <script>
         // 1. Mostrar opciones de Pádel
-        function showPadelOptions(event) {
+        document.getElementById('btn-padel-main')?.addEventListener('click', (event) => {
             event.preventDefault();
             document.getElementById('btn-padel-main').style.display = 'none';
             document.getElementById('padel-options').style.display = 'block';
-        }
+        });
 
-        function escHtml(s) {
-            const d = document.createElement('div');
-            d.textContent = String(s);
-            return d.innerHTML;
-        }
-
-        // Sistema dinámico de anuncios
+        // Sistema dinámico de anuncios — todo construido con DOM API (sin innerHTML)
         async function fetchAnuncios() {
             const container = document.getElementById('anuncios-container');
-            if(!container) return;
-
+            if (!container) return;
             try {
-                const resp = await fetch('../api/get-anuncios.php');
+                const resp = await fetch('../api/get-anuncios.php', { credentials: 'same-origin' });
                 const result = await resp.json();
+                if (!result.success || result.data.length === 0) return;
 
-                if (result.success && result.data.length > 0) {
-                    let html = '';
-                    result.data.forEach(a => {
-                        let icon = 'ℹ️';
-                        if(a.tipo === 'aviso') icon = '⚠️';
-                        if(a.tipo === 'peligro') icon = '⛔';
-                        if(a.tipo === 'exito') icon = '✅';
+                const iconFor = (t) => t === 'aviso' ? '⚠️' : t === 'peligro' ? '⛔' : t === 'exito' ? '✅' : 'ℹ️';
 
-                        html += `
-                        <div class="anuncio-banner anuncio-${escHtml(a.tipo)}" id="anuncio-${parseInt(a.id)}">
-                            <div>
-                                <h4>${escHtml(icon + ' ' + a.titulo)}</h4>
-                                <p>${escHtml(a.mensaje)}</p>
-                            </div>
-                            <button class="btn-close-anuncio" onclick="closeAnuncio(${parseInt(a.id)})" title="Ocultar">&times;</button>
-                        </div>`;
-                    });
-                    container.innerHTML = html;
-                }
+                result.data.forEach((a) => {
+                    const id = parseInt(a.id, 10);
+                    const tipo = String(a.tipo || '').replace(/[^a-z0-9_-]/gi, '');
+                    const banner = document.createElement('div');
+                    banner.className = 'anuncio-banner anuncio-' + tipo;
+                    banner.id = 'anuncio-' + id;
+
+                    const content = document.createElement('div');
+                    const h4 = document.createElement('h4');
+                    h4.textContent = iconFor(tipo) + ' ' + (a.titulo || '');
+                    const p = document.createElement('p');
+                    p.textContent = a.mensaje || '';
+                    content.append(h4, p);
+                    banner.appendChild(content);
+
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'btn-close-anuncio';
+                    closeBtn.type = 'button';
+                    closeBtn.title = 'Ocultar';
+                    closeBtn.setAttribute('aria-label', 'Cerrar anuncio');
+                    closeBtn.textContent = '×';
+                    closeBtn.addEventListener('click', () => { banner.style.display = 'none'; });
+                    banner.appendChild(closeBtn);
+
+                    container.appendChild(banner);
+                });
             } catch (err) {
-                console.error("Error cargando anuncios", err);
+                console.error('Error cargando anuncios', err);
             }
-        }
-
-        function closeAnuncio(id) {
-            const el = document.getElementById('anuncio-' + id);
-            if(el) el.style.display = 'none';
         }
 
         // 2. Obtener el año actual para el footer dinámicamente

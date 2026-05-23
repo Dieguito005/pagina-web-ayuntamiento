@@ -1,70 +1,92 @@
 <?php
-// api/user-auth.php — Procesa el login de usuarios públicos
-ob_start(); // Capturar cualquier output accidental para que header() funcione siempre
+// api/user-auth.php — Login de usuarios públicos
+// - CSRF obligatorio
+// - Rate limit por email + IP (5 intentos / 15 min)
+// - session_regenerate_id tras login
+// - Redirect saneado contra whitelist
+
+ob_start();
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/audit.php';
+require_once __DIR__ . '/../includes/helpers.php';
 session_start();
 require_once 'conexion.php';
 
-/**
- * Función de redirección robusta con fallback HTML/JS
- * Garantiza la redirección incluso si header() falla
- */
-function safe_redirect($url) {
-    // Intentar redirección por header HTTP
+function safe_redirect_login($url)
+{
     if (!headers_sent()) {
-        header("Location: " . $url);
+        header('Location: ' . $url);
         ob_end_flush();
         exit;
     }
-    // Fallback: redirección por HTML + JavaScript
     ob_end_clean();
     echo '<!DOCTYPE html><html><head>';
-    echo '<meta http-equiv="refresh" content="0;url=' . htmlspecialchars($url) . '">';
-    echo '<script>window.location.href="' . htmlspecialchars($url, ENT_QUOTES) . '";</script>';
+    echo '<meta http-equiv="refresh" content="0;url=' . htmlspecialchars($url, ENT_QUOTES) . '">';
+    echo '<script>window.location.href=' . json_encode($url) . ';</script>';
     echo '</head><body><p>Redirigiendo...</p></body></html>';
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    safe_redirect_login('../html/user-login.php');
+}
 
-    if (empty($email) || empty($password)) {
-        safe_redirect('../html/user-login.php?error=empty');
-    }
+SecurityHandler::requireCSRFOrRedirect('../html/user-login.php?error=csrf');
 
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = ? LIMIT 1");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+$email = strtolower(trim($_POST['email'] ?? ''));
+$password = clamp_password((string) ($_POST['password'] ?? ''));
 
-        if ($user && password_verify($password, $user['password_hash'])) {
-            // Login correcto — crear sesión
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_nombre'] = $user['nombre'];
-            $_SESSION['user_apellidos'] = $user['apellidos'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_dni'] = $user['dni'];
-            $_SESSION['user_telefono'] = $user['telefono'];
+if ($email === '' || $password === '') {
+    safe_redirect_login('../html/user-login.php?error=empty');
+}
 
-            // Actualizar último acceso
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    safe_redirect_login('../html/user-login.php?error=invalid');
+}
+
+$ip = SecurityHandler::clientIp();
+$identifier = $email . '|' . $ip;
+
+if (SecurityHandler::isRateLimited($pdo, 'user_login', $identifier, 5, 900)) {
+    safe_redirect_login('../html/user-login.php?error=ratelimit');
+}
+
+try {
+    $stmt = $pdo->prepare("SELECT id, nombre, apellidos, email, dni, telefono, password_hash FROM usuarios WHERE email = ? LIMIT 1");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+
+    if ($user && password_verify($password, $user['password_hash'])) {
+        SecurityHandler::clearAttempts($pdo, 'user_login', $identifier);
+        SecurityHandler::regenerateSession();
+
+        $_SESSION['user_id'] = (int) $user['id'];
+        $_SESSION['user_nombre'] = $user['nombre'];
+        $_SESSION['user_apellidos'] = $user['apellidos'];
+        $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_dni'] = $user['dni'];
+        $_SESSION['user_telefono'] = $user['telefono'];
+        $_SESSION['_last_activity'] = time();
+
+        try {
             $updateStmt = $pdo->prepare("UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = ?");
             $updateStmt->execute([$user['id']]);
-
-            // Redirigir al destino original o a home
-            $redirect = !empty($_POST['redirect']) ? $_POST['redirect'] : '../html/home.php';
-            // Sanitizar redirect para evitar open redirect
-            if (strpos($redirect, '://') !== false || strpos($redirect, '//') === 0) {
-                $redirect = '../html/home.php';
-            } elseif (!empty($_POST['redirect']) && strpos($redirect, '../html/') !== 0) {
-                $redirect = '../html/' . ltrim($redirect, '/');
-            }
-            safe_redirect($redirect);
-        } else {
-            safe_redirect('../html/user-login.php?error=invalid');
+        } catch (\PDOException $e) {
+            // no-op
         }
-    } catch (\PDOException $e) {
-        safe_redirect('../html/user-login.php?error=db');
+
+        audit_log($pdo, 'login', 'usuario', $user['id'], ['email' => $email]);
+
+        $redirect = SecurityHandler::sanitizeRedirect($_POST['redirect'] ?? null);
+        safe_redirect_login($redirect);
     }
-} else {
-    safe_redirect('../html/user-login.php');
+
+    // Credencial inválida: registrar intento, delay, redirigir mensaje genérico
+    SecurityHandler::recordAttempt($pdo, 'user_login', $identifier, false);
+    audit_log($pdo, 'login_fail', 'usuario', null, ['email' => $email]);
+    usleep(random_int(200000, 500000));
+    safe_redirect_login('../html/user-login.php?error=invalid');
+} catch (\PDOException $e) {
+    error_log('user_auth_error: ' . $e->getMessage());
+    safe_redirect_login('../html/user-login.php?error=db');
 }

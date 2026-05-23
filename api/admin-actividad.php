@@ -1,126 +1,87 @@
 <?php
-// api/admin-actividad.php
-// Centro de Actividad: avisos de reservas recientes para el conserje/admin
+// api/admin-actividad.php — Centro de actividad (verificación de reservas por conserje)
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/audit.php';
+require_once __DIR__ . '/../includes/helpers.php';
 session_start();
 require_once 'conexion.php';
-header("Content-Type: application/json; charset=UTF-8");
+header('Content-Type: application/json; charset=UTF-8');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
 
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(403);
-    echo json_encode(["status" => "error", "message" => "Acceso no autorizado"]);
-    exit;
-}
-
+SecurityHandler::requireAdmin();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    $action = $_GET['action'] ?? 'get';
+    $limite = isset($_GET['limite']) ? (int) $_GET['limite'] : 50;
+    if ($limite < 1 || $limite > 500) $limite = 50;
+    $solo_hoy = isset($_GET['solo_hoy']) && $_GET['solo_hoy'] === '1';
+    $pista = $_GET['pista'] ?? '';
 
-    if ($action === 'get') {
-        // Obtener reservas recientes (últimas 72h por defecto o las del día filtrado)
-        $limite = isset($_GET['limite']) ? (int)$_GET['limite'] : 50;
-        $solo_hoy = isset($_GET['solo_hoy']) && $_GET['solo_hoy'] === '1';
-        $pista = $_GET['pista'] ?? '';
-
-        date_default_timezone_set('Europe/Madrid');
-
-        $sql = "SELECT r.*, 
-                       COALESCE(r.usuario_nombre, 'Desconocido') as cliente_nombre
-                FROM reservas r
-                WHERE r.estado = 'reservada'";
-
-        $params = [];
-
-        if ($solo_hoy) {
-            $sql .= " AND r.fecha = CURDATE()";
-        } else {
-            $sql .= " AND r.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 DAY)";
-        }
-
-        if (!empty($pista)) {
-            $sql .= " AND r.pista = ?";
-            $params[] = $pista;
-        }
-
-        $sql .= " ORDER BY r.fecha ASC, r.hora_inicio ASC";
-
-        if ($limite > 0) {
-            $sql .= " LIMIT " . $limite;
-        }
-
-        try {
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
-            $reservas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Contar reservas SIN verificar del día (para el badge — desaparece al verificar todas)
-            $stmtHoy = $pdo->prepare("SELECT COUNT(*) as total FROM reservas WHERE estado = 'reservada' AND fecha = CURDATE() AND (verificado_admin IS NULL OR verificado_admin = 0)");
-            $stmtHoy->execute();
-            $totalHoy = $stmtHoy->fetch()['total'];
-
-            echo json_encode([
-                "status" => "success",
-                "data" => $reservas,
-                "total_hoy" => (int)$totalHoy
-            ]);
-        } catch (\PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Error al obtener actividad"]);
-        }
-    }
-
-} elseif ($method === 'POST') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $action = $data['action'] ?? '';
-
-    if ($action === 'verificar') {
-        // Marcar una reserva como verificada por el conserje (campo verificado_admin)
-        $id = $data['id'] ?? null;
-        if (!$id) {
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "ID requerido"]);
-            exit;
-        }
-
-        try {
-            // Añadir columna si no existe (safe migration)
-            $pdo->exec("ALTER TABLE reservas ADD COLUMN IF NOT EXISTS verificado_admin TINYINT(1) DEFAULT 0");
-            $pdo->exec("ALTER TABLE reservas ADD COLUMN IF NOT EXISTS fecha_verificacion DATETIME DEFAULT NULL");
-
-            date_default_timezone_set('Europe/Madrid');
-            $stmt = $pdo->prepare("UPDATE reservas SET verificado_admin = 1, fecha_verificacion = NOW() WHERE id = ?");
-            $stmt->execute([$id]);
-
-            echo json_encode(["status" => "success", "message" => "Reserva verificada correctamente"]);
-        } catch (\PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Error al verificar"]);
-        }
-
-    } elseif ($action === 'desverificar') {
-        $id = $data['id'] ?? null;
-        if (!$id) {
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "ID requerido"]);
-            exit;
-        }
-
-        try {
-            $stmt = $pdo->prepare("UPDATE reservas SET verificado_admin = 0, fecha_verificacion = NULL WHERE id = ?");
-            $stmt->execute([$id]);
-            echo json_encode(["status" => "success", "message" => "Verificación retirada"]);
-        } catch (\PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Error al desverificar"]);
-        }
-
+    date_default_timezone_set('Europe/Madrid');
+    $sql = "SELECT r.*, COALESCE(r.usuario_nombre, 'Desconocido') AS cliente_nombre
+            FROM reservas r WHERE r.estado = 'reservada'";
+    $params = [];
+    if ($solo_hoy) {
+        $sql .= " AND r.fecha = CURDATE()";
     } else {
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "Acción no válida"]);
+        $sql .= " AND r.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 DAY)";
     }
+    if ($pista !== '') {
+        $sql .= " AND r.pista = ?";
+        $params[] = $pista;
+    }
+    $sql .= " ORDER BY r.fecha ASC, r.hora_inicio ASC LIMIT :lim";
 
-} else {
-    http_response_code(405);
-    echo json_encode(["status" => "error", "message" => "Método no permitido"]);
+    try {
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $i => $val) {
+            $stmt->bindValue($i + 1, $val);
+        }
+        $stmt->bindValue(':lim', $limite, PDO::PARAM_INT);
+        $stmt->execute();
+        $reservas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $stmtHoy = $pdo->prepare("SELECT COUNT(*) AS total FROM reservas WHERE estado = 'reservada' AND fecha = CURDATE() AND (verificado_admin IS NULL OR verificado_admin = 0)");
+        $stmtHoy->execute();
+        $totalHoy = (int) ($stmtHoy->fetch()['total'] ?? 0);
+
+        SecurityHandler::jsonOk(['data' => $reservas, 'total_hoy' => $totalHoy]);
+    } catch (\PDOException $e) {
+        error_log('admin_actividad_get: ' . $e->getMessage());
+        SecurityHandler::jsonError(500, 'Error al obtener actividad.');
+    }
 }
-?>
+
+if ($method !== 'POST') {
+    SecurityHandler::jsonError(405, 'Método no permitido.');
+}
+
+$data = read_json_body();
+SecurityHandler::requireCSRF($data);
+
+$action = $data['action'] ?? '';
+$id = (int) ($data['id'] ?? 0);
+if ($id <= 0) {
+    SecurityHandler::jsonError(400, 'ID requerido.');
+}
+
+try {
+    if ($action === 'verificar') {
+        date_default_timezone_set('Europe/Madrid');
+        $stmt = $pdo->prepare("UPDATE reservas SET verificado_admin = 1, fecha_verificacion = NOW() WHERE id = ?");
+        $stmt->execute([$id]);
+        audit_log($pdo, 'verificar_reserva', 'reserva', $id);
+        SecurityHandler::jsonOk(['message' => 'Reserva verificada correctamente.']);
+    }
+    if ($action === 'desverificar') {
+        $stmt = $pdo->prepare("UPDATE reservas SET verificado_admin = 0, fecha_verificacion = NULL WHERE id = ?");
+        $stmt->execute([$id]);
+        audit_log($pdo, 'desverificar_reserva', 'reserva', $id);
+        SecurityHandler::jsonOk(['message' => 'Verificación retirada.']);
+    }
+    SecurityHandler::jsonError(400, 'Acción no válida.');
+} catch (\PDOException $e) {
+    error_log('admin_actividad_post: ' . $e->getMessage());
+    SecurityHandler::jsonError(500, 'Error de base de datos.');
+}

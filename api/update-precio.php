@@ -1,29 +1,22 @@
 <?php
+// api/update-precio.php — Editar precios personalizados de un slot (admin)
+require_once __DIR__ . '/../includes/SecurityHandler.php';
+require_once __DIR__ . '/../includes/audit.php';
+require_once __DIR__ . '/../includes/helpers.php';
 session_start();
 require_once 'conexion.php';
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=UTF-8');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
 
-if (!isset($_SESSION['admin_id'])) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Acceso no autorizado.']);
-    exit;
-}
+SecurityHandler::requireAdmin();
 
-// Permitir solo peticiones POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Método no permitido.']);
-    exit;
+    SecurityHandler::jsonError(405, 'Método no permitido.');
 }
 
-require_once __DIR__ . '/../includes/SecurityHandler.php';
-$csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
-if (!SecurityHandler::validateCSRFToken($csrfToken)) {
-    http_response_code(403);
-    die(json_encode(['status' => 'error', 'message' => 'Token de seguridad inválido.']));
-}
-
-$input = json_decode(file_get_contents('php://input'), true);
+$input = read_json_body();
+SecurityHandler::requireCSRF($input);
 
 $pista = $input['pista'] ?? '';
 $fecha = $input['fecha'] ?? '';
@@ -31,31 +24,32 @@ $hora_inicio = $input['hora_inicio'] ?? '';
 $precio_base = isset($input['precio_base']) && $input['precio_base'] !== '' ? (float) $input['precio_base'] : null;
 $precio_luz = isset($input['precio_luz']) && $input['precio_luz'] !== '' ? (float) $input['precio_luz'] : null;
 
-if (!$pista || !$fecha || !$hora_inicio) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Faltan datos obligatorios.']);
-    exit;
+if ($pista === '' || $fecha === '' || $hora_inicio === '') {
+    SecurityHandler::jsonError(400, 'Faltan datos obligatorios.');
+}
+if ($precio_base !== null && ($precio_base < 0 || $precio_base > 9999)) {
+    SecurityHandler::jsonError(400, 'Precio base fuera de rango.');
+}
+if ($precio_luz !== null && ($precio_luz < 0 || $precio_luz > 9999)) {
+    SecurityHandler::jsonError(400, 'Suplemento luz fuera de rango.');
 }
 
 try {
-    // Si ambos son null, podríamos querer borrar el registro para volver al precio por defecto
     if ($precio_base === null && $precio_luz === null) {
         $stmt = $pdo->prepare("DELETE FROM precios_personalizados WHERE pista = ? AND fecha = ? AND hora_inicio = ?");
         $stmt->execute([$pista, $fecha, $hora_inicio]);
-        echo json_encode(['status' => 'success', 'message' => 'Precios restablecidos al valor por defecto.']);
-    } else {
-        $stmt = $pdo->prepare("
-            INSERT INTO precios_personalizados (pista, fecha, hora_inicio, precio_base, precio_luz)
-            VALUES (?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE precio_base = VALUES(precio_base), precio_luz = VALUES(precio_luz)
-        ");
-        $stmt->execute([$pista, $fecha, $hora_inicio, $precio_base, $precio_luz]);
-        echo json_encode(['status' => 'success', 'message' => 'Precios guardados correctamente.']);
+        audit_log($pdo, 'price_reset', 'precio', null, compact('pista', 'fecha', 'hora_inicio'));
+        SecurityHandler::jsonOk(['message' => 'Precios restablecidos al valor por defecto.']);
     }
-
+    $stmt = $pdo->prepare(
+        "INSERT INTO precios_personalizados (pista, fecha, hora_inicio, precio_base, precio_luz)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE precio_base = VALUES(precio_base), precio_luz = VALUES(precio_luz)"
+    );
+    $stmt->execute([$pista, $fecha, $hora_inicio, $precio_base, $precio_luz]);
+    audit_log($pdo, 'price_update', 'precio', null, compact('pista', 'fecha', 'hora_inicio', 'precio_base', 'precio_luz'));
+    SecurityHandler::jsonOk(['message' => 'Precios guardados correctamente.']);
 } catch (\PDOException $e) {
-    http_response_code(500);
-    error_log("Error de BBDD al guardar precio: " . $e->getMessage());
-    echo json_encode(['status' => 'error', 'message' => 'Error al guardar los precios.']);
+    error_log('update_precio_error: ' . $e->getMessage());
+    SecurityHandler::jsonError(500, 'Error al guardar los precios.');
 }
-?>
