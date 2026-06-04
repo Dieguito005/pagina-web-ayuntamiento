@@ -36,3 +36,36 @@ function qr_gf_mul(int $a, int $b): int
     [$exp, $log] = qr_gf_tables();
     return $exp[$log[$a] + $log[$b]];
 }
+
+/** Polinomio generador Reed-Solomon de grado $degree (coeficientes en valores). */
+function qr_rs_generator(int $degree): array
+{
+    [$exp] = qr_gf_tables();
+    $g = [1];
+    for ($i = 0; $i < $degree; $i++) {
+        $next = array_fill(0, count($g) + 1, 0);
+        foreach ($g as $j => $coef) {
+            $next[$j]     ^= $coef;                       // x * g
+            $next[$j + 1] ^= qr_gf_mul($coef, $exp[$i]);  // alpha^i * g
+        }
+        $g = $next;
+    }
+    return $g; // longitud degree+1, monico
+}
+
+/** Codewords de corrección de errores para un bloque de datos. */
+function qr_rs_ec(array $data, int $ecCount): array
+{
+    $gen = qr_rs_generator($ecCount);
+    $res = array_merge($data, array_fill(0, $ecCount, 0));
+    $dataLen = count($data);
+    for ($i = 0; $i < $dataLen; $i++) {
+        $coef = $res[$i];
+        if ($coef !== 0) {
+            foreach ($gen as $j => $g) {
+                $res[$i + $j] ^= qr_gf_mul($g, $coef);
+            }
+        }
+    }
+    return array_slice($res, $dataLen); // últimos ecCount
+}
