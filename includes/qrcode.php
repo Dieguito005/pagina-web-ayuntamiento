@@ -205,3 +205,92 @@ function qr_build_codewords(string $text, int $version): array
     }
     return $result;
 }
+
+/** Matriz QR: m = módulos (-1 vacío, 0/1), f = es módulo de función (reservado). */
+final class QrMatrix
+{
+    public int $n;
+    public array $m;
+    public array $f;
+    public function __construct(int $version)
+    {
+        $this->n = qr_matrix_size($version);
+        $this->m = array_fill(0, $this->n, array_fill(0, $this->n, -1));
+        $this->f = array_fill(0, $this->n, array_fill(0, $this->n, false));
+    }
+    public function set(int $r, int $c, int $v, bool $fn = true): void
+    {
+        if ($r < 0 || $c < 0 || $r >= $this->n || $c >= $this->n) return;
+        $this->m[$r][$c] = $v;
+        if ($fn) $this->f[$r][$c] = true;
+    }
+}
+
+/** Coloca un patrón localizador 7x7 + separador en la esquina (row,col). */
+function qr_place_finder(QrMatrix $q, int $row, int $col): void
+{
+    for ($r = -1; $r <= 7; $r++) {
+        for ($c = -1; $c <= 7; $c++) {
+            $border = ($r >= 0 && $r <= 6 && ($c === 0 || $c === 6))
+                   || ($c >= 0 && $c <= 6 && ($r === 0 || $r === 6));
+            $core = ($r >= 2 && $r <= 4 && $c >= 2 && $c <= 4);
+            $q->set($row + $r, $col + $c, ($border || $core) ? 1 : 0);
+        }
+    }
+}
+
+/** Coloca un patrón de alineación 5x5 centrado en (cr,cc). */
+function qr_place_alignment(QrMatrix $q, int $cr, int $cc): void
+{
+    for ($r = -2; $r <= 2; $r++) {
+        for ($c = -2; $c <= 2; $c++) {
+            $d = max(abs($r), abs($c));   // 0 centro, 1 anillo claro, 2 borde oscuro
+            $q->set($cr + $r, $cc + $c, ($d === 1) ? 0 : 1);
+        }
+    }
+}
+
+/** Dibuja todos los patrones de función y reserva las áreas de formato/versión. */
+function qr_draw_function_patterns(QrMatrix $q, int $version): void
+{
+    $n = $q->n;
+
+    qr_place_finder($q, 0, 0);
+    qr_place_finder($q, 0, $n - 7);
+    qr_place_finder($q, $n - 7, 0);
+
+    for ($i = 8; $i < $n - 8; $i++) {
+        $bit = ($i % 2 === 0) ? 1 : 0;
+        if ($q->m[6][$i] === -1) $q->set(6, $i, $bit);
+        if ($q->m[$i][6] === -1) $q->set($i, 6, $bit);
+    }
+
+    $centers = qr_align_centers($version);
+    $maxC = $centers ? end($centers) : 0;
+    foreach ($centers as $r) {
+        foreach ($centers as $c) {
+            if (($r === 6 && $c === 6) || ($r === 6 && $c === $maxC) || ($r === $maxC && $c === 6)) {
+                continue;
+            }
+            qr_place_alignment($q, $r, $c);
+        }
+    }
+
+    for ($i = 0; $i <= 5; $i++) $q->set(8, $i, 0);
+    $q->set(8, 7, 0); $q->set(8, 8, 0); $q->set(7, 8, 0);
+    for ($i = 9; $i < 15; $i++) $q->set(14 - $i, 8, 0);
+    for ($i = 0; $i < 8; $i++) $q->set($n - 1 - $i, 8, 0);
+    for ($i = 8; $i < 15; $i++) $q->set(8, $n - 15 + $i, 0);
+
+    // Módulo oscuro: siempre 1, colocado después de reservar el área de formato.
+    $q->set(4 * $version + 9, 8, 1);
+
+    if ($version >= 7) {
+        for ($i = 0; $i < 18; $i++) {
+            $a = $n - 11 + $i % 3;
+            $b = intdiv($i, 3);
+            $q->set($a, $b, 0);
+            $q->set($b, $a, 0);
+        }
+    }
+}
