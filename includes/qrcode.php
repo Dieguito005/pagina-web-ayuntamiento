@@ -431,3 +431,56 @@ function qr_apply_best_mask(QrMatrix $q): int
     }
     return $best;
 }
+
+/** Cadena de 15 bits de información de formato (nivel M + máscara), con BCH y XOR. */
+function qr_format_bits(int $mask): int
+{
+    $data = $mask;                 // nivel M = prefijo 00; data = 0b00 + mask = mask
+    $rem = $data;
+    for ($i = 0; $i < 10; $i++) {
+        $rem = ($rem << 1) ^ ((($rem >> 9) & 1) * 0x537);
+    }
+    return ((($data << 10) | $rem) ^ 0x5412) & 0x7FFF;
+}
+
+/** Cadena de 18 bits de información de versión (v>=7), con BCH. */
+function qr_version_bits(int $version): int
+{
+    $rem = $version;
+    for ($i = 0; $i < 12; $i++) {
+        $rem = ($rem << 1) ^ ((($rem >> 11) & 1) * 0x1F25);
+    }
+    return ($version << 12) | $rem;
+}
+
+/** Escribe la información de formato (dos copias) y de versión (v>=7). */
+function qr_draw_format_version(QrMatrix $q, int $version, int $mask): void
+{
+    $n = $q->n;
+    $fmt = qr_format_bits($mask);
+    $bit = fn(int $x, int $i): int => ($x >> $i) & 1;
+
+    // Copia 1 (alrededor del localizador superior izquierdo).
+    for ($i = 0; $i <= 5; $i++) $q->m[$i][8] = $bit($fmt, $i);       // col 8, filas 0-5
+    $q->m[7][8] = $bit($fmt, 6);
+    $q->m[8][8] = $bit($fmt, 7);
+    $q->m[8][7] = $bit($fmt, 8);
+    for ($i = 9; $i < 15; $i++) $q->m[8][14 - $i] = $bit($fmt, $i);  // fila 8, cols 5-0
+
+    // Copia 2.
+    for ($i = 0; $i < 8; $i++) $q->m[8][$n - 1 - $i] = $bit($fmt, $i);    // fila 8, cols n-1..n-8
+    for ($i = 8; $i < 15; $i++) $q->m[$n - 15 + $i][8] = $bit($fmt, $i);  // col 8, filas n-7..n-1
+    // El módulo oscuro (n-8,8) ya está fijado por qr_draw_function_patterns.
+
+    // Información de versión (v>=7).
+    if ($version >= 7) {
+        $vb = qr_version_bits($version);
+        for ($i = 0; $i < 18; $i++) {
+            $b = $bit($vb, $i);
+            $a = $n - 11 + $i % 3;
+            $d = intdiv($i, 3);
+            $q->m[$a][$d] = $b;
+            $q->m[$d][$a] = $b;
+        }
+    }
+}
