@@ -296,3 +296,29 @@ function qr_draw_function_patterns(QrMatrix $q, int $version): void
         }
     }
 }
+
+/** Coloca el flujo de codewords (MSB primero) en la matriz, en zigzag. */
+function qr_place_data(QrMatrix $q, array $codewords): void
+{
+    $n = $q->n;
+    $bits = [];
+    foreach ($codewords as $cw) {
+        for ($i = 7; $i >= 0; $i--) $bits[] = ($cw >> $i) & 1;
+    }
+    $total = count($bits);
+    $idx = 0;
+
+    for ($right = $n - 1; $right >= 1; $right -= 2) {
+        if ($right === 6) $right = 5; // saltar la columna de timing
+        for ($vert = 0; $vert < $n; $vert++) {
+            for ($j = 0; $j < 2; $j++) {
+                $col = $right - $j;
+                $upward = ((($right + 1) & 2) === 0);
+                $row = $upward ? ($n - 1 - $vert) : $vert;
+                if ($q->f[$row][$col]) continue;          // saltar función
+                $q->m[$row][$col] = ($idx < $total) ? $bits[$idx] : 0; // bits sobrantes = 0
+                $idx++;
+            }
+        }
+    }
+}
