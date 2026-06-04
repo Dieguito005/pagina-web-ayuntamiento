@@ -69,3 +69,65 @@ function qr_rs_ec(array $data, int $ecCount): array
     }
     return array_slice($res, $dataLen); // últimos ecCount
 }
+
+/**
+ * Características de corrección de errores, nivel M, versiones 1–10.
+ * [version] => [ecCodewordsPorBloque, [[numBloques, dataCwPorBloque], ...]]
+ * Valores de ISO/IEC 18004 (verificar contra la norma si algún test de matriz falla).
+ */
+function qr_ec_table(): array
+{
+    return [
+        1  => [10, [[1, 16]]],
+        2  => [16, [[1, 28]]],
+        3  => [26, [[1, 44]]],
+        4  => [18, [[2, 32]]],
+        5  => [24, [[2, 43]]],
+        6  => [16, [[4, 27]]],
+        7  => [18, [[4, 31]]],
+        8  => [22, [[2, 38], [2, 39]]],
+        9  => [22, [[3, 36], [2, 37]]],
+        10 => [24, [[4, 43], [1, 44]]],
+    ];
+}
+
+/** Centros de patrones de alineación por versión (nivel-independiente). */
+function qr_align_centers(int $version): array
+{
+    $t = [
+        1 => [], 2 => [6,18], 3 => [6,22], 4 => [6,26], 5 => [6,30],
+        6 => [6,34], 7 => [6,22,38], 8 => [6,24,42], 9 => [6,26,46], 10 => [6,28,50],
+    ];
+    return $t[$version];
+}
+
+/** Tamaño (módulos por lado) de la matriz de una versión. */
+function qr_matrix_size(int $version): int
+{
+    return 17 + 4 * $version;
+}
+
+/** Codewords de datos totales de una versión (nivel M). */
+function qr_data_codewords(int $version): int
+{
+    [, $groups] = qr_ec_table()[$version];
+    $sum = 0;
+    foreach ($groups as [$n, $cw]) $sum += $n * $cw;
+    return $sum;
+}
+
+/** Capacidad en bytes (modo byte) de una versión, descontando cabecera. */
+function qr_byte_capacity(int $version): int
+{
+    $ccBits = $version >= 10 ? 16 : 8;
+    return intdiv(qr_data_codewords($version) * 8 - 4 - $ccBits, 8);
+}
+
+/** Menor versión (1–10) capaz de contener $byteLen bytes en modo byte. */
+function qr_choose_version(int $byteLen): int
+{
+    for ($v = 1; $v <= 10; $v++) {
+        if (qr_byte_capacity($v) >= $byteLen) return $v;
+    }
+    throw new RuntimeException('Texto demasiado largo para QR (máx v10/M)');
+}
