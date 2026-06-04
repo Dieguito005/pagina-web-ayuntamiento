@@ -131,3 +131,77 @@ function qr_choose_version(int $byteLen): int
     }
     throw new RuntimeException('Texto demasiado largo para QR (máx v10/M)');
 }
+
+/** Buffer de bits (MSB primero). */
+final class QrBitBuffer
+{
+    public array $bits = [];
+    public function put(int $value, int $len): void
+    {
+        for ($i = $len - 1; $i >= 0; $i--) {
+            $this->bits[] = ($value >> $i) & 1;
+        }
+    }
+    public function length(): int { return count($this->bits); }
+}
+
+/** Codifica $text (modo byte) a los codewords de datos de una versión. */
+function qr_encode_data(string $text, int $version): array
+{
+    $dataCw = qr_data_codewords($version);
+    $capacityBits = $dataCw * 8;
+    $bb = new QrBitBuffer();
+    $bb->put(0b0100, 4);                       // indicador de modo byte
+    $ccBits = $version >= 10 ? 16 : 8;
+    $bb->put(strlen($text), $ccBits);          // indicador de longitud
+    $len = strlen($text);
+    for ($i = 0; $i < $len; $i++) $bb->put(ord($text[$i]), 8);
+
+    // Terminador (hasta 4 ceros, sin pasarse de capacidad)
+    $remaining = $capacityBits - $bb->length();
+    $bb->put(0, max(0, min(4, $remaining)));
+    // Relleno hasta byte completo
+    while ($bb->length() % 8 !== 0) $bb->bits[] = 0;
+    // Bytes de relleno alternos 0xEC / 0x11
+    $pad = [0xEC, 0x11]; $p = 0;
+    while ($bb->length() < $capacityBits) { $bb->put($pad[$p % 2], 8); $p++; }
+
+    // Empaquetar a codewords
+    $cw = [];
+    for ($i = 0; $i < $capacityBits; $i += 8) {
+        $b = 0;
+        for ($j = 0; $j < 8; $j++) $b = ($b << 1) | $bb->bits[$i + $j];
+        $cw[] = $b;
+    }
+    return $cw;
+}
+
+/** Datos + EC, divididos en bloques e intercalados según el estándar. */
+function qr_build_codewords(string $text, int $version): array
+{
+    $data = qr_encode_data($text, $version);
+    [$ecPerBlock, $groups] = qr_ec_table()[$version];
+
+    $blocks = [];
+    $idx = 0;
+    foreach ($groups as [$n, $cwPer]) {
+        for ($b = 0; $b < $n; $b++) {
+            $blockData = array_slice($data, $idx, $cwPer);
+            $idx += $cwPer;
+            $blocks[] = ['data' => $blockData, 'ec' => qr_rs_ec($blockData, $ecPerBlock)];
+        }
+    }
+
+    $result = [];
+    $maxData = 0;
+    foreach ($blocks as $b) $maxData = max($maxData, count($b['data']));
+    for ($i = 0; $i < $maxData; $i++) {
+        foreach ($blocks as $b) {
+            if ($i < count($b['data'])) $result[] = $b['data'][$i];
+        }
+    }
+    for ($i = 0; $i < $ecPerBlock; $i++) {
+        foreach ($blocks as $b) $result[] = $b['ec'][$i];
+    }
+    return $result;
+}
