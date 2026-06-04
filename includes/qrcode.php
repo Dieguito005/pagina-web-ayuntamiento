@@ -276,14 +276,16 @@ function qr_draw_function_patterns(QrMatrix $q, int $version): void
         }
     }
 
-    for ($i = 0; $i <= 5; $i++) $q->set(8, $i, 0);
-    $q->set(8, 7, 0); $q->set(8, 8, 0); $q->set(7, 8, 0);
-    for ($i = 9; $i < 15; $i++) $q->set(14 - $i, 8, 0);
-    for ($i = 0; $i < 8; $i++) $q->set($n - 1 - $i, 8, 0);
-    for ($i = 8; $i < 15; $i++) $q->set(8, $n - 15 + $i, 0);
+    // Reservar área de información de formato (L alrededor del localizador superior izq.).
+    for ($i = 0; $i <= 5; $i++) $q->set($i, 8, 0);           // col 8, filas 0-5
+    $q->set(7, 8, 0); $q->set(8, 8, 0); $q->set(8, 7, 0);
+    for ($i = 9; $i < 15; $i++) $q->set(8, 14 - $i, 0);      // fila 8, cols 5-0
+    // Segunda copia.
+    for ($i = 0; $i < 8; $i++) $q->set(8, $n - 1 - $i, 0);   // fila 8, cols n-1..n-8
+    for ($i = 8; $i < 15; $i++) $q->set($n - 15 + $i, 8, 0); // col 8, filas n-7..n-1
 
-    // Módulo oscuro: siempre 1, colocado después de reservar el área de formato.
-    $q->set(4 * $version + 9, 8, 1);
+    // Módulo oscuro: siempre 1, en (n-8, 8).
+    $q->set($n - 8, 8, 1);
 
     if ($version >= 7) {
         for ($i = 0; $i < 18; $i++) {
