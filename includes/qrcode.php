@@ -322,3 +322,112 @@ function qr_place_data(QrMatrix $q, array $codewords): void
         }
     }
 }
+
+/** Condición de máscara $mask en (r,c). */
+function qr_mask_condition(int $mask, int $r, int $c): bool
+{
+    switch ($mask) {
+        case 0: return (($r + $c) % 2) === 0;
+        case 1: return ($r % 2) === 0;
+        case 2: return ($c % 3) === 0;
+        case 3: return (($r + $c) % 3) === 0;
+        case 4: return ((intdiv($r, 2) + intdiv($c, 3)) % 2) === 0;
+        case 5: return ((($r * $c) % 2) + (($r * $c) % 3)) === 0;
+        case 6: return (((($r * $c) % 2) + (($r * $c) % 3)) % 2) === 0;
+        case 7: return (((($r + $c) % 2) + (($r * $c) % 3)) % 2) === 0;
+    }
+    return false;
+}
+
+/** Penalización de una matriz ya enmascarada (4 reglas del estándar). */
+function qr_penalty(QrMatrix $q): int
+{
+    $n = $q->n; $m = $q->m; $p = 0;
+
+    // Regla 1: 5+ módulos iguales consecutivos (filas y columnas).
+    for ($r = 0; $r < $n; $r++) {
+        $run = 1;
+        for ($c = 1; $c < $n; $c++) {
+            if ($m[$r][$c] === $m[$r][$c - 1]) { $run++; if ($run === 5) $p += 3; elseif ($run > 5) $p++; }
+            else $run = 1;
+        }
+    }
+    for ($c = 0; $c < $n; $c++) {
+        $run = 1;
+        for ($r = 1; $r < $n; $r++) {
+            if ($m[$r][$c] === $m[$r - 1][$c]) { $run++; if ($run === 5) $p += 3; elseif ($run > 5) $p++; }
+            else $run = 1;
+        }
+    }
+
+    // Regla 2: bloques 2x2 del mismo color.
+    for ($r = 0; $r < $n - 1; $r++) {
+        for ($c = 0; $c < $n - 1; $c++) {
+            $v = $m[$r][$c];
+            if ($v === $m[$r][$c + 1] && $v === $m[$r + 1][$c] && $v === $m[$r + 1][$c + 1]) $p += 3;
+        }
+    }
+
+    // Regla 3: patrón 1:1:3:1:1 (y su espejo) en filas y columnas.
+    $pat1 = [1,0,1,1,1,0,1,0,0,0,0];
+    $pat2 = [0,0,0,0,1,0,1,1,1,0,1];
+    for ($r = 0; $r < $n; $r++) {
+        for ($c = 0; $c <= $n - 11; $c++) {
+            $ok1 = true; $ok2 = true;
+            for ($k = 0; $k < 11; $k++) {
+                if ($m[$r][$c + $k] !== $pat1[$k]) $ok1 = false;
+                if ($m[$r][$c + $k] !== $pat2[$k]) $ok2 = false;
+            }
+            if ($ok1 || $ok2) $p += 40;
+        }
+    }
+    for ($c = 0; $c < $n; $c++) {
+        for ($r = 0; $r <= $n - 11; $r++) {
+            $ok1 = true; $ok2 = true;
+            for ($k = 0; $k < 11; $k++) {
+                if ($m[$r + $k][$c] !== $pat1[$k]) $ok1 = false;
+                if ($m[$r + $k][$c] !== $pat2[$k]) $ok2 = false;
+            }
+            if ($ok1 || $ok2) $p += 40;
+        }
+    }
+
+    // Regla 4: balance de módulos oscuros.
+    $dark = 0;
+    for ($r = 0; $r < $n; $r++) for ($c = 0; $c < $n; $c++) if ($m[$r][$c] === 1) $dark++;
+    $ratio = ($dark * 100) / ($n * $n);
+    $p += (int) (abs($ratio - 50) / 5) * 10;
+
+    return $p;
+}
+
+/** Aplica las 8 máscaras (solo a módulos de datos), elige la de menor penalización. */
+function qr_apply_best_mask(QrMatrix $q): int
+{
+    $n = $q->n;
+    $best = -1; $bestPenalty = PHP_INT_MAX;
+    $original = $q->m;
+
+    for ($mask = 0; $mask < 8; $mask++) {
+        $q->m = $original;
+        for ($r = 0; $r < $n; $r++) {
+            for ($c = 0; $c < $n; $c++) {
+                if (!$q->f[$r][$c] && qr_mask_condition($mask, $r, $c)) {
+                    $q->m[$r][$c] ^= 1;
+                }
+            }
+        }
+        $pen = qr_penalty($q);
+        if ($pen < $bestPenalty) { $bestPenalty = $pen; $best = $mask; }
+    }
+
+    $q->m = $original;
+    for ($r = 0; $r < $n; $r++) {
+        for ($c = 0; $c < $n; $c++) {
+            if (!$q->f[$r][$c] && qr_mask_condition($best, $r, $c)) {
+                $q->m[$r][$c] ^= 1;
+            }
+        }
+    }
+    return $best;
+}
