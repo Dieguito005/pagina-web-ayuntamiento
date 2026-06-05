@@ -484,3 +484,44 @@ function qr_draw_format_version(QrMatrix $q, int $version, int $mask): void
         }
     }
 }
+
+/** Construye la matriz QR final (módulos 0/1) para un texto. */
+function qr_build_matrix(string $text): QrMatrix
+{
+    $version = qr_choose_version(strlen($text));
+    $q = new QrMatrix($version);
+    qr_draw_function_patterns($q, $version);
+    qr_place_data($q, qr_build_codewords($text, $version));
+    $mask = qr_apply_best_mask($q);
+    qr_draw_format_version($q, $version, $mask);
+    return $q;
+}
+
+/**
+ * Codifica $text en un QR y devuelve un documento SVG.
+ * @param int $moduleSize px por módulo. @param int $margin módulos de "quiet zone".
+ */
+function qr_encode_svg(string $text, int $moduleSize = 6, int $margin = 4): string
+{
+    $q = qr_build_matrix($text);
+    $n = $q->n;
+    $dim = ($n + 2 * $margin) * $moduleSize;
+
+    $rects = '';
+    for ($r = 0; $r < $n; $r++) {
+        for ($c = 0; $c < $n; $c++) {
+            if ($q->m[$r][$c] === 1) {
+                $x = ($c + $margin) * $moduleSize;
+                $y = ($r + $margin) * $moduleSize;
+                $rects .= "M{$x} {$y}h{$moduleSize}v{$moduleSize}h-{$moduleSize}z";
+            }
+        }
+    }
+
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' . $dim . '" height="' . $dim
+        . '" viewBox="0 0 ' . $dim . ' ' . $dim . '" shape-rendering="crispEdges" role="img" '
+        . 'aria-label="Código QR de configuración 2FA">'
+        . '<rect width="100%" height="100%" fill="#ffffff"/>'
+        . '<path d="' . $rects . '" fill="#000000"/>'
+        . '</svg>';
+}
