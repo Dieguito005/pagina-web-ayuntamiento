@@ -9,6 +9,14 @@ foreach ($totales as $v => $esperado) {
     check("data codewords v$v", $suma, $esperado);
 }
 
+// Total de codewords (datos + EC) por versión — debe coincidir con ISO 18004.
+$totalesCw = [1=>26,2=>44,3=>70,4=>100,5=>134,6=>172,7=>196,8=>242,9=>292,10=>346];
+foreach ($totalesCw as $v => $esperado) {
+    [$ec, $groups] = qr_ec_table()[$v];
+    $total = 0; foreach ($groups as [$n, $cw]) $total += $n * ($cw + $ec);
+    check("total codewords v$v", $total, $esperado);
+}
+
 check('capacidad v1', qr_byte_capacity(1), 14);
 check('capacidad v7', qr_byte_capacity(7), 122);
 check('capacidad v9', qr_byte_capacity(9), 180);
