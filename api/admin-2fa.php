@@ -49,7 +49,12 @@ if ($action === 'init') {
     $_SESSION['_2fa_pending_secret'] = $secret;
     $usuario = $_SESSION['admin_usuario'] ?? 'admin';
     $uri = totp_provisioning_uri('Ayuntamiento Tarancon', $usuario, $secret);
-    $qrUrl = totp_qr_url($uri);
+    try {
+        $qrUrl = totp_qr_url($uri);
+    } catch (\RuntimeException $e) {
+        error_log('admin-2fa init: fallo al generar QR: ' . $e->getMessage());
+        SecurityHandler::jsonError(500, 'No se pudo generar el codigo QR.');
+    }
     SecurityHandler::jsonOk(['secret' => $secret, 'qr_url' => $qrUrl, 'uri' => $uri]);
 }
 
