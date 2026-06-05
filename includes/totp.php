@@ -11,6 +11,8 @@
  *   $ok  = totp_verify($secret, $codigoIntroducidoPorUsuario);
  */
 
+require_once __DIR__ . '/qrcode.php';
+
 /** Genera un secreto Base32 de 32 caracteres (160 bits, recomendado por RFC). */
 function totp_generate_secret(int $length = 32): string
 {
@@ -96,12 +98,10 @@ function totp_provisioning_uri(string $issuer, string $account, string $secretBa
 }
 
 /**
- * Devuelve la URL de un código QR generado por un servicio público.
- * Para no añadir dependencias, usamos quickchart.io (cifrado en tránsito, sin tracking).
- * La URL es solo HTML/imagen — los secretos viajan en la query a quickchart, así que
- * úsalo SOLO durante el aprovisionamiento inicial y nunca para volver a mostrar el QR.
+ * Devuelve un data: URI con el QR del otpauth URI, generado en el servidor.
+ * El secreto NO sale del servidor: el SVG se embebe directamente en la página.
  */
 function totp_qr_url(string $otpauthUri): string
 {
-    return 'https://quickchart.io/qr?size=240&format=svg&text=' . rawurlencode($otpauthUri);
+    return 'data:image/svg+xml;base64,' . base64_encode(qr_encode_svg($otpauthUri));
 }

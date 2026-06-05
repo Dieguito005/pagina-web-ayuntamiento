@@ -133,7 +133,7 @@ function send_security_headers()
         "script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net; " .
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
         "font-src 'self' https://fonts.gstatic.com; " .
-        "img-src 'self' data: https://quickchart.io; " .
+        "img-src 'self' data:; " .
         "connect-src 'self' https://api.stripe.com; " .
         "frame-src https://js.stripe.com; " .
         "frame-ancestors 'self'; " .
