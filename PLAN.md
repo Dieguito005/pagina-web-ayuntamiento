@@ -56,7 +56,7 @@ Convenciones de prioridad:
 - [ ] **Backup automatizado**: cron diario que vuelque BD a `S3 EU` o `Hetzner Storage Box`, retención 30 días.
 - [ ] **CI básico en GitHub Actions**: `php -l` en todos los `*.php`, scan de secretos (`gitleaks`), validación de sintaxis JS.
 - [ ] **Retirar `'unsafe-inline'` del `script-src` del CSP**: mover los `<script>` inline restantes (admin-dashboard, home, bonos, forgot/reset/verify, 2fa-setup) a archivos `.js` externos o usar nonces. Los `onclick=` ya están eliminados.
-- [ ] **Autohospedar el generador de QR del 2FA** (alternativa a quickchart.io) — instalar `endroid/qr-code` vía Composer o usar librería sin dependencias.
+- [x] **Autohospedar el generador de QR del 2FA** (alternativa a quickchart.io) — `includes/qrcode.php`, encoder QR en PHP puro sin dependencias (modo byte, nivel M, v1–10); `totp_qr_url()` devuelve un `data:` URI y se quitó quickchart.io de la CSP.
 - [ ] **Limpiar `setup-*.php` y `migrate_*.php`** del directorio raíz al migrar a producción definitiva. **CRÍTICO**: los `deploy_*.php` con credenciales FTP en código siguen en Git (rotación pendiente).
 
 ### 🟡 P2 — mejoras importantes

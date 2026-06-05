@@ -6,6 +6,24 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [Unreleased]
+
+### Cambiado 🔄
+- **QR del 2FA autohospedado**: nuevo módulo `includes/qrcode.php` genera el código
+  QR de configuración TOTP en el servidor (PHP puro, sin dependencias; modo byte,
+  nivel de corrección M, versiones 1–10) y lo devuelve como `data:` URI desde
+  `totp_qr_url()`. Elimina la dependencia de `quickchart.io`, a la que se enviaba el
+  secreto TOTP del administrador en la query string (fuga de un secreto de
+  autenticación + transferencia internacional no contemplada). Verificado con
+  decodificación round-trip independiente en v1/v7/v8/v10. Cierra el ítem P1
+  correspondiente.
+
+### Seguridad 🔒
+- **CSP endurecida**: eliminado `https://quickchart.io` de la directiva `img-src`
+  (queda `img-src 'self' data:`).
+
+---
+
 ## [3.1.0] - 24-05-2026
 
 > **Segunda ola de endurecimiento tras auditoría de validación de v3.0.0.**
